@@ -48,6 +48,7 @@ border-radius:20px;
 display:grid;
 grid-template-columns:1fr 1fr;
 gap:15px;
+
 }
 
 
@@ -79,7 +80,6 @@ color:#ef4444;
 }
 
 
-
 .progress{
 
 background:#334155;
@@ -99,7 +99,6 @@ border-radius:10px;
 }
 
 
-
 button{
 
 width:100%;
@@ -113,7 +112,6 @@ font-size:18px;
 }
 
 
-
 .trade{
 
 display:flex;
@@ -122,7 +120,6 @@ padding:12px;
 border-bottom:1px solid #334155;
 
 }
-
 
 
 .nav{
@@ -138,12 +135,10 @@ padding:15px;
 
 }
 
-
 </style>
 
 
 </head>
-
 
 
 <body>
@@ -161,10 +156,10 @@ Loading...
 
 
 
+
 <div class="card">
 
 <h2>Account</h2>
-
 
 <div class="grid">
 
@@ -174,9 +169,7 @@ Loading...
 Balance
 
 <div class="number">
-
 $10,000
-
 </div>
 
 </div>
@@ -188,16 +181,13 @@ $10,000
 Profit Today
 
 <div class="number green">
-
 +$342
-
 </div>
 
 </div>
 
 
 </div>
-
 
 </div>
 
@@ -212,9 +202,7 @@ Profit Today
 
 
 <p class="green">
-
 ● Online
-
 </p>
 
 
@@ -229,19 +217,17 @@ Accuracy: 87%
 
 
 <div class="progress">
-
 <div></div>
-
 </div>
 
 
 </div>
+
 
 
 
 
 <div class="card">
-
 
 <h2>
 Latest Signal
@@ -249,9 +235,7 @@ Latest Signal
 
 
 <h2 class="green">
-
 BUY BTC 🚀
-
 </h2>
 
 
@@ -265,8 +249,8 @@ AI Confidence: 87%
 
 
 
-<div class="card">
 
+<div class="card">
 
 <h2>
 Recent Trades
@@ -274,53 +258,36 @@ Recent Trades
 
 
 <div class="trade">
-
 BTC/USDT
-
-<span class="green">
-+$120
-</span>
-
+<span class="green">+$120</span>
 </div>
 
 
 <div class="trade">
-
 ETH/USDT
-
-<span class="green">
-+$85
-</span>
-
+<span class="green">+$85</span>
 </div>
 
 
 <div class="trade">
-
 SOL/USDT
-
-<span class="red">
--$20
-</span>
-
+<span class="red">-$20</span>
 </div>
 
 
-
 </div>
+
 
 
 
 
 <div class="card">
 
-
 <button onclick="startBot()">
 
 ⚡ Start AI Trading
 
 </button>
-
 
 </div>
 
@@ -351,7 +318,6 @@ let tg = window.Telegram.WebApp;
 
 tg.ready();
 
-
 tg.expand();
 
 
@@ -360,8 +326,9 @@ let user = tg.initDataUnsafe.user;
 
 
 
-const BACKEND_URL = 
+const BACKEND_URL =
 "https://autotrade-backend-02cc.onrender.com";
+
 
 
 
@@ -373,7 +340,7 @@ document.getElementById("user").innerHTML =
 
 
 
-fetch(BACKEND_URL + "/user",{
+fetch(BACKEND_URL + "/user", {
 
 
 method:"POST",
@@ -381,18 +348,22 @@ method:"POST",
 
 headers:{
 
+
 "Content-Type":"application/json"
+
 
 },
 
 
 body:JSON.stringify({
 
+
 id:user.id,
 
 first_name:user.first_name,
 
 username:user.username
+
 
 })
 
@@ -432,6 +403,7 @@ document.getElementById("user").innerHTML =
 
 
 }
+
 
 
 
