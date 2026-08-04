@@ -1,94 +1,385 @@
 <!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<html lang="fa">
 
 <head>
 
 <meta charset="UTF-8">
 
-<title>ربات معامله‌گر اتوماتیک</title>
-
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+<title>
+ربات معامله‌گر اتوماتیک
+</title>
 
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 
-<link rel="stylesheet" href="style.css">
+<style>
+
+*{
+box-sizing:border-box;
+}
+
+
+body{
+
+margin:0;
+
+font-family:Arial, Tahoma;
+
+direction:rtl;
+
+background:#050816;
+
+color:white;
+
+padding-bottom:90px;
+
+}
+
+
+/* header */
+
+.header{
+
+padding:25px;
+
+background:#111827;
+
+}
+
+
+.logo{
+
+color:#22d3ee;
+
+font-size:20px;
+
+font-weight:bold;
+
+}
+
+
+
+.status{
+
+margin-top:15px;
+
+color:#94a3b8;
+
+}
+
+
+
+
+
+/* cards */
+
+
+.card{
+
+background:#111827;
+
+margin:15px;
+
+padding:20px;
+
+border-radius:25px;
+
+box-shadow:0 0 20px #0005;
+
+}
+
+
+
+.title{
+
+font-size:18px;
+
+margin-bottom:15px;
+
+}
+
+
+
+.balance{
+
+font-size:40px;
+
+font-weight:bold;
+
+text-align:center;
+
+margin:20px 0;
+
+}
+
+
+
+.gray{
+
+color:#94a3b8;
+
+}
+
+
+
+.green{
+
+color:#22c55e;
+
+}
+
+
+
+.blue{
+
+color:#22d3ee;
+
+}
+
+
+
+/* stats */
+
+
+.grid{
+
+display:grid;
+
+grid-template-columns:1fr 1fr;
+
+gap:15px;
+
+}
+
+
+
+.stat{
+
+background:#1e293b;
+
+padding:20px;
+
+border-radius:20px;
+
+text-align:center;
+
+}
+
+
+
+.stat h3{
+
+margin:0;
+
+font-size:25px;
+
+}
+
+
+
+
+
+/* button */
+
+
+button{
+
+
+width:100%;
+
+padding:16px;
+
+border:none;
+
+border-radius:18px;
+
+background:linear-gradient(90deg,#06b6d4,#2563eb);
+
+color:white;
+
+font-size:18px;
+
+font-weight:bold;
+
+}
+
+
+
+
+
+/* AI */
+
+
+.ai{
+
+background:#172554;
+
+}
+
+
+
+/* trades */
+
+
+.trade{
+
+display:flex;
+
+justify-content:space-between;
+
+padding:15px;
+
+border-bottom:1px solid #334155;
+
+}
+
+
+
+
+
+/* bottom nav */
+
+
+.nav{
+
+position:fixed;
+
+bottom:0;
+
+left:0;
+
+right:0;
+
+height:80px;
+
+background:#111827;
+
+display:flex;
+
+justify-content:space-around;
+
+align-items:center;
+
+z-index:1000;
+
+}
+
+
+
+.nav div{
+
+text-align:center;
+
+font-size:13px;
+
+color:#cbd5e1;
+
+cursor:pointer;
+
+}
+
+
+
+.nav div:hover{
+
+color:#22d3ee;
+
+}
+
+
+
+</style>
+
 
 </head>
+
 
 
 <body>
 
 
 
-<header class="header">
+<div class="header">
 
 
-<div class="brand">
+<div class="logo">
 
 🤖 ربات معامله‌گر اتوماتیک
 
 </div>
 
 
-<div id="user">
+<p id="user">
 
 در حال اتصال...
 
-</div>
-
-
-</header>
-
-
-
-
-
-<section id="home" class="page active">
-
-
-
-<div class="glass main-card">
-
-
-<p>
-موجودی حساب
 </p>
 
 
-<h1>
+</div>
+
+
+
+
+<div class="card">
+
+
+<div class="title">
+
+💰 موجودی حساب
+
+</div>
+
+
+<div class="balance">
+
 0.00$
-</h1>
+
+</div>
 
 
-<span class="gray">
+<center>
 
 0 تومان
 
-</span>
+</center>
 
 
 
-<div class="profit-box">
+<br>
 
-<div>
+
+
+<div class="grid">
+
+
+<div class="stat">
 
 سود کل
 
-<strong>
+<h3 class="green">
+
 0%
-</strong>
+
+</h3>
 
 </div>
 
 
-<div>
+
+<div class="stat">
 
 امروز
 
-<strong>
-0.00$</strong>
+<h3>
+
+0.00$
+
+</h3>
 
 </div>
 
@@ -97,9 +388,12 @@
 
 
 
-<button>
+<br>
 
-⬇ برداشت موجودی
+
+<button onclick="startBot()">
+
+⚡ شروع معامله‌گری AI
 
 </button>
 
@@ -110,243 +404,118 @@
 
 
 
-
-
-<div class="cards">
+<div class="grid" style="margin:15px;">
 
 
 
-<div class="glass small-card">
+<div class="stat">
 
+📊 معاملات
 
-<p>
-معاملات
-</p>
+<h3>
 
-
-<h2>
 0
-</h2>
 
+</h3>
 
 </div>
 
 
 
+<div class="stat">
 
-<div class="glass small-card">
+🏆 برد موفق
 
+<h3 class="green">
 
-<p>
-برد موفق
-</p>
-
-
-<h2 class="green">
 0%
-</h2>
+
+</h3>
+
+</div>
+
 
 
 </div>
 
 
 
-</div>
 
 
 
 
+<div class="card ai">
 
 
+<div class="title">
 
-<div class="glass ai-card">
-
-
-<h2>
 🤖 هوش مصنوعی
-</h2>
-
-
-
-<div class="status">
-
-<span></span>
-
-Online
 
 </div>
 
 
+
+<p class="green">
+
+● آنلاین
+
+</p>
+
+
+
 <p>
+
 استراتژی:
-Crypto AI Scalping
-</p>
 
+Crypto Scalping AI
 
-<div class="chart">
-
-
-<div></div>
-<div></div>
-<div></div>
-<div></div>
-<div></div>
-
-
-</div>
-
-
-
-</div>
-
-
-
-
-</section>
-
-
-
-
-
-
-
-<section id="trades" class="page">
-
-
-<div class="glass">
-
-
-<h2>
-📈 معاملات
-</h2>
-
-
-
-<div class="trade">
-
-BTC/USDT
-
-<span>
-0.00$
-</span>
-
-</div>
-
-
-<div class="trade">
-
-ETH/USDT
-
-<span>
-0.00$
-</span>
-
-</div>
-
-
-
-<div class="trade">
-
-XAU/USD
-
-<span>
-0.00$
-</span>
-
-</div>
-
-
-</div>
-
-
-</section>
-
-
-
-
-
-
-
-<section id="wallet" class="page">
-
-
-<div class="glass">
-
-
-<h2>
-💼 کیف پول
-</h2>
-
-
-<h1>
-0.00$
-</h1>
-
-
-<button>
-
-➕ واریز
-
-</button>
-
-
-<br><br>
-
-
-<button>
-
-⬇ برداشت
-
-</button>
-
-
-</div>
-
-
-</section>
-
-
-
-
-
-
-
-<section id="ai" class="page">
-
-
-<div class="glass">
-
-
-<h2>
-🤖 مرکز AI
-</h2>
-
-
-<p>
-وضعیت:
-<span class="green">
-فعال
-</span>
 </p>
 
 
 <p>
-دقت سیستم:
+
+دقت:
+
 87%
+
 </p>
-
-
-<button onclick="startAI()">
-
-شروع ربات
-
-</button>
 
 
 </div>
 
 
-</section>
+
+
+
+
+
+
+<div class="card">
+
+
+<div class="title">
+
+🚀 آخرین سیگنال
+
+</div>
+
+
+
+<h2>
+
+منتظر سیگنال...
+
+</h2>
+
+
+<p>
+
+اعتماد AI : 0%
+
+</p>
+
+
+</div>
 
 
 
@@ -354,52 +523,247 @@ XAU/USD
 
 
 
-<nav>
+<div class="card">
 
 
-<div onclick="openPage('home')">
+<div class="title">
+
+📈 معاملات اخیر
+
+</div>
+
+
+
+<div class="trade">
+
+BTCUSDT
+
+<span class="gray">
+
+0$
+
+</span>
+
+</div>
+
+
+
+<div class="trade">
+
+ETHUSDT
+
+<span class="gray">
+
+0$
+
+</span>
+
+</div>
+
+
+
+<div class="trade">
+
+XAUUSD
+
+<span class="gray">
+
+0$
+
+</span>
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+
+<!-- MENU -->
+
+
+<div class="nav">
+
+
+<div onclick="page('home')">
 
 🏠
+
 <br>
+
 خانه
 
 </div>
 
 
-<div onclick="openPage('trades')">
 
-📈
-<br>
-معاملات
-
-</div>
-
-
-<div onclick="openPage('wallet')">
+<div onclick="page('wallet')">
 
 💼
+
 <br>
+
 کیف پول
 
 </div>
 
 
-<div onclick="openPage('ai')">
+
+<div onclick="page('trade')">
+
+📊
+
+<br>
+
+معاملات
+
+</div>
+
+
+
+<div onclick="page('ai')">
 
 🤖
+
 <br>
+
 AI
 
 </div>
 
 
-</nav>
+</div>
 
 
 
 
 
-<script src="app.js"></script>
+
+<script>
+
+
+
+let tg = window.Telegram.WebApp;
+
+
+tg.ready();
+
+tg.expand();
+
+
+
+let user = tg.initDataUnsafe.user;
+
+
+
+const BACKEND_URL =
+"https://autotrade-backend-02cc.onrender.com";
+
+
+
+
+if(user){
+
+
+document.getElementById("user").innerHTML =
+"سلام "+user.first_name+" 👋";
+
+
+
+fetch(BACKEND_URL+"/user",{
+
+method:"POST",
+
+headers:{
+
+"Content-Type":"application/json"
+
+},
+
+
+body:JSON.stringify({
+
+id:user.id,
+
+first_name:user.first_name,
+
+username:user.username
+
+})
+
+
+});
+
+
+}
+
+else{
+
+
+document.getElementById("user").innerHTML =
+"کاربر تلگرام";
+
+}
+
+
+
+
+function startBot(){
+
+
+alert("ربات AI آماده شروع است 🚀");
+
+
+}
+
+
+
+
+function page(name){
+
+
+if(name=="home"){
+
+alert("داشبورد");
+
+}
+
+
+if(name=="wallet"){
+
+alert("کیف پول");
+
+}
+
+
+if(name=="trade"){
+
+alert("معاملات");
+
+}
+
+
+if(name=="ai"){
+
+alert("هوش مصنوعی");
+
+}
+
+
+
+}
+
+
+
+</script>
+
 
 
 </body>
