@@ -1,79 +1,163 @@
-<!DOCTYPE html>
-<html lang="fa" dir="rtl">
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
-<head>
+:root{
+  --bg:#0B0E14;
+  --surface:#141924;
+  --surface-2:#1B2230;
+  --border:#242C3D;
+  --text:#E8EDF5;
+  --text-dim:#8B95A8;
+  --profit:#00D9A3;
+  --loss:#FF4D6D;
+  --warn:#FFB020;
+}
 
-<meta charset="UTF-8">
+*{box-sizing:border-box;margin:0;padding:0;}
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Space Grotesk',sans-serif;
+}
 
-<title>ربات معامله‌گر اتوماتیک</title>
+#app{padding-bottom:90px;min-height:100vh;}
 
-<link rel="stylesheet" href="style.css">
+/* Header */
+.header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:14px 16px;
+  border-bottom:1px solid var(--border);
+}
+.logo{font-weight:700;font-size:15px;}
+#user{color:var(--text-dim);font-size:12px;}
 
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
+/* Demo banner - always visible, cannot be dismissed */
+.demo-banner{
+  background:linear-gradient(90deg,#3A2A00,#4A3400);
+  color:var(--warn);
+  font-size:12px;
+  font-weight:600;
+  text-align:center;
+  padding:8px 12px;
+  border-bottom:1px solid #5A4200;
+}
 
-</head>
+/* Content area */
+#content{padding:16px;}
+.page-title{font-size:19px;font-weight:700;margin-bottom:14px;}
 
-<body>
+/* Balance / wallet card */
+.balance-card{
+  background:linear-gradient(160deg,var(--surface),var(--surface-2));
+  border:1px solid var(--border);
+  border-radius:18px;
+  padding:20px;
+  margin-bottom:16px;
+}
+.balance-label{color:var(--text-dim);font-size:13px;margin-bottom:6px;}
+.balance-value{font-family:'JetBrains Mono',monospace;font-size:32px;font-weight:700;}
+.balance-value .unit{font-size:18px;color:var(--text-dim);margin-inline-start:4px;}
+.balance-toman{color:var(--text-dim);font-size:12.5px;margin-top:2px;font-family:'JetBrains Mono',monospace;}
+.balance-stats{
+  display:flex;justify-content:space-between;
+  margin-top:16px;padding-top:14px;border-top:1px solid var(--border);
+}
+.balance-stats > div{display:flex;flex-direction:column;gap:4px;}
+.stat-label{color:var(--text-dim);font-size:11px;}
+.stat-value{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--profit);}
+.stat-value.loss{color:var(--loss);}
+.stat-value.muted{color:var(--text);}
 
-<div id="app">
+.primary-btn{
+  width:100%;margin-top:16px;padding:14px;border-radius:12px;border:none;
+  font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:14px;cursor:pointer;
+}
+.disabled-btn{
+  background:var(--surface-2);color:var(--text-dim);
+  border:1px dashed var(--border);cursor:not-allowed;
+}
+.disclaimer{color:var(--text-dim);font-size:11px;margin-top:8px;line-height:1.7;}
 
-<header class="header">
+/* Win-rate donut */
+.win-rate-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:18px;
+  padding:18px;display:flex;align-items:center;gap:18px;
+}
+.donut-wrap{position:relative;width:104px;height:104px;flex-shrink:0;}
+.donut{width:100%;height:100%;transform:rotate(-90deg);}
+.donut-bg{fill:none;stroke:var(--surface-2);stroke-width:10;}
+.donut-fg{
+  fill:none;stroke:var(--profit);stroke-width:10;stroke-linecap:round;
+  stroke-dasharray:283;stroke-dashoffset:283;transition:stroke-dashoffset .6s ease;
+}
+.donut-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.donut-center span{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;}
+.donut-center small{color:var(--text-dim);font-size:10px;}
+.win-rate-meta{display:flex;flex-direction:column;gap:7px;font-size:12.5px;}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-inline-end:6px;}
+.dot.green{background:var(--profit);}
+.dot.red{background:var(--loss);}
+.ai-note{color:var(--text-dim);font-size:10.5px;margin-top:2px;line-height:1.6;max-width:150px;}
 
-<div class="logo">
-🤖 ربات معامله‌گر اتوماتیک
-</div>
+/* Trades list */
+.trades-list{display:flex;flex-direction:column;gap:8px;}
+.trade-row{
+  background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  padding:12px 14px;display:flex;align-items:center;justify-content:space-between;
+}
+.trade-left{display:flex;align-items:center;gap:10px;}
+.symbol-badge{
+  width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:10.5px;font-weight:700;font-family:'JetBrains Mono',monospace;background:var(--surface-2);
+}
+.trade-symbol{font-weight:700;font-size:13px;}
+.trade-time{color:var(--text-dim);font-size:10.5px;font-family:'JetBrains Mono',monospace;}
+.trade-pnl{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13.5px;}
+.trade-pnl.up{color:var(--profit);}
+.trade-pnl.down{color:var(--loss);}
+.empty-state{color:var(--text-dim);font-size:13px;text-align:center;padding:30px 0;}
 
-<div id="user">
-در حال اتصال...
-</div>
+/* Ticker (used on AI page) */
+.ticker-box{
+  background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  padding:12px;font-family:'JetBrains Mono',monospace;font-size:12px;margin-bottom:14px;
+}
+.ticker-row{display:flex;justify-content:space-between;padding:5px 0;color:var(--text-dim);}
+.ticker-row b{color:var(--text);}
 
-</header>
+/* Info / AI cards */
+.info-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  padding:16px;margin-bottom:12px;
+}
+.info-card h3{font-size:14px;margin-bottom:8px;}
+.info-card p{color:var(--text-dim);font-size:12.5px;line-height:1.8;}
 
-<main id="content">
+/* Profile / menu */
+.menu-list{display:flex;flex-direction:column;gap:8px;}
+.menu-item{
+  background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  padding:14px 16px;display:flex;justify-content:space-between;align-items:center;
+  color:var(--text-dim);font-size:13.5px;cursor:pointer;
+}
+.reset-btn{
+  width:100%;margin-top:6px;padding:13px;border-radius:12px;
+  border:1px solid var(--loss);background:none;color:var(--loss);
+  font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:13.5px;cursor:pointer;
+}
 
-<!-- اینجا صفحات نمایش داده می‌شوند -->
-
-</main>
-
-<nav class="bottom-nav">
-
-<button onclick="showPage('dashboard')">
-🏠
-<br>
-خانه
-</button>
-
-<button onclick="showPage('wallet')">
-💼
-<br>
-کیف پول
-</button>
-
-<button onclick="showPage('trades')">
-📈
-<br>
-معاملات
-</button>
-
-<button onclick="showPage('ai')">
-🤖
-<br>
-AI
-</button>
-
-<button onclick="showPage('profile')">
-👤
-<br>
-پروفایل
-</button>
-
-</nav>
-
-</div>
-
-<script src="app.js"></script>
-
-</body>
-</html>
+/* Bottom nav */
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;
+  background:var(--surface);border-top:1px solid var(--border);
+  display:flex;padding:8px 4px calc(8px + env(safe-area-inset-bottom));
+  z-index:50;
+}
+.bottom-nav button{
+  flex:1;background:none;border:none;color:var(--text-dim);
+  font-size:10.5px;font-family:'Space Grotesk',sans-serif;
+  padding:6px 0;cursor:pointer;line-height:1.8;
+}
+.bottom-nav button.active{color:var(--profit);}
