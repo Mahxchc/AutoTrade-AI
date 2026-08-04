@@ -7,177 +7,13 @@
 
 <title>ربات معامله‌گر اتوماتیک</title>
 
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 
-<style>
-
-*{
-box-sizing:border-box;
-}
-
-body{
-
-margin:0;
-background:#050816;
-color:white;
-font-family:tahoma;
-padding-bottom:90px;
-
-}
-
-
-.header{
-
-padding:25px;
-
-}
-
-
-.logo{
-
-color:#22d3ee;
-font-size:22px;
-font-weight:bold;
-
-}
-
-
-
-.page{
-
-display:none;
-
-}
-
-
-
-.active{
-
-display:block;
-
-}
-
-
-
-.card{
-
-background:#111827;
-margin:15px;
-padding:20px;
-border-radius:25px;
-
-}
-
-
-
-.balance{
-
-font-size:40px;
-font-weight:bold;
-
-}
-
-
-
-.green{
-
-color:#22c55e;
-
-}
-
-
-.blue{
-
-color:#38bdf8;
-
-}
-
-
-
-.gray{
-
-color:#94a3b8;
-
-}
-
-
-
-.grid{
-
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:15px;
-
-}
-
-
-
-.box{
-
-background:#1e293b;
-padding:15px;
-border-radius:18px;
-
-}
-
-
-
-button{
-
-width:100%;
-padding:15px;
-border:0;
-border-radius:18px;
-background:#2563eb;
-color:white;
-font-size:17px;
-
-}
-
-
-
-.trade{
-
-display:flex;
-justify-content:space-between;
-padding:15px;
-border-bottom:1px solid #334155;
-
-}
-
-
-
-.nav{
-
-position:fixed;
-bottom:0;
-left:0;
-right:0;
-
-background:#111827;
-
-display:flex;
-
-justify-content:space-around;
-
-padding:15px;
-
-}
-
-
-
-.nav div{
-
-text-align:center;
-font-size:13px;
-
-}
-
-
-</style>
+<link rel="stylesheet" href="style.css">
 
 </head>
 
@@ -186,106 +22,198 @@ font-size:13px;
 
 
 
-<div class="header">
+<header class="header">
 
-<div class="logo">
+
+<div class="brand">
+
 🤖 ربات معامله‌گر اتوماتیک
+
 </div>
 
 
-<p id="user">
-اتصال...
+<div id="user">
+
+در حال اتصال...
+
+</div>
+
+
+</header>
+
+
+
+
+
+<section id="home" class="page active">
+
+
+
+<div class="glass main-card">
+
+
+<p>
+موجودی حساب
 </p>
 
 
-</div>
+<h1>
+0.00$
+</h1>
 
 
+<span class="gray">
 
-
-
-<!-- DASHBOARD -->
-
-<div id="home" class="page active">
-
-
-<div class="card">
-
-
-<h2>
-💰 موجودی
-</h2>
-
-
-<div class="balance">
-0$
-</div>
-
-
-<p class="gray">
 0 تومان
+
+</span>
+
+
+
+<div class="profit-box">
+
+<div>
+
+سود کل
+
+<strong>
+0%
+</strong>
+
+</div>
+
+
+<div>
+
+امروز
+
+<strong>
+0.00$</strong>
+
+</div>
+
+
+</div>
+
+
+
+<button>
+
+⬇ برداشت موجودی
+
+</button>
+
+
+</div>
+
+
+
+
+
+
+
+<div class="cards">
+
+
+
+<div class="glass small-card">
+
+
+<p>
+معاملات
 </p>
 
-
-</div>
-
-
-
-
-<div class="card">
-
-
-<h2>
-📊 عملکرد
-</h2>
-
-
-<div class="grid">
-
-
-<div class="box">
-
-سود امروز
-
-<h2>
-0$
-</h2>
-
-</div>
-
-
-<div class="box">
-
-معاملات
 
 <h2>
 0
 </h2>
 
-</div>
-
-
-</div>
-
-
-</div>
-
-
 
 </div>
 
 
 
 
+<div class="glass small-card">
 
 
-<!-- TRADES -->
+<p>
+برد موفق
+</p>
 
 
-<div id="trades" class="page">
+<h2 class="green">
+0%
+</h2>
 
 
-<div class="card">
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+
+<div class="glass ai-card">
+
+
+<h2>
+🤖 هوش مصنوعی
+</h2>
+
+
+
+<div class="status">
+
+<span></span>
+
+Online
+
+</div>
+
+
+<p>
+استراتژی:
+Crypto AI Scalping
+</p>
+
+
+<div class="chart">
+
+
+<div></div>
+<div></div>
+<div></div>
+<div></div>
+<div></div>
+
+
+</div>
+
+
+
+</div>
+
+
+
+
+</section>
+
+
+
+
+
+
+
+<section id="trades" class="page">
+
+
+<div class="glass">
 
 
 <h2>
@@ -296,10 +224,21 @@ font-size:13px;
 
 <div class="trade">
 
-BTCUSDT
+BTC/USDT
 
-<span class="gray">
-بدون معامله
+<span>
+0.00$
+</span>
+
+</div>
+
+
+<div class="trade">
+
+ETH/USDT
+
+<span>
+0.00$
 </span>
 
 </div>
@@ -308,45 +247,30 @@ BTCUSDT
 
 <div class="trade">
 
-ETHUSDT
+XAU/USD
 
-<span class="gray">
-بدون معامله
+<span>
+0.00$
 </span>
 
 </div>
 
 
-
-<div class="trade">
-
-XAUUSD
-
-<span class="gray">
-بدون معامله
-</span>
-
 </div>
 
 
-
-</div>
-
-
-</div>
+</section>
 
 
 
 
 
 
-<!-- WALLET -->
+
+<section id="wallet" class="page">
 
 
-<div id="wallet" class="page">
-
-
-<div class="card">
+<div class="glass">
 
 
 <h2>
@@ -354,13 +278,15 @@ XAUUSD
 </h2>
 
 
-<h1 class="balance">
-0$
+<h1>
+0.00$
 </h1>
 
 
 <button>
+
 ➕ واریز
+
 </button>
 
 
@@ -368,14 +294,16 @@ XAUUSD
 
 
 <button>
+
 ⬇ برداشت
+
 </button>
 
 
 </div>
 
 
-</div>
+</section>
 
 
 
@@ -383,42 +311,34 @@ XAUUSD
 
 
 
-<!-- AI -->
+<section id="ai" class="page">
 
 
-<div id="ai" class="page">
-
-
-<div class="card">
+<div class="glass">
 
 
 <h2>
-🤖 هوش مصنوعی
+🤖 مرکز AI
 </h2>
 
 
-<p class="green">
-
-● آنلاین
-
+<p>
+وضعیت:
+<span class="green">
+فعال
+</span>
 </p>
 
 
 <p>
-استراتژی:
-Crypto AI
-</p>
-
-
-<p>
-دقت:
+دقت سیستم:
 87%
 </p>
 
 
 <button onclick="startAI()">
 
-فعال کردن ربات
+شروع ربات
 
 </button>
 
@@ -426,41 +346,7 @@ Crypto AI
 </div>
 
 
-</div>
-
-
-
-
-
-
-<!-- SETTINGS -->
-
-
-<div id="settings" class="page">
-
-
-<div class="card">
-
-
-<h2>
-⚙️ تنظیمات
-</h2>
-
-
-<p>
-زبان: فارسی
-</p>
-
-
-<p>
-نسخه: 1.0
-</p>
-
-
-</div>
-
-
-</div>
+</section>
 
 
 
@@ -468,10 +354,10 @@ Crypto AI
 
 
 
-<div class="nav">
+<nav>
 
 
-<div onclick="showPage('home')">
+<div onclick="openPage('home')">
 
 🏠
 <br>
@@ -480,7 +366,7 @@ Crypto AI
 </div>
 
 
-<div onclick="showPage('trades')">
+<div onclick="openPage('trades')">
 
 📈
 <br>
@@ -489,7 +375,7 @@ Crypto AI
 </div>
 
 
-<div onclick="showPage('wallet')">
+<div onclick="openPage('wallet')">
 
 💼
 <br>
@@ -498,7 +384,7 @@ Crypto AI
 </div>
 
 
-<div onclick="showPage('ai')">
+<div onclick="openPage('ai')">
 
 🤖
 <br>
@@ -507,88 +393,13 @@ AI
 </div>
 
 
-<div onclick="showPage('settings')">
-
-⚙️
-<br>
-تنظیمات
-
-</div>
-
-
-</div>
+</nav>
 
 
 
 
 
-
-
-<script>
-
-
-let tg = window.Telegram.WebApp;
-
-tg.ready();
-
-tg.expand();
-
-
-
-let user=tg.initDataUnsafe.user;
-
-
-
-if(user){
-
-document.getElementById("user").innerHTML=
-
-"سلام "+user.first_name+" 👋";
-
-}
-
-else{
-
-document.getElementById("user").innerHTML=
-
-"کاربر مهمان";
-
-}
-
-
-
-
-function showPage(id){
-
-
-document.querySelectorAll(".page")
-
-.forEach(page=>{
-
-page.classList.remove("active");
-
-});
-
-
-document.getElementById(id)
-
-.classList.add("active");
-
-
-}
-
-
-
-function startAI(){
-
-
-alert("🤖 ربات آماده شروع است");
-
-}
-
-
-
-</script>
+<script src="app.js"></script>
 
 
 </body>
