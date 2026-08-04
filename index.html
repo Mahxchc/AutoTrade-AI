@@ -22,20 +22,15 @@ padding-bottom:80px;
 
 
 .header{
-
 padding:25px;
 background:#111827;
-
 }
 
 
 .header h1{
-
 margin:0;
 color:#38bdf8;
-
 }
-
 
 
 .card{
@@ -53,8 +48,6 @@ border-radius:20px;
 display:grid;
 grid-template-columns:1fr 1fr;
 gap:15px;
-margin:15px;
-
 }
 
 
@@ -71,24 +64,18 @@ border-radius:15px;
 
 font-size:25px;
 font-weight:bold;
-
 color:#38bdf8;
 
 }
 
 
-
 .green{
-
 color:#22c55e;
-
 }
 
 
 .red{
-
 color:#ef4444;
-
 }
 
 
@@ -106,8 +93,8 @@ border-radius:10px;
 
 background:#22c55e;
 height:10px;
-border-radius:10px;
 width:87%;
+border-radius:10px;
 
 }
 
@@ -152,14 +139,14 @@ padding:15px;
 }
 
 
-
 </style>
+
 
 </head>
 
 
-<body>
 
+<body>
 
 
 <div class="header">
@@ -174,12 +161,13 @@ Loading...
 
 
 
-
 <div class="card">
 
 <h2>Account</h2>
 
+
 <div class="grid">
+
 
 <div class="stat">
 
@@ -216,30 +204,27 @@ Profit Today
 
 
 
-
 <div class="card">
 
 <h2>
-AI Engine
+🤖 AI Engine
 </h2>
 
 
 <p class="green">
 
-● Running
+● Online
 
 </p>
 
 
 <p>
-Strategy:
-AI Crypto Scalping
+Strategy: Crypto AI Scalping
 </p>
 
 
 <p>
-Accuracy
-
+Accuracy: 87%
 </p>
 
 
@@ -251,8 +236,6 @@ Accuracy
 
 
 </div>
-
-
 
 
 
@@ -273,15 +256,11 @@ BUY BTC 🚀
 
 
 <p>
-
 AI Confidence: 87%
-
 </p>
 
 
 </div>
-
-
 
 
 
@@ -292,7 +271,6 @@ AI Confidence: 87%
 <h2>
 Recent Trades
 </h2>
-
 
 
 <div class="trade">
@@ -306,7 +284,6 @@ BTC/USDT
 </div>
 
 
-
 <div class="trade">
 
 ETH/USDT
@@ -316,7 +293,6 @@ ETH/USDT
 </span>
 
 </div>
-
 
 
 <div class="trade">
@@ -336,13 +312,10 @@ SOL/USDT
 
 
 
-
-
-
 <div class="card">
 
 
-<button onclick="bot()">
+<button onclick="startBot()">
 
 ⚡ Start AI Trading
 
@@ -354,29 +327,17 @@ SOL/USDT
 
 
 
-
 <div class="nav">
 
-<div>
-🏠 Home
-</div>
+<div>🏠 Home</div>
 
-<div>
-📈 Market
-</div>
+<div>📈 Market</div>
 
-<div>
-🤖 AI
-</div>
+<div>🤖 AI</div>
 
-<div>
-⚙️ Settings
-</div>
-
+<div>⚙️ Settings</div>
 
 </div>
-
-
 
 
 
@@ -385,45 +346,105 @@ SOL/USDT
 <script>
 
 
-let tg =
-window.Telegram.WebApp;
+let tg = window.Telegram.WebApp;
 
 
 tg.ready();
 
 
-let user =
-tg.initDataUnsafe.user;
+tg.expand();
+
+
+
+let user = tg.initDataUnsafe.user;
+
+
+
+const BACKEND_URL = 
+"https://autotrade-backend-02cc.onrender.com";
 
 
 
 if(user){
 
+
 document.getElementById("user").innerHTML =
-"Welcome "+user.first_name;
+"Welcome " + user.first_name + " 👋";
+
+
+
+fetch(BACKEND_URL + "/user",{
+
+
+method:"POST",
+
+
+headers:{
+
+"Content-Type":"application/json"
+
+},
+
+
+body:JSON.stringify({
+
+id:user.id,
+
+first_name:user.first_name,
+
+username:user.username
+
+})
+
+
+})
+
+
+.then(response=>response.json())
+
+
+.then(data=>{
+
+
+console.log("Backend:",data);
+
+
+})
+
+
+.catch(error=>{
+
+
+console.log("Error:",error);
+
+
+});
+
+
 
 }
 
 else{
 
+
 document.getElementById("user").innerHTML =
 "Telegram User";
 
-}
-
-
-
-
-
-function bot(){
-
-tg.expand();
-
-alert(
-"AI Trading Engine Activated 🚀"
-);
 
 }
+
+
+
+
+
+function startBot(){
+
+
+alert("AI Trading Engine Activated 🚀");
+
+
+}
+
 
 
 </script>
