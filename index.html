@@ -3,49 +3,154 @@
 
 <head>
 
-<title>AutoTrade AI</title>
+<title>AutoTrade AI Pro</title>
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
+
 <style>
 
-body {
-    font-family: Arial;
-    background:#101522;
-    color:white;
-    text-align:center;
-    padding:30px;
+body{
+margin:0;
+font-family:Arial;
+background:#050816;
+color:white;
+padding-bottom:80px;
 }
 
 
-.card {
-    background:#1c2538;
-    border-radius:20px;
-    padding:25px;
-    margin:20px;
-}
+.header{
 
-
-button {
-
-    background:#3b82f6;
-    color:white;
-    border:0;
-    padding:15px 30px;
-    border-radius:15px;
-    font-size:18px;
+padding:25px;
+background:#111827;
 
 }
 
 
-.status {
+.header h1{
 
-    margin-top:20px;
-    font-size:18px;
+margin:0;
+color:#38bdf8;
 
 }
+
+
+
+.card{
+
+background:#111827;
+margin:15px;
+padding:20px;
+border-radius:20px;
+
+}
+
+
+.grid{
+
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:15px;
+margin:15px;
+
+}
+
+
+.stat{
+
+background:#1e293b;
+padding:15px;
+border-radius:15px;
+
+}
+
+
+.number{
+
+font-size:25px;
+font-weight:bold;
+
+color:#38bdf8;
+
+}
+
+
+
+.green{
+
+color:#22c55e;
+
+}
+
+
+.red{
+
+color:#ef4444;
+
+}
+
+
+
+.progress{
+
+background:#334155;
+height:10px;
+border-radius:10px;
+
+}
+
+
+.progress div{
+
+background:#22c55e;
+height:10px;
+border-radius:10px;
+width:87%;
+
+}
+
+
+
+button{
+
+width:100%;
+padding:16px;
+border:0;
+border-radius:15px;
+background:#2563eb;
+color:white;
+font-size:18px;
+
+}
+
+
+
+.trade{
+
+display:flex;
+justify-content:space-between;
+padding:12px;
+border-bottom:1px solid #334155;
+
+}
+
+
+
+.nav{
+
+position:fixed;
+bottom:0;
+left:0;
+right:0;
+background:#111827;
+display:flex;
+justify-content:space-around;
+padding:15px;
+
+}
+
 
 
 </style>
@@ -56,23 +161,190 @@ button {
 <body>
 
 
+
+<div class="header">
+
 <h1>🤖 AutoTrade AI</h1>
 
-
-<div class="card" id="mainCard">
-
-
-<h2>Welcome</h2>
-
-
 <p id="user">
-Telegram Connected ✅
+Loading...
+</p>
+
+</div>
+
+
+
+
+<div class="card">
+
+<h2>Account</h2>
+
+<div class="grid">
+
+<div class="stat">
+
+Balance
+
+<div class="number">
+
+$10,000
+
+</div>
+
+</div>
+
+
+
+<div class="stat">
+
+Profit Today
+
+<div class="number green">
+
++$342
+
+</div>
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+<div class="card">
+
+<h2>
+AI Engine
+</h2>
+
+
+<p class="green">
+
+● Running
+
 </p>
 
 
-<button onclick="startApp()">
+<p>
+Strategy:
+AI Crypto Scalping
+</p>
 
-Connect AutoTrade AI
+
+<p>
+Accuracy
+
+</p>
+
+
+<div class="progress">
+
+<div></div>
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+<div class="card">
+
+
+<h2>
+Latest Signal
+</h2>
+
+
+<h2 class="green">
+
+BUY BTC 🚀
+
+</h2>
+
+
+<p>
+
+AI Confidence: 87%
+
+</p>
+
+
+</div>
+
+
+
+
+
+
+<div class="card">
+
+
+<h2>
+Recent Trades
+</h2>
+
+
+
+<div class="trade">
+
+BTC/USDT
+
+<span class="green">
++$120
+</span>
+
+</div>
+
+
+
+<div class="trade">
+
+ETH/USDT
+
+<span class="green">
++$85
+</span>
+
+</div>
+
+
+
+<div class="trade">
+
+SOL/USDT
+
+<span class="red">
+-$20
+</span>
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+
+<div class="card">
+
+
+<button onclick="bot()">
+
+⚡ Start AI Trading
 
 </button>
 
@@ -81,86 +353,81 @@ Connect AutoTrade AI
 
 
 
+
+
+<div class="nav">
+
+<div>
+🏠 Home
+</div>
+
+<div>
+📈 Market
+</div>
+
+<div>
+🤖 AI
+</div>
+
+<div>
+⚙️ Settings
+</div>
+
+
+</div>
+
+
+
+
+
+
+
 <script>
 
 
-let tg = window.Telegram.WebApp;
+let tg =
+window.Telegram.WebApp;
 
 
 tg.ready();
 
 
-
-let user = tg.initDataUnsafe.user;
+let user =
+tg.initDataUnsafe.user;
 
 
 
 if(user){
 
 document.getElementById("user").innerHTML =
-"Hello " + user.first_name + " 👋";
+"Welcome "+user.first_name;
 
 }
 
 else{
 
 document.getElementById("user").innerHTML =
-"Telegram user not detected";
+"Telegram User";
 
 }
 
 
 
 
-function startApp(){
 
+function bot(){
 
 tg.expand();
 
-
-
-document.getElementById("mainCard").innerHTML = `
-
-
-<h2>Dashboard 🚀</h2>
-
-
-<p class="status">
-🤖 AutoTrade AI Ready
-</p>
-
-
-<p>
-Telegram Connection: ✅
-</p>
-
-
-<button onclick="trade()">
-
-Start AI Trading
-
-</button>
-
-
-`;
-
-
+alert(
+"AI Trading Engine Activated 🚀"
+);
 
 }
-
-
-
-function trade(){
-
-
-alert("AI Trading Engine Started 🚀");
-
-
-}
-
 
 
 </script>
+
 
 
 </body>
