@@ -1,61 +1,265 @@
-const express = require("express");
-const cors = require("cors");
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
 
-const app = express();
+<head>
 
+<meta charset="UTF-8">
+<title>AutoTrade AI</title>
 
-// اجازه اتصال Mini App
-app.use(cors());
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-app.use(express.json());
+<link rel="stylesheet" href="style.css">
 
-
-
-// تست سرور
-app.get("/", (req,res)=>{
-
-    res.send("AutoTrade AI Backend is Running 🚀");
-
-});
+</head>
 
 
+<body>
 
 
-// دریافت کاربر تلگرام
-app.post("/user",(req,res)=>{
+<header>
 
+<div class="logo">
+🤖 ربات معامله‌گر اتوماتی
+</div>
 
-    console.log("NEW USER RECEIVED:");
+<h2>داشبورد</h2>
 
-    console.log(req.body);
+<p id="user">
+در حال اتصال...
+</p>
 
-
-
-    res.json({
-
-        status:"success",
-
-        message:"User Registered",
-
-        user:req.body
-
-    });
-
-
-});
+</header>
 
 
 
+<section class="card wallet">
+
+<span>
+موجودی
+</span>
+
+<h1>
+409.44$
+</h1>
+
+<p>
+≈ 79,034,000 تومان
+</p>
 
 
-const PORT = process.env.PORT || 3000;
+<div class="profit">
+
++309.44$
+<br>
++309.4%
+
+</div>
 
 
-app.listen(PORT,()=>{
+<button>
+⬇ برداشت موجودی
+</button>
 
-console.log(
-"Server running on port " + PORT
-);
 
-});
+</section>
+
+
+
+
+
+<div class="grid">
+
+
+<div class="box">
+
+سود امروز
+
+<h2 class="green">
++0.00$
+</h2>
+
+</div>
+
+
+
+<div class="box">
+
+سود کل
+
+<h2 class="green">
++309.44$
+</h2>
+
+</div>
+
+
+</div>
+
+
+
+
+
+<section class="card">
+
+
+<h2>
+🤖 هوش مصنوعی
+</h2>
+
+
+<p class="online">
+● آنلاین
+</p>
+
+
+<p>
+استراتژی:
+Crypto Scalping AI
+</p>
+
+
+<p>
+دقت:
+87%
+</p>
+
+
+
+<div class="progress">
+
+<div></div>
+
+</div>
+
+
+
+</section>
+
+
+
+
+
+
+
+<section class="card">
+
+<h2>
+آخرین سیگنال
+</h2>
+
+
+<h1 class="green">
+BUY BTC 🚀
+</h1>
+
+
+<p>
+اعتماد AI:
+87%
+</p>
+
+
+</section>
+
+
+
+
+
+
+<section class="card">
+
+
+<h2>
+معاملات اخیر
+</h2>
+
+
+<div class="trade">
+
+BTCUSDT
+
+<span class="green">
++4.41$
+</span>
+
+
+</div>
+
+
+
+<div class="trade">
+
+ETHUSDT
+
+<span class="green">
++4.85$
+</span>
+
+
+</div>
+
+
+
+<div class="trade">
+
+XAUUSD
+
+<span class="red">
+-2.46$
+</span>
+
+
+</div>
+
+
+
+</section>
+
+
+
+
+
+
+<nav>
+
+
+<div>
+🏠
+<br>
+داشبورد
+</div>
+
+
+<div>
+📈
+<br>
+معاملات
+</div>
+
+
+<div>
+💼
+<br>
+کیف پول
+</div>
+
+
+<div>
+⚙️
+<br>
+بیشتر
+</div>
+
+
+</nav>
+
+
+
+<script src="app.js"></script>
+
+
+</body>
+
+</html>
