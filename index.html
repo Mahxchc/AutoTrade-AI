@@ -17,6 +17,8 @@
 
 <body>
 
+<div id="app">
+
 <header class="header">
 
 <div class="logo">
@@ -29,26 +31,49 @@
 
 </header>
 
-<main id="app">
+<main id="content">
+
+<!-- اینجا صفحات نمایش داده می‌شوند -->
 
 </main>
 
 <nav class="bottom-nav">
 
-<button id="homeBtn">🏠<br>خانه</button>
+<button onclick="showPage('dashboard')">
+🏠
+<br>
+خانه
+</button>
 
-<button id="walletBtn">💼<br>کیف پول</button>
+<button onclick="showPage('wallet')">
+💼
+<br>
+کیف پول
+</button>
 
-<button id="tradeBtn">📈<br>معاملات</button>
+<button onclick="showPage('trades')">
+📈
+<br>
+معاملات
+</button>
 
-<button id="aiBtn">🤖<br>AI</button>
+<button onclick="showPage('ai')">
+🤖
+<br>
+AI
+</button>
 
-<button id="profileBtn">👤<br>پروفایل</button>
+<button onclick="showPage('profile')">
+👤
+<br>
+پروفایل
+</button>
 
 </nav>
+
+</div>
 
 <script src="app.js"></script>
 
 </body>
-
 </html>
