@@ -1,4 +1,4 @@
-ز<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fa" dir="rtl">
 
 <head>
@@ -11,9 +11,12 @@
 ربات معامله‌گر اتوماتیک
 </title>
 
+
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
+
 <link rel="stylesheet" href="style.css">
+
 
 </head>
 
@@ -26,29 +29,43 @@
 
 <header class="top-header">
 
+
 <div class="brand">
 
+
 <div class="logo">
+
 🤖
+
 </div>
 
+
 <div>
+
 
 <h1>
 ربات معامله‌گر اتوماتیک
 </h1>
 
+
 <p id="username">
-در حال اتصال...
+
+اتصال به تلگرام...
+
 </p>
 
-</div>
 
 </div>
+
+
+</div>
+
 
 
 <div class="notification">
+
 🔔
+
 </div>
 
 
@@ -56,138 +73,160 @@
 
 
 
-<section class="balance-card">
 
 
-<div class="balance-title">
+<main id="app-content">
 
+
+
+<!-- تمام صفحات اینجا لود می‌شوند -->
+
+
+<section class="page active" id="home-page">
+
+
+<div class="balance-card">
+
+
+<p>
 موجودی حساب
+</p>
 
-</div>
 
-
-<div class="balance">
+<h2 id="balance">
 
 0.00 USDT
 
-</div>
+</h2>
 
 
-<div class="money">
+<span id="balanceIR">
 
 ≈ 0 تومان
 
+</span>
+
+
 </div>
 
 
-<div class="balance-row">
 
 
-<div>
+
+<div class="cards-grid">
+
+
+<div class="info-card">
+
 
 <span>
 سود امروز
 </span>
 
-<strong class="green">
+
+<strong id="today-profit">
+
 0%
+
 </strong>
+
 
 </div>
 
 
-<div>
+
+
+<div class="info-card">
+
 
 <span>
 سود کل
 </span>
 
-<strong>
+
+<strong id="total-profit">
+
 0$
+
 </strong>
 
-</div>
-
 
 </div>
 
 
-</section>
-
-  <section class="ai-card">
+</div>
 
 
-<div class="card-header">
+
+
+
+<div class="ai-card">
+
+
+<div class="card-title">
+
 
 <h2>
 🤖 هوش مصنوعی
 </h2>
 
-<span class="online">
-● Online
+
+<span id="bot-status">
+
+خاموش
+
 </span>
+
 
 </div>
 
 
 
-<div class="ai-info">
-
-
-<div class="ai-item">
-
-<span>
-استراتژی
-</span>
-
-<strong>
-Crypto AI Scalping
-</strong>
-
-</div>
-
-
-
-<div class="ai-item">
+<div class="ai-row">
 
 <span>
 دقت تحلیل
 </span>
 
-<strong class="blue">
+
+<strong id="ai-accuracy">
+
 0%
+
 </strong>
+
 
 </div>
 
 
 
-<div class="ai-item">
+<div class="ai-row">
+
 
 <span>
-وضعیت ربات
+اعتماد سیگنال
 </span>
 
-<strong class="green">
-فعال
+
+<strong id="confidence">
+
+0%
+
 </strong>
 
-</div>
-
 
 </div>
 
 
-</section>
 
+</div>
 
-
-
+  <!-- Performance Chart -->
 
 <section class="chart-card">
 
 
-<div class="card-header">
+<div class="card-title">
 
 <h2>
 📈 عملکرد ربات
@@ -195,7 +234,7 @@ Crypto AI Scalping
 
 
 <span>
-  0 روز اخیر
+لحظه‌ای
 </span>
 
 
@@ -203,40 +242,24 @@ Crypto AI Scalping
 
 
 
-<div class="chart">
+<div class="chart-box">
 
-
-<div class="line"></div>
-
+<div id="chart-line"></div>
 
 </div>
 
 
 
-<div class="chart-info">
+<div class="stats">
 
 
 <div>
 
-<p>
-سود
-</p>
-
-<strong>
-0.00$
-</strong>
-
-</div>
-
-
-
-<div>
-
-<p>
+<span>
 معاملات
-</p>
+</span>
 
-<strong>
+<strong id="trade-count">
 0
 </strong>
 
@@ -246,12 +269,26 @@ Crypto AI Scalping
 
 <div>
 
-<p>
+<span>
 موفقیت
-</p>
+</span>
 
-<strong>
+<strong id="win-rate">
 0%
+</strong>
+
+</div>
+
+
+
+<div>
+
+<span>
+سود
+</span>
+
+<strong id="profit">
+0$
 </strong>
 
 </div>
@@ -260,15 +297,23 @@ Crypto AI Scalping
 </div>
 
 
-  </section>
-
-  <section class="signal-card">
+</section>
 
 
-<div class="card-header">
+
+
+
+<!-- AI Signal -->
+
+
+<section class="signal-card">
+
+
+<div class="card-title">
+
 
 <h2>
-🚀 آخرین سیگنال AI
+🚀 سیگنال AI
 </h2>
 
 
@@ -276,37 +321,62 @@ Crypto AI Scalping
 
 
 
-<div class="signal">
+
+<div class="signal-box">
 
 
-<div class="coin">
+<div>
 
-BTC / USDT
+
+<p>
+ارز
+</p>
+
+
+<strong id="signal-symbol">
+
+---
+
+</strong>
+
 
 </div>
 
 
-<div class="action buy">
 
-BUY
+<div>
+
+
+<p>
+نوع
+</p>
+
+
+<strong id="signal-type">
+
+WAIT
+
+</strong>
+
 
 </div>
 
 
 </div>
+
 
 
 
 <div class="confidence">
 
 
-<span>
-اعتماد هوش مصنوعی
-</span>
+اعتماد تحلیل
 
 
-<strong>
+<strong id="signal-confidence">
+
 0%
+
 </strong>
 
 
@@ -319,13 +389,18 @@ BUY
 
 
 
+
+<!-- Trades Preview -->
+
+
 <section class="trades-card">
 
 
-<div class="card-header">
+<div class="card-title">
+
 
 <h2>
-📊 آخرین معاملات
+📊 معاملات اخیر
 </h2>
 
 
@@ -333,79 +408,14 @@ BUY
 
 
 
-<div class="trade-row">
+<div id="trade-list">
 
 
-<div>
+<p class="empty">
 
-<strong>
-BTC/USDT
-</strong>
+هنوز معامله‌ای ثبت نشده
 
-<p>
-امروز
 </p>
-
-</div>
-
-
-<span class="green">
-+0$
-</span>
-
-
-</div>
-
-
-
-
-
-<div class="trade-row">
-
-
-<div>
-
-<strong>
-ETH/USDT
-</strong>
-
-<p>
-امروز
-</p>
-
-</div>
-
-
-<span class="green">
-+0$
-</span>
-
-
-</div>
-
-
-
-
-
-<div class="trade-row">
-
-
-<div>
-
-<strong>
-SOL/USDT
-</strong>
-
-<p>
-امروز
-</p>
-
-</div>
-
-
-<span class="red">
-0$
-</span>
 
 
 </div>
@@ -417,30 +427,123 @@ SOL/USDT
 
 
 
-<section class="start-section">
+
+<!-- Other Pages -->
 
 
-<button id="startBot">
+<section class="page" id="wallet-page">
 
-🤖 شروع ربات معامله‌گر
 
-</button>
+<div class="box">
+
+<h2>
+💼 کیف پول
+</h2>
+
+
+<p>
+موجودی واقعی از سرور دریافت می‌شود
+</p>
+
+
+</div>
 
 
 </section>
 
 
 
-</main>
+
+
+<section class="page" id="trades-page">
+
+
+<div class="box">
+
+
+<h2>
+📈 معاملات
+</h2>
+
+
+<p>
+تاریخچه معاملات اینجا نمایش داده می‌شود
+</p>
+
+
+</div>
+
+
+</section>
 
 
 
+
+
+<section class="page" id="ai-page">
+
+
+<div class="box">
+
+
+<h2>
+🤖 مرکز هوش مصنوعی
+</h2>
+
+
+<p>
+تحلیل بازار و سیگنال‌ها
+</p>
+
+
+</div>
+
+
+</section>
+
+
+
+
+
+<section class="page" id="profile-page">
+
+
+<div class="box">
+
+
+<h2>
+👤 پروفایل
+</h2>
+
+
+<p id="profile-info">
+
+کاربر تلگرام
+
+</p>
+
+
+</div>
+
+
+</section>
+
+  </main>
+
+
+
+
+
+<!-- Bottom Navigation -->
 
 
 <nav class="bottom-nav">
 
 
-<button class="active">
+
+<button 
+class="nav-btn active"
+data-page="home-page">
 
 🏠
 
@@ -452,7 +555,11 @@ SOL/USDT
 
 
 
-<button>
+
+
+<button 
+class="nav-btn"
+data-page="wallet-page">
 
 💼
 
@@ -464,7 +571,11 @@ SOL/USDT
 
 
 
-<button>
+
+
+<button 
+class="nav-btn"
+data-page="trades-page">
 
 📈
 
@@ -476,7 +587,11 @@ SOL/USDT
 
 
 
-<button>
+
+
+<button 
+class="nav-btn"
+data-page="ai-page">
 
 🤖
 
@@ -488,7 +603,11 @@ AI
 
 
 
-<button>
+
+
+<button 
+class="nav-btn"
+data-page="profile-page">
 
 👤
 
@@ -504,7 +623,10 @@ AI
 
 
 
+
 </div>
+
+
 
 
 
@@ -513,5 +635,5 @@ AI
 
 </body>
 
-</html>
 
+</html>
