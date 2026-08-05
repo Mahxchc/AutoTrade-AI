@@ -1,429 +1,431 @@
-// ===============================
-// 🤖 Auto Trade AI - App Logic
-// بخش ۱: تنظیمات اولیه ربات
-// ===============================
+*{
 
+box-sizing:border-box;
 
-// اطلاعات اولیه ربات
-let botData = {
-
-    // موجودی
-    balance: 0,
-
-    // سود امروز
-    todayProfit: 0,
-
-    // سود کل
-    totalProfit: 0,
-
-
-    // تعداد معاملات
-    trades: 0,
-
-
-    // درصد موفقیت
-    winRate: 0,
-
-
-    // تحلیل هوش مصنوعی
-    aiAccuracy: 0,
-
-
-    // اعتماد آخرین سیگنال
-    confidence: 0,
-
-
-    // وضعیت ربات
-    status: "خاموش",
-
-
-    // آخرین ارز بررسی شده
-    symbol: "BTC/USDT",
-
-
-    // آخرین سیگنال
-    signal: "WAIT"
-
-};
-
-
-
-// وضعیت اتصال
-let connectionStatus = {
-
-    online: false,
-
-    message: "در حال اتصال..."
-
-};
-
-
-
-// شروع اولیه برنامه
-document.addEventListener("DOMContentLoaded", () => {
-
-    console.log("🤖 Auto Trade AI Started");
-
-    console.log(botData);
-
-});
-
-// ===============================
-// بخش ۲: کنترل دکمه‌های ربات
-// ===============================
-
-
-// پیدا کردن دکمه شروع ربات
-const startBotBtn = document.querySelector("#startBot");
-
-
-// اگر دکمه وجود داشت
-if(startBotBtn){
-
-    startBotBtn.addEventListener("click", () => {
-
-
-        // تغییر وضعیت ربات
-        botData.status = "فعال";
-
-
-        // اتصال AI
-        connectionStatus.online = true;
-
-        connectionStatus.message = "Online";
-
-
-        // تغییر تحلیل اولیه
-        botData.aiAccuracy = 0;
-        botData.confidence = 0;
-
-
-        // تغییر متن دکمه
-        startBotBtn.innerHTML = "🤖 ربات فعال است";
-
-
-        // نمایش در کنسول
-        console.log("Robot Started");
-        console.log(botData);
-
-
-
-        // تغییر ظاهر دکمه
-        startBotBtn.classList.add("active");
-
-
-    });
+font-family:
+Tahoma,
+Arial,
+sans-serif;
 
 }
 
 
 
-// دکمه توقف ربات
-const stopBotBtn = document.querySelector("#stopBot");
+body{
 
+margin:0;
 
-if(stopBotBtn){
+background:
+linear-gradient(
+180deg,
+#020617,
+#0f172a
+);
 
+color:white;
 
-    stopBotBtn.addEventListener("click",()=>{
+min-height:100vh;
 
-
-        botData.status = "خاموش";
-
-
-        connectionStatus.online = false;
-
-        connectionStatus.message = "Offline";
-
-
-        startBotBtn.innerHTML = "🤖 شروع ربات معامله‌گر";
-
-
-        startBotBtn.classList.remove("active");
-
-
-        console.log("Robot Stopped");
-
-
-    });
+padding-bottom:90px;
 
 }
 
-// ===============================
-// بخش ۳: اتصال داده‌ها به صفحه
-// ===============================
 
 
-// آپدیت اطلاعات روی صفحه
-function updateDashboard(){
+.app{
 
+max-width:480px;
 
-    // موجودی
-    const balance = document.querySelector(".balance");
+margin:auto;
 
-    if(balance){
-
-        balance.innerHTML =
-        botData.balance.toFixed(2)
-        + " USDT";
-
-    }
-
-
-
-    // سود امروز
-    const todayProfit =
-    document.querySelector(".balance-row strong.green");
-
-
-    if(todayProfit){
-
-        todayProfit.innerHTML =
-        botData.todayProfit
-        + "%";
-
-    }
-
-
-
-    // سود کل
-    const totalProfit =
-    document.querySelector(".balance-row strong:not(.green)");
-
-
-    if(totalProfit){
-
-        totalProfit.innerHTML =
-        botData.totalProfit
-        + "$";
-
-    }
-
-
-
-    // دقت AI
-    const aiAccuracy =
-    document.querySelector(".ai-item:nth-child(2) strong");
-
-
-    if(aiAccuracy){
-
-        aiAccuracy.innerHTML =
-        botData.aiAccuracy
-        + "%";
-
-    }
-
-
-
-    // وضعیت ربات
-    const status =
-    document.querySelector(".ai-item:nth-child(3) strong");
-
-
-    if(status){
-
-        status.innerHTML =
-        botData.status;
-
-    }
-
-
-
-    // اعتماد سیگنال
-    const confidence =
-    document.querySelector(".confidence strong");
-
-
-    if(confidence){
-
-        confidence.innerHTML =
-        botData.confidence
-        + "%";
-
-    }
-
-
-
-    // تعداد معاملات
-    const trades =
-    document.querySelector(".chart-info div:nth-child(2) strong");
-
-
-    if(trades){
-
-        trades.innerHTML =
-        botData.trades;
-
-    }
-
-
-
-    // درصد موفقیت
-    const win =
-    document.querySelector(".chart-info div:nth-child(3) strong");
-
-
-    if(win){
-
-        win.innerHTML =
-        botData.winRate
-        + "%";
-
-    }
-
+padding:15px;
 
 }
 
 
 
-// اجرای اولیه
-updateDashboard();
 
 
-// ===============================
-// بخش ۴: کنترل منوی پایین
-// ===============================
+.top-header{
+
+display:flex;
+
+justify-content:space-between;
+
+align-items:center;
+
+padding:15px 5px;
+
+}
 
 
-const navButtons = document.querySelectorAll(
-    ".bottom-nav button"
+
+.brand{
+
+display:flex;
+
+align-items:center;
+
+gap:12px;
+
+}
+
+
+
+.logo{
+
+width:50px;
+
+height:50px;
+
+border-radius:18px;
+
+background:#2563eb;
+
+display:flex;
+
+align-items:center;
+
+justify-content:center;
+
+font-size:28px;
+
+}
+
+
+
+h1{
+
+font-size:20px;
+
+margin:0;
+
+}
+
+
+
+#username{
+
+color:#94a3b8;
+
+margin-top:5px;
+
+font-size:13px;
+
+}
+
+
+
+.notification{
+
+font-size:24px;
+
+}
+
+
+
+
+
+.balance-card,
+.ai-card,
+.chart-card,
+.signal-card,
+.trades-card,
+.box{
+
+
+background:
+
+rgba(30,41,59,.75);
+
+
+border:
+
+1px solid
+
+rgba(255,255,255,.08);
+
+
+border-radius:25px;
+
+
+padding:20px;
+
+
+margin-bottom:15px;
+
+
+backdrop-filter:
+
+blur(15px);
+
+
+    }
+
+/* =========================
+   Cards & Dashboard
+========================= */
+
+
+.balance-card{
+
+text-align:center;
+
+}
+
+
+
+.balance-card p{
+
+color:#94a3b8;
+
+margin:0;
+
+}
+
+
+
+.balance-card h2{
+
+font-size:38px;
+
+margin:15px 0;
+
+color:#38bdf8;
+
+}
+
+
+
+.balance-card span{
+
+color:#cbd5e1;
+
+}
+
+
+
+
+.cards-grid{
+
+display:grid;
+
+grid-template-columns:1fr 1fr;
+
+gap:15px;
+
+margin-bottom:15px;
+
+}
+
+
+
+
+.info-card{
+
+background:
+
+rgba(15,23,42,.8);
+
+border-radius:20px;
+
+padding:18px;
+
+}
+
+
+
+.info-card span{
+
+color:#94a3b8;
+
+font-size:13px;
+
+}
+
+
+
+.info-card strong{
+
+display:block;
+
+font-size:24px;
+
+margin-top:10px;
+
+color:#38bdf8;
+
+}
+
+
+
+
+.card-title{
+
+display:flex;
+
+justify-content:space-between;
+
+align-items:center;
+
+margin-bottom:20px;
+
+}
+
+
+
+.card-title h2{
+
+margin:0;
+
+font-size:18px;
+
+}
+
+
+
+
+#bot-status{
+
+color:#ef4444;
+
+font-size:13px;
+
+}
+
+
+
+
+
+.ai-row{
+
+display:flex;
+
+justify-content:space-between;
+
+padding:15px 0;
+
+border-bottom:
+
+1px solid
+
+rgba(255,255,255,.08);
+
+}
+
+
+
+.ai-row:last-child{
+
+border-bottom:none;
+
+}
+
+
+
+.ai-row span{
+
+color:#94a3b8;
+
+}
+
+
+
+.ai-row strong{
+
+color:#38bdf8;
+
+}
+
+
+
+
+
+.chart-box{
+
+height:180px;
+
+border-radius:20px;
+
+background:
+
+linear-gradient(
+
+180deg,
+
+rgba(56,189,248,.15),
+
+transparent
+
 );
 
 
+overflow:hidden;
 
-navButtons.forEach((button,index)=>{
-
-
-    button.addEventListener("click",()=>{
-
-
-        // حذف حالت فعال از همه
-        navButtons.forEach(btn=>{
-
-            btn.classList.remove("active");
-
-        });
-
-
-
-        // فعال کردن دکمه انتخاب شده
-        button.classList.add("active");
-
-
-
-        // تشخیص صفحه
-        switch(index){
-
-
-            case 0:
-
-                console.log("🏠 Dashboard");
-
-                break;
-
-
-
-            case 1:
-
-                console.log("💼 Wallet");
-
-                break;
-
-
-
-            case 2:
-
-                console.log("📈 Trades");
-
-                break;
-
-
-
-            case 3:
-
-                console.log("🤖 AI");
-
-                break;
-
-
-
-            case 4:
-
-                console.log("👤 Profile");
-
-                break;
-
-
-        }
-
-
-
-    });
-
-
-});
-
-
-// ===============================
-// بخش ۵: اتصال Telegram WebApp
-// ===============================
-
-
-
-let tg = window.Telegram.WebApp;
-
-
-
-// آماده شدن تلگرام
-tg.ready();
-
-
-// باز شدن کامل Mini App
-tg.expand();
-
-
-
-
-// گرفتن اطلاعات کاربر
-let telegramUser = tg.initDataUnsafe.user;
-
-
-
-const userElement =
-document.querySelector("#username");
-
-
-
-
-
-if(telegramUser){
-
-
-    userElement.innerHTML =
-
-    "سلام "
-    +
-    telegramUser.first_name
-    +
-    " 👋";
-
-
-
-    console.log(
-        "Telegram User:",
-        telegramUser
-    );
-
+position:relative;
 
 }
 
-else{
 
 
-    userElement.innerHTML =
+#chart-line{
 
-    "کاربر مهمان";
+position:absolute;
+
+width:140%;
+
+height:100px;
+
+right:-20%;
+
+top:60px;
+
+
+border-top:
+
+3px solid
+
+#38bdf8;
+
+
+transform:
+
+rotate(-8deg);
+
+
+animation:
+
+moveChart 3s infinite alternate;
+
+}
+
+
+
+
+@keyframes moveChart{
+
+
+from{
+
+transform:
+
+rotate(-8deg)
+
+translateY(10px);
+
+}
+
+
+
+to{
+
+transform:
+
+rotate(-8deg)
+
+translateY(-10px);
+
+}
 
 
 }
@@ -431,118 +433,401 @@ else{
 
 
 
+.stats{
 
-// اطلاعاتی که بعداً به سرور می‌رود
+display:grid;
 
-let userData = {
+grid-template-columns:repeat(3,1fr);
 
+gap:10px;
 
-    id:
-    telegramUser ?
-    telegramUser.id :
-    null,
+margin-top:20px;
 
-
-    name:
-    telegramUser ?
-    telegramUser.first_name :
-    "Guest",
-
-
-    username:
-    telegramUser ?
-    telegramUser.username :
-    null
-
-
-};
+}
 
 
 
-console.log(
-    "User Data:",
-    userData
+.stats div{
+
+text-align:center;
+
+}
+
+
+
+.stats span{
+
+display:block;
+
+color:#94a3b8;
+
+font-size:12px;
+
+}
+
+
+
+.stats strong{
+
+display:block;
+
+font-size:20px;
+
+margin-top:5px;
+
+}
+
+/* =========================
+   Signal & Trades
+========================= */
+
+
+.signal-box{
+
+display:flex;
+
+justify-content:space-between;
+
+align-items:center;
+
+background:
+
+rgba(15,23,42,.7);
+
+padding:20px;
+
+border-radius:20px;
+
+}
+
+
+
+.signal-box p{
+
+margin:0;
+
+color:#94a3b8;
+
+font-size:13px;
+
+}
+
+
+
+.signal-box strong{
+
+font-size:22px;
+
+}
+
+
+
+
+
+.buy{
+
+color:#22c55e;
+
+}
+
+
+
+.sell{
+
+color:#ef4444;
+
+}
+
+
+
+
+.confidence{
+
+display:flex;
+
+justify-content:space-between;
+
+margin-top:20px;
+
+color:#94a3b8;
+
+}
+
+
+
+.confidence strong{
+
+color:#38bdf8;
+
+font-size:20px;
+
+}
+
+
+
+
+
+.trade-row{
+
+display:flex;
+
+justify-content:space-between;
+
+align-items:center;
+
+padding:15px 0;
+
+border-bottom:
+
+1px solid
+
+rgba(255,255,255,.08);
+
+}
+
+
+
+.trade-row:last-child{
+
+border:none;
+
+}
+
+
+
+.trade-row p{
+
+margin:5px 0 0;
+
+color:#94a3b8;
+
+font-size:12px;
+
+}
+
+
+
+
+
+.green{
+
+color:#22c55e !important;
+
+}
+
+
+
+.red{
+
+color:#ef4444 !important;
+
+}
+
+
+
+.blue{
+
+color:#38bdf8 !important;
+
+}
+
+
+
+
+
+
+.empty{
+
+text-align:center;
+
+color:#94a3b8;
+
+}
+
+
+
+
+
+/* =========================
+   Pages
+========================= */
+
+
+.page{
+
+display:none;
+
+animation:
+
+fade .3s ease;
+
+}
+
+
+
+.page.active{
+
+display:block;
+
+}
+
+
+
+@keyframes fade{
+
+
+from{
+
+opacity:0;
+
+transform:translateY(10px);
+
+}
+
+
+to{
+
+opacity:1;
+
+transform:translateY(0);
+
+}
+
+
+}
+
+
+
+
+
+
+/* =========================
+   Start Button
+========================= */
+
+
+.start-section{
+
+margin:20px 0;
+
+}
+
+
+
+#startBot{
+
+width:100%;
+
+border:none;
+
+padding:18px;
+
+border-radius:22px;
+
+font-size:18px;
+
+font-weight:bold;
+
+background:
+
+linear-gradient(
+
+135deg,
+
+#2563eb,
+
+#38bdf8
+
 );
 
 
-// ===============================
-// بخش ۶: اتصال به Backend
-// ===============================
+color:white;
+
+cursor:pointer;
 
 
+transition:.3s;
 
-const BACKEND_URL =
-
-"https://autotrade-backend-02cc.onrender.com";
-
+}
 
 
 
 
-// ارسال اطلاعات کاربر به سرور
+#startBot:hover{
 
-async function sendUserToBackend(){
+transform:scale(1.03);
 
-
-
-    try{
-
-
-        let response = await fetch(
-
-            BACKEND_URL + "/user",
-
-            {
-
-                method:"POST",
-
-                headers:{
-
-                    "Content-Type":
-                    "application/json"
-
-                },
-
-
-                body:JSON.stringify(userData)
-
-
-            }
-
-        );
+}
 
 
 
-        let result = await response.json();
 
 
+#startBot.active{
 
-        console.log(
+background:
 
-            "Backend Response:",
+linear-gradient(
 
-            result
+135deg,
 
-        );
+#16a34a,
 
+#22c55e
 
+);
 
-    }
+}
 
-    catch(error){
-
-
-        console.log(
-
-            "Backend Error:",
-
-            error
-
-        );
+/* =========================
+   Bottom Navigation
+========================= */
 
 
-    }
+.bottom-nav{
 
+position:fixed;
+
+bottom:0;
+
+right:0;
+
+left:0;
+
+
+max-width:480px;
+
+margin:auto;
+
+
+height:75px;
+
+
+background:
+
+rgba(15,23,42,.95);
+
+
+border-top:
+
+1px solid
+
+rgba(255,255,255,.08);
+
+
+display:flex;
+
+justify-content:space-around;
+
+align-items:center;
+
+
+backdrop-filter:
+
+blur(20px);
+
+
+z-index:100;
 
 
 }
@@ -551,15 +836,47 @@ async function sendUserToBackend(){
 
 
 
+.nav-btn{
+
+background:none;
+
+border:none;
+
+color:#94a3b8;
+
+font-size:22px;
+
+display:flex;
+
+flex-direction:column;
+
+align-items:center;
+
+gap:4px;
+
+cursor:pointer;
+
+transition:.3s;
+
+}
 
 
-// اجرای ارسال اطلاعات
 
-if(userData.id){
+.nav-btn span{
+
+font-size:11px;
+
+}
 
 
-    sendUserToBackend();
 
+.nav-btn.active{
+
+color:#38bdf8;
+
+transform:
+
+translateY(-5px);
 
 }
 
@@ -567,39 +884,9 @@ if(userData.id){
 
 
 
+.nav-btn.active span{
 
-
-// تست تغییر داده ربات
-
-function simulateAI(){
-
-
-
-    if(botData.status !== "فعال"){
-
-        return;
-
-    }
-
-
-
-    botData.aiAccuracy =
-    Math.floor(
-        Math.random()*40
-    );
-
-
-
-    botData.confidence =
-    Math.floor(
-        Math.random()*40
-    );
-
-
-
-    updateDashboard();
-
-
+color:#38bdf8;
 
 }
 
@@ -607,13 +894,37 @@ function simulateAI(){
 
 
 
-
-// هر ۵ ثانیه بررسی AI
-
-setInterval(()=>{
-
-
-    simulateAI();
+/* =========================
+   Mobile
+========================= */
 
 
-},5000);
+@media(max-width:480px){
+
+
+.app{
+
+padding:12px;
+
+}
+
+
+
+.balance-card h2{
+
+font-size:32px;
+
+}
+
+
+
+.card-title h2{
+
+font-size:16px;
+
+}
+
+
+
+}
+
