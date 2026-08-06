@@ -1,3 +1,5 @@
-module.exports = {
-    mongoURI: "mongodb://127.0.0.1:27017/autotrade"
+export default {
+
+    mongoURI: process.env.MONGO_URI
+
 };
