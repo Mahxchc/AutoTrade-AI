@@ -8,11 +8,11 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 
-
+import { connectDatabase } from "./database.js";
 
 dotenv.config();
 
-
+connectDatabase();
 
 const app = express();
 
