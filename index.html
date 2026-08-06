@@ -8,7 +8,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>
-ربات معامله‌گر اتوماتیک
+AutoTrade AI
 </title>
 
 
@@ -34,14 +34,11 @@
 
 
 <div class="logo">
-
 🤖
-
 </div>
 
 
 <div>
-
 
 <h1>
 ربات معامله‌گر اتوماتیک
@@ -49,9 +46,7 @@
 
 
 <p id="username">
-
-اتصال به تلگرام...
-
+در حال اتصال...
 </p>
 
 
@@ -61,11 +56,8 @@
 </div>
 
 
-
 <div class="notification">
-
 🔔
-
 </div>
 
 
@@ -73,13 +65,7 @@
 
 
 
-
-
 <main id="app-content">
-
-
-
-<!-- تمام صفحات اینجا لود می‌شوند -->
 
 
 <section class="page active" id="home-page">
@@ -94,22 +80,16 @@
 
 
 <h2 id="balance">
-
 0.00 USDT
-
 </h2>
 
 
 <span id="balanceIR">
-
 ≈ 0 تومان
-
 </span>
 
 
 </div>
-
-
 
 
 
@@ -118,53 +98,40 @@
 
 <div class="info-card">
 
-
 <span>
 سود امروز
 </span>
 
-
 <strong id="today-profit">
-
 0%
-
 </strong>
 
-
 </div>
-
 
 
 
 <div class="info-card">
 
-
 <span>
 سود کل
 </span>
 
-
 <strong id="total-profit">
-
 0$
-
 </strong>
 
-
 </div>
 
 
 </div>
 
 
+<!-- AI Section -->
 
-
-
-<div class="ai-card">
+<section class="ai-card">
 
 
 <div class="card-title">
-
 
 <h2>
 🤖 هوش مصنوعی
@@ -172,13 +139,28 @@
 
 
 <span id="bot-status">
-
 خاموش
-
 </span>
 
 
 </div>
+
+
+
+<div class="ai-row">
+
+<span>
+استراتژی
+</span>
+
+
+<strong>
+Crypto AI Scalping
+</strong>
+
+
+</div>
+
 
 
 
@@ -190,9 +172,7 @@
 
 
 <strong id="ai-accuracy">
-
 0%
-
 </strong>
 
 
@@ -200,8 +180,9 @@
 
 
 
-<div class="ai-row">
 
+
+<div class="ai-row">
 
 <span>
 اعتماد سیگنال
@@ -209,9 +190,7 @@
 
 
 <strong id="confidence">
-
 0%
-
 </strong>
 
 
@@ -219,9 +198,14 @@
 
 
 
-</div>
+</section>
 
-  <!-- Performance Chart -->
+
+
+
+
+
+<!-- Performance -->
 
 <section class="chart-card">
 
@@ -244,9 +228,14 @@
 
 <div class="chart-box">
 
-<div id="chart-line"></div>
+<div id="chart-line">
 
 </div>
+
+
+</div>
+
+
 
 
 
@@ -263,6 +252,7 @@
 0
 </strong>
 
+
 </div>
 
 
@@ -276,6 +266,7 @@
 <strong id="win-rate">
 0%
 </strong>
+
 
 </div>
 
@@ -291,29 +282,26 @@
 0$
 </strong>
 
+
 </div>
 
 
 </div>
+
 
 
 </section>
 
 
-
-
-
 <!-- AI Signal -->
-
 
 <section class="signal-card">
 
 
 <div class="card-title">
 
-
 <h2>
-🚀 سیگنال AI
+🚀 آخرین سیگنال AI
 </h2>
 
 
@@ -327,42 +315,39 @@
 
 <div>
 
-
 <p>
 ارز
 </p>
 
 
 <strong id="signal-symbol">
-
 ---
-
 </strong>
 
 
 </div>
+
 
 
 
 <div>
 
-
 <p>
-نوع
+عملیات
 </p>
 
 
 <strong id="signal-type">
-
 WAIT
-
 </strong>
 
 
 </div>
 
 
+
 </div>
+
 
 
 
@@ -370,17 +355,18 @@ WAIT
 <div class="confidence">
 
 
-اعتماد تحلیل
+<span>
+اعتماد هوش مصنوعی
+</span>
 
 
 <strong id="signal-confidence">
-
 0%
-
 </strong>
 
 
 </div>
+
 
 
 </section>
@@ -390,7 +376,8 @@ WAIT
 
 
 
-<!-- Trades Preview -->
+
+<!-- Recent Trades -->
 
 
 <section class="trades-card">
@@ -400,7 +387,7 @@ WAIT
 
 
 <h2>
-📊 معاملات اخیر
+📊 آخرین معاملات
 </h2>
 
 
@@ -408,17 +395,39 @@ WAIT
 
 
 
+
 <div id="trade-list">
 
 
-<p class="empty">
+<div class="trade-row">
 
-هنوز معامله‌ای ثبت نشده
 
+<div>
+
+<strong>
+BTC/USDT
+</strong>
+
+
+<p>
+در انتظار معامله
 </p>
 
 
 </div>
+
+
+<span>
+0$
+</span>
+
+
+</div>
+
+
+
+</div>
+
 
 
 </section>
@@ -428,13 +437,31 @@ WAIT
 
 
 
-<!-- Other Pages -->
 
+<!-- Start Bot -->
+
+
+<section class="start-section">
+
+
+<button id="startBot">
+
+
+🤖 شروع ربات معامله‌گر
+
+
+</button>
+
+
+  </section>
+
+  <!-- Wallet Page -->
 
 <section class="page" id="wallet-page">
 
 
 <div class="box">
+
 
 <h2>
 💼 کیف پول
@@ -442,8 +469,13 @@ WAIT
 
 
 <p>
-موجودی واقعی از سرور دریافت می‌شود
+موجودی و تراکنش‌ها
 </p>
+
+
+<h3 id="wallet-balance">
+0 USDT
+</h3>
 
 
 </div>
@@ -454,6 +486,9 @@ WAIT
 
 
 
+
+
+<!-- Trades Page -->
 
 <section class="page" id="trades-page">
 
@@ -466,9 +501,15 @@ WAIT
 </h2>
 
 
+<div id="all-trades">
+
+
 <p>
-تاریخچه معاملات اینجا نمایش داده می‌شود
+هنوز معامله‌ای انجام نشده
 </p>
+
+
+</div>
 
 
 </div>
@@ -479,6 +520,9 @@ WAIT
 
 
 
+
+
+<!-- AI Page -->
 
 <section class="page" id="ai-page">
 
@@ -492,7 +536,7 @@ WAIT
 
 
 <p>
-تحلیل بازار و سیگنال‌ها
+تحلیل بازار و مدیریت ریسک
 </p>
 
 
@@ -504,6 +548,9 @@ WAIT
 
 
 
+
+
+<!-- Profile Page -->
 
 <section class="page" id="profile-page">
 
@@ -517,9 +564,7 @@ WAIT
 
 
 <p id="profile-info">
-
 کاربر تلگرام
-
 </p>
 
 
@@ -529,7 +574,12 @@ WAIT
 </section>
 
 
-  </main>
+
+
+
+</main>
+
+
 
 
 
@@ -546,11 +596,13 @@ WAIT
 class="nav-btn active"
 data-page="home-page">
 
+
 🏠
 
 <span>
 خانه
 </span>
+
 
 </button>
 
@@ -562,11 +614,13 @@ data-page="home-page">
 class="nav-btn"
 data-page="wallet-page">
 
+
 💼
 
 <span>
 کیف پول
 </span>
+
 
 </button>
 
@@ -578,11 +632,13 @@ data-page="wallet-page">
 class="nav-btn"
 data-page="trades-page">
 
+
 📈
 
 <span>
 معاملات
 </span>
+
 
 </button>
 
@@ -594,11 +650,13 @@ data-page="trades-page">
 class="nav-btn"
 data-page="ai-page">
 
+
 🤖
 
 <span>
 AI
 </span>
+
 
 </button>
 
@@ -610,17 +668,20 @@ AI
 class="nav-btn"
 data-page="profile-page">
 
+
 👤
 
 <span>
 پروفایل
 </span>
 
+
 </button>
 
 
 
 </nav>
+
 
 
 
@@ -638,3 +699,4 @@ data-page="profile-page">
 
 
 </html>
+
