@@ -10,6 +10,11 @@ import dotenv from "dotenv";
 
 import { connectDatabase } from "./database.js";
 
+import userRoutes from "./routes/User.js";
+import walletRoutes from "./routes/Wallet.js";
+import tradeRoutes from "./routes/Trade.js";
+import botRoutes from "./routes/Bot.js";
+
 dotenv.config();
 
 connectDatabase();
@@ -22,6 +27,15 @@ app.use(cors());
 
 
 app.use(express.json());
+
+app.use("/api/users", userRoutes);
+
+app.use("/api/wallet", walletRoutes);
+
+app.use("/api/trades", tradeRoutes);
+
+app.use("/api/bot", botRoutes);
+
 
 
 
