@@ -8,7 +8,9 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 
+
 import { connectDatabase } from "./database.js";
+
 
 import userRoutes from "./routes/User.js";
 import walletRoutes from "./routes/Wallet.js";
@@ -16,15 +18,11 @@ import tradeRoutes from "./routes/Trade.js";
 import botRoutes from "./routes/Bot.js";
 
 
-// Load Environment Variables
+
 dotenv.config();
 
 
-// Connect Database
-connectDatabase();
 
-
-// Create App
 const app = express();
 
 
@@ -34,6 +32,7 @@ const app = express();
 app.use(cors());
 
 app.use(express.json());
+
 
 
 
@@ -51,34 +50,81 @@ app.use("/api/bot", botRoutes);
 
 
 
+
 // Health Check
 
-app.get("/", (req, res)=>{
+app.get("/", (req,res)=>{
+
 
     res.json({
 
-        status: "online",
+        status:"online",
 
-        message: "AutoTrade AI Backend Running"
+        message:
+        "AutoTrade AI Backend Running"
 
     });
 
-});
-
-
-
-
-
-// Server Port
-
-const PORT = process.env.PORT || 3000;
-
-
-
-app.listen(PORT, ()=>{
-
-    console.log(
-        `Server running on ${PORT}`
-    );
 
 });
+
+
+
+
+
+const PORT =
+process.env.PORT || 3000;
+
+
+
+
+
+
+async function startServer(){
+
+
+    try{
+
+
+        await connectDatabase();
+
+
+
+        app.listen(PORT, ()=>{
+
+
+            console.log(
+
+                `Server running on ${PORT}`
+
+            );
+
+
+        });
+
+
+
+    }
+
+
+    catch(error){
+
+
+        console.log(
+
+            "Server Start Error:",
+            error.message
+
+        );
+
+
+    }
+
+
+}
+
+
+
+
+
+startServer();
