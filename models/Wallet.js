@@ -3,113 +3,171 @@
 // Wallet Model
 // =====================================
 
-import mongoose from "mongoose";
+
+class Wallet {
 
 
-const walletSchema = new mongoose.Schema({
+    constructor({
 
-    userId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-        required: true
-    },
+        userId
+
+    }) {
 
 
-    // نوع دارایی
-    currency: {
-        type: String,
-        default: "USDT"
-    },
+        this.userId = userId;
 
 
-    // موجودی ارز دیجیتال
-    balance: {
-        type: Number,
-        default: 0
-    },
+        // موجودی فعلی
+
+        this.balance = 0;
 
 
-    // موجودی قفل شده در معاملات
-    lockedBalance: {
-        type: Number,
-        default: 0
-    },
+
+        // مجموع سود
+
+        this.totalProfit = 0;
 
 
-    // موجودی ریالی
-    tomanBalance: {
-        type: Number,
-        default: 0
-    },
+
+        // تعداد معاملات
+
+        this.totalTrades = 0;
 
 
-    // شماره شبا برای برداشت ریالی
-    shebaNumber: {
-        type: String,
-        default: null
-    },
+
+        // مقدار قابل برداشت
+
+        this.withdrawable = 0;
 
 
-    // نام صاحب حساب
-    accountOwnerName: {
-        type: String,
-        default: null
-    },
+
+        // تاریخ ساخت کیف پول
+
+        this.createdAt = new Date();
 
 
-    // مجموع واریزها
-    totalDeposit: {
-        type: Number,
-        default: 0
-    },
+
+        // آخرین بروزرسانی
+
+        this.updatedAt = new Date();
 
 
-    // مجموع برداشت‌ها
-    totalWithdraw: {
-        type: Number,
-        default: 0
-    },
 
-
-    // وضعیت درخواست برداشت
-    withdrawStatus: {
-        type: String,
-        enum: [
-            "none",
-            "pending",
-            "approved",
-            "paid",
-            "rejected"
-        ],
-        default: "none"
-    },
-
-
-    // آخرین درخواست برداشت
-    lastWithdrawDate: {
-        type: Date,
-        default: null
-    },
-
-
-    lastUpdate: {
-        type: Date,
-        default: Date.now
-    },
-
-
-    createdAt: {
-        type: Date,
-        default: Date.now
     }
 
-});
 
 
-const Wallet = mongoose.model(
-    "Wallet",
-    walletSchema
-);
 
 
-export default Wallet;
+    // اضافه کردن سود بعد از معامله موفق
+
+    addProfit(amount){
+
+
+        this.balance += amount;
+
+
+        this.totalProfit += amount;
+
+
+        this.withdrawable += amount;
+
+
+        this.updatedAt = new Date();
+
+
+    }
+
+
+
+
+
+    // ثبت معامله
+
+    addTrade(){
+
+
+        this.totalTrades += 1;
+
+
+        this.updatedAt = new Date();
+
+
+    }
+
+
+
+
+
+    // برداشت از کیف پول
+
+    withdraw(amount){
+
+
+
+        if(amount > this.withdrawable){
+
+
+            throw new Error(
+                "Insufficient withdrawable balance"
+            );
+
+
+        }
+
+
+
+        this.balance -= amount;
+
+
+        this.withdrawable -= amount;
+
+
+        this.updatedAt = new Date();
+
+
+    }
+
+
+
+
+
+    // گرفتن اطلاعات کیف پول
+
+    getInfo(){
+
+
+        return {
+
+
+            userId:this.userId,
+
+
+            balance:this.balance,
+
+
+            totalProfit:this.totalProfit,
+
+
+            totalTrades:this.totalTrades,
+
+
+            withdrawable:this.withdrawable,
+
+
+            updatedAt:this.updatedAt
+
+
+        };
+
+
+    }
+
+
+
+}
+
+
+
+
+module.exports = Wallet;
