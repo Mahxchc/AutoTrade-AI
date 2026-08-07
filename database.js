@@ -6,7 +6,12 @@
 
 
 import mongoose from "mongoose";
+import dotenv from "dotenv";
 import config from "./config/databaseConfig.js";
+
+
+dotenv.config();
+
 
 
 export async function connectDatabase(){
@@ -16,17 +21,14 @@ export async function connectDatabase(){
 
 
         await mongoose.connect(
-    config.mongoURI
-);
+            config.mongoURI
+        );
 
 
 
         console.log(
-
             "Database Connected"
-
         );
-
 
 
     }
