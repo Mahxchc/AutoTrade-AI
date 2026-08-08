@@ -21,7 +21,7 @@ import botRoutes from "./routes/Bot.js";
 
 dotenv.config();
 
-
+console.log("MONGO URI:", process.env.MONGO_URI ? "FOUND" : "NOT FOUND");
 
 const app = express();
 
