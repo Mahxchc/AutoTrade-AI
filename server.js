@@ -1,131 +1,43 @@
 // =====================================
-// AutoTrade AI Backend
+// AutoTrade AI Mini App
 // server.js
 // =====================================
 
-
 import express from "express";
-import cors from "cors";
-import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
 
-
-import { connectDatabase } from "./database.js";
-
-
-import userRoutes from "./routes/User.js";
-import walletRoutes from "./routes/Wallet.js";
-import tradeRoutes from "./routes/Trade.js";
-import botRoutes from "./routes/Bot.js";
-
-
-
-dotenv.config();
-
-console.log("MONGO URI:", process.env.MONGO_URI ? "FOUND" : "NOT FOUND");
 
 const app = express();
- 
 
 
-// Middleware
-
-app.use(cors());
-
-app.use(express.json());
+// برای مسیر فایل‌ها
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 
+// نمایش فایل‌های مینی اپ
+app.use(express.static(__dirname));
 
 
+// صفحه اصلی
+app.get("/", (req, res) => {
 
-// Routes
-
-app.use("/api/users", userRoutes);
-
-app.use("/api/wallet", walletRoutes);
-
-app.use("/api/trades", tradeRoutes);
-
-app.use("/api/bot", botRoutes);
-
-
-
-
-
-// Health Check
-
-app.get("/", (req,res)=>{
-
-
-    res.json({
-
-        status:"online",
-
-        message:
-        "AutoTrade AI Backend Running"
-
-    });
-
+    res.sendFile(
+        path.join(__dirname, "index.html")
+    );
 
 });
 
 
+// پورت
+const PORT = process.env.PORT || 3000;
 
 
+app.listen(PORT, () => {
 
-const PORT =
-process.env.PORT || 3000;
+    console.log(
+        `AutoTrade AI Mini App running on port ${PORT}`
+    );
 
-
-
-
-
-
-async function startServer(){
-
-
-    try{
-
-
-        await connectDatabase();
-
-
-
-        app.listen(PORT, ()=>{
-
-
-            console.log(
-
-                `Server running on ${PORT}`
-
-            );
-
-
-        });
-
-
-
-    }
-
-
-    catch(error){
-
-
-        console.log(
-
-            "Server Start Error:",
- 
-          error.message
-
-        );
-
-
-    }
-
-
-}
-
-
-
-
-
-startServer();
+});
