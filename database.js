@@ -26,6 +26,6 @@ export async function connectDatabase(){
    error
  );
 
-    }
+    } 
 
 }
