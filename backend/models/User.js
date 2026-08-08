@@ -7,56 +7,80 @@ import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
     {
-        // Telegram identity
+        // =====================================
+        // Telegram Identity
+        // =====================================
+
         telegramId: {
             type: String,
             required: true,
             unique: true,
-            index: true
+            index: true,
+            trim: true
         },
 
         username: {
             type: String,
-            default: ""
+            default: "",
+            trim: true
         },
 
         firstName: {
             type: String,
-            default: ""
+            default: "",
+            trim: true
         },
 
-        // Account access
+        // =====================================
+        // Account Access
+        // =====================================
+
         accessEnabled: {
             type: Boolean,
             default: false
         },
 
-        // Admin / owner control
+        // =====================================
+        // Admin / Owner Control
+        // =====================================
+
         isAdmin: {
             type: Boolean,
             default: false
         },
 
-        // Bot permission
+        // =====================================
+        // Bot Permission
+        // =====================================
+
         botAccess: {
             type: Boolean,
             default: false
         },
 
-        // Current bot state
+        // =====================================
+        // Current Bot State
+        // =====================================
+
         botActive: {
             type: Boolean,
             default: false
         },
 
+        // =====================================
         // Wallet
+        // =====================================
+
         walletId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Wallet",
             default: null
         },
 
-        // Account status
+        // =====================================
+        // Account Status
+        // =====================================
+
         status: {
             type: String,
             enum: [
@@ -67,11 +91,9 @@ const userSchema = new mongoose.Schema(
             default: "PENDING"
         },
 
-        // Timestamps
-        createdAt: {
-            type: Date,
-            default: Date.now
-        },
+        // =====================================
+        // Last Login
+        // =====================================
 
         lastLogin: {
             type: Date,
@@ -83,9 +105,6 @@ const userSchema = new mongoose.Schema(
     }
 );
 
-const User = mongoose.model(
-    "User",
-    userSchema
-);
+const User = mongoose.model("User", userSchema);
 
 export default User;
