@@ -533,7 +533,7 @@ updateDashboard({
 
 const API_URL =
 
-"https://YOUR-SERVER-URL.com";
+"https://autotrade-backend-02cc.onrender.com";
 
 
 
