@@ -21,10 +21,10 @@ export async function connectDatabase(){
     }
     catch(error){
 
-        console.log(
-            "Database Error ❌:",
-            error.message
-        );
+ console.log(
+   "Database Error:",
+   error
+ );
 
     }
 
