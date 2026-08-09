@@ -1,132 +1,271 @@
 // =====================================
+// Trade Routes:: M
 // AutoTrade AI
-// Trade Routes
+// Trade History & Access API
+// File: backend/routes/Trade.js
 // =====================================
 
 import express from "express";
+
 import mongoose from "mongoose";
+
 import Trade from "../models/Trade.js";
+
+import {
+    requireUser,
+    requireApprovedUser,
+    requireAdmin
+} from "../middleware/auth.js";
+
 
 const router = express.Router();
 
+
 // =====================================
-// GET USER TRADES
-// GET /api/trades/:userId
+// GET MY TRADES:: M
+// GET /api/trades/me
 // =====================================
 
-router.get("/:userId", async (req, res) => {
-    try {
-        const { userId } = req.params;
+router.get(
+    "/me",
+    requireUser,
+    requireApprovedUser,
+    async (req, res, next) => {
 
-        if (!mongoose.Types.ObjectId.isValid(userId)) {
-            return res.status(400).json({
-                success: false,
-                message: "Invalid user ID"
+        try {
+
+            const trades =
+                await Trade.find({
+
+                    userId:
+                        req.user._id
+
+                })
+                .sort({
+
+                    createdAt: -1
+
+                })
+                .limit(100);
+
+
+            return res.status(200).json({
+
+                success: true,
+
+                count:
+                    trades.length,
+
+                trades
+
             });
+
         }
 
-        const trades = await Trade.find({ userId })
-            .sort({ createdAt: -1 })
-            .limit(100);
+        catch (error) {
 
-        return res.status(200).json({
-            success: true,
-            trades
-        });
+            next(error);
 
-    } catch (error) {
-        console.error("Get Trades Error:", error);
+        }
 
-        return res.status(500).json({
-            success: false,
-            message: "Failed to get trades"
-        });
     }
-});
+);
+
 
 // =====================================
-// CREATE TRADE
-// INTERNAL USE
+// GET USER TRADES:: M
+// GET /api/trades/:userId
+// =====================================
+//
+// Owner can see own trades.
+// Admin can see any user's trades.
+// =====================================
+
+router.get(
+    "/:userId",
+    requireUser,
+    async (req, res, next) => {
+
+        try {
+
+            const {
+                userId
+            } = req.params;
+
+
+            // =====================================
+            // Validate User ID:: M
+            // =====================================
+
+            if (
+                !mongoose.Types.ObjectId.isValid(
+                    userId
+                )
+            ) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    message:
+                        "Invalid user ID"
+
+                });
+
+            }
+
+
+            // =====================================
+            // Permission Check:: M
+            // =====================================
+
+            const isOwner =
+                req.user._id.toString() ===
+                userId;
+
+
+            const isAdmin =
+                req.user.isAdmin === true;
+
+
+            if (
+                !isOwner &&
+                !isAdmin
+            ) {
+
+                return res.status(403).json({
+
+                    success: false,
+
+                    message:
+                        "You do not have permission to view these trades"
+
+                });
+
+            }
+
+
+            // =====================================
+            // Get Trades:: M
+            // =====================================
+
+            const trades =
+                await Trade.find({
+
+                    userId
+
+                })
+                .sort({
+
+                    createdAt: -1
+
+                })
+                .limit(100);
+
+
+            return res.status(200).json({
+
+                success: true,
+
+                count:
+                    trades.length,
+
+                trades
+
+            });
+
+        }
+
+        catch (error) {
+
+            next(error);
+
+        }
+
+    }
+);
+
+
+// =====================================
+// CREATE TRADE:: M
 // POST /api/trades
 // =====================================
 //
 // IMPORTANT:
-// This endpoint is intended for the backend
-// trading engine, not for direct client control.
+// Direct client-created trades are disabled.
 //
-// In the next stage we will move actual trade
-// creation behind the Trading Engine / broker
-// integration.
-//
+// Real trades must be created by the
+// Trading Engine after a real broker/exchange
+// order has been successfully executed.
+// =====================================
 
-router.post("/", async (req, res) => {
-    try {
-        const {
-            userId,
-            symbol,
-            side,
-            quantity,
-            entryPrice,
-            exitPrice,
-            profit,
-            status
-        } = req.body;
+router.post(
+    "/",
+    requireUser,
+    requireApprovedUser,
+    async (req, res) => {
 
-        if (!userId || !symbol || !side || quantity == null) {
-            return res.status(400).json({
-                success: false,
-                message: "Required trade data is missing"
-            });
-        }
+        return res.status(403).json({
 
-        if (!mongoose.Types.ObjectId.isValid(userId)) {
-            return res.status(400).json({
-                success: false,
-                message: "Invalid user ID"
-            });
-        }
-
-        const allowedSides = ["BUY", "SELL"];
-
-        if (!allowedSides.includes(side)) {
-            return res.status(400).json({
-                success: false,
-                message: "Invalid trade side"
-            });
-        }
-
-        if (Number(quantity) <= 0) {
-            return res.status(400).json({
-                success: false,
-                message: "Quantity must be greater than zero"
-            });
-        }
-
-        const trade = await Trade.create({
-            userId,
-            symbol,
-            side,
-            quantity,
-            entryPrice: entryPrice ?? null,
-            exitPrice: exitPrice ?? null,
-            profit: profit ?? 0,
-            status: status || "OPEN"
-        });
-
-        return res.status(201).json({
-            success: true,
-            message: "Trade created successfully",
-            trade
-        });
-
-    } catch (error) {
-        console.error("Create Trade Error:", error);
-
-        return res.status(500).json({
             success: false,
-            message: "Failed to create trade"
+
+            message:
+                "Direct trade creation is disabled. Trades are created by the Trading Engine."
+
         });
+
     }
-});
+);
+
+
+// =====================================
+// ADMIN GET ALL TRADES:: M
+// GET /api/trades/admin/all
+// =====================================
+
+router.get(
+    "/admin/all",
+    requireUser,
+    requireAdmin,
+    async (req, res, next) => {
+
+        try {
+
+            const trades =
+                await Trade.find({})
+                .populate(
+                    "userId",
+                    "telegramId username firstName lastName"
+                )
+                .sort({
+
+                    createdAt: -1
+
+                })
+                .limit(500);
+
+
+            return res.status(200).json({
+
+                success: true,
+
+                count:
+                    trades.length,
+
+                trades
+
+            });
+
+        }
+
+        catch (error) {
+
+            next(error);
+
+        }
+
+    }
+);
+
 
 export default router;
