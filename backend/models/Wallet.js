@@ -1,16 +1,12 @@
 // =====================================
 // Wallet Model:: M
 // AutoTrade AI
-// Wallet Database Model
+// مدل دیتابیس کیف پول
 // File: backend/models/Wallet.js
 // =====================================
 
 import mongoose from "mongoose";
 
-
-// =====================================
-// Wallet Schema:: M
-// =====================================
 
 const walletSchema = new mongoose.Schema(
 
@@ -18,6 +14,7 @@ const walletSchema = new mongoose.Schema(
 
         // =====================================
         // User Reference:: M
+        // ارتباط با کاربر
         // =====================================
 
         userId: {
@@ -37,10 +34,11 @@ const walletSchema = new mongoose.Schema(
 
 
         // =====================================
-        // USD Balance:: M
+        // Balance:: M
+        // موجودی کل
         // =====================================
 
-        balanceUSD: {
+        balance: {
 
             type: Number,
 
@@ -52,10 +50,27 @@ const walletSchema = new mongoose.Schema(
 
 
         // =====================================
-        // Total Profit USD:: M
+        // Withdrawable:: M
+        // کل موجودی قابل برداشت
         // =====================================
 
-        totalProfitUSD: {
+        withdrawable: {
+
+            type: Number,
+
+            default: 0,
+
+            min: 0
+
+        },
+
+
+        // =====================================
+        // Total Profit:: M
+        // مجموع سود و زیان معاملات
+        // =====================================
+
+        totalProfit: {
 
             type: Number,
 
@@ -66,6 +81,7 @@ const walletSchema = new mongoose.Schema(
 
         // =====================================
         // Total Trades:: M
+        // تعداد معاملات
         // =====================================
 
         totalTrades: {
@@ -80,29 +96,15 @@ const walletSchema = new mongoose.Schema(
 
 
         // =====================================
-        // Withdrawable USD:: M
-        // =====================================
-
-        withdrawableUSD: {
-
-            type: Number,
-
-            default: 0,
-
-            min: 0
-
-        },
-
-
-        // =====================================
-        // Display Currency:: M
+        // Currency:: M
+        // واحد پول
         // =====================================
 
         currency: {
 
             type: String,
 
-            default: "USD",
+            default: "USDT",
 
             uppercase: true,
 
@@ -113,6 +115,7 @@ const walletSchema = new mongoose.Schema(
 
         // =====================================
         // Wallet Status:: M
+        // وضعیت کیف پول
         // =====================================
 
         status: {
@@ -127,22 +130,7 @@ const walletSchema = new mongoose.Schema(
 
             ],
 
-            default: "ACTIVE",
-
-            index: true
-
-        },
-
-
-        // =====================================
-        // Last Balance Update:: M
-        // =====================================
-
-        lastBalanceUpdate: {
-
-            type: Date,
-
-            default: Date.now
+            default: "ACTIVE"
 
         }
 
