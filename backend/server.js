@@ -18,6 +18,7 @@ import botRoutes from "./routes/Bot.js";
 import withdrawRoutes from "./routes/withdraw.js";
 import depositRoutes from "./routes/Deposit.js";
 import currencyRoutes from "./routes/Currency.js";
+import paymentRoutes from "./routes/Payment.js";
 
 
 // =====================================
@@ -138,6 +139,17 @@ app.use(
 
 
 // =====================================
+// Payment Routes:: M
+// مسیرهای پرداخت
+// =====================================
+
+app.use(
+    "/api/payment",
+    paymentRoutes
+);
+
+
+// =====================================
 // 404:: M
 // مسیر پیدا نشد
 // =====================================
@@ -232,7 +244,6 @@ async function startServer() {
 
             }
         );
-
 
     }
 
