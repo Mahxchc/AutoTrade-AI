@@ -1,109 +1,33 @@
 // =====================================
 // Wallet Routes:: M
 // AutoTrade AI
-// Wallet API
+// مسیرهای کیف پول
 // File: backend/routes/Wallet.js
 // =====================================
 
 import express from "express";
-
 import mongoose from "mongoose";
 
 import Wallet from "../models/Wallet.js";
 
 import {
-    requireUser,
-    requireApprovedUser
-} from "../middleware/auth.js";
+    getWalletDisplayValues
+} from "../services/currencyService.js";
 
 
-const router = express.Router();
-
-
-// =====================================
-// GET MY WALLET
-// GET /api/wallet/me
-// =====================================
-
-router.get(
-    "/me",
-    requireUser,
-    requireApprovedUser,
-    async (req, res, next) => {
-
-        try {
-
-            const userId =
-                req.user._id;
-
-
-            let wallet =
-                await Wallet.findOne({
-
-                    userId
-
-                });
-
-
-            // =====================================
-            // Create Wallet If Missing
-            // =====================================
-
-            if (!wallet) {
-
-                wallet =
-                    await Wallet.create({
-
-                        userId,
-
-                        balanceUSD: 0,
-
-                        totalProfitUSD: 0,
-
-                        totalTrades: 0,
-
-                        withdrawableUSD: 0,
-
-                        currency: "USD"
-
-                    });
-
-            }
-
-
-            return res.status(200).json({
-
-                success: true,
-
-                wallet
-
-            });
-
-        }
-
-        catch (error) {
-
-            next(error);
-
-        }
-
-    }
-);
+const router =
+    express.Router();
 
 
 // =====================================
-// GET WALLET BY USER ID
+// GET USER WALLET:: M
+// دریافت اطلاعات کیف پول
 // GET /api/wallet/:userId
-// =====================================
-//
-// Admin only.
-// Normal users must use /me.
 // =====================================
 
 router.get(
     "/:userId",
-    requireUser,
-    async (req, res, next) => {
+    async (req, res) => {
 
         try {
 
@@ -113,7 +37,7 @@ router.get(
 
 
             // =====================================
-            // Validate ObjectId
+            // بررسی شناسه کاربر:: M
             // =====================================
 
             if (
@@ -124,7 +48,8 @@ router.get(
 
                 return res.status(400).json({
 
-                    success: false,
+                    success:
+                        false,
 
                     message:
                         "Invalid user ID"
@@ -135,36 +60,10 @@ router.get(
 
 
             // =====================================
-            // User Can Only Access Own Wallet
+            // پیدا کردن کیف پول:: M
             // =====================================
 
-            const isOwner =
-                req.user._id.toString() ===
-                userId;
-
-
-            const isAdmin =
-                req.user.isAdmin === true;
-
-
-            if (
-                !isOwner &&
-                !isAdmin
-            ) {
-
-                return res.status(403).json({
-
-                    success: false,
-
-                    message:
-                        "You do not have permission to access this wallet"
-
-                });
-
-            }
-
-
-            const wallet =
+            let wallet =
                 await Wallet.findOne({
 
                     userId
@@ -173,57 +72,212 @@ router.get(
 
 
             // =====================================
-            // Wallet Not Created Yet
+            // ساخت کیف پول در صورت نبودن:: M
             // =====================================
 
             if (!wallet) {
 
-                return res.status(200).json({
-
-                    success: true,
-
-                    wallet: {
+                wallet =
+                    await Wallet.create({
 
                         userId,
 
-                        balanceUSD: 0,
+                        balance:
+                            0,
 
-                        totalProfitUSD: 0,
+                        totalProfit:
+                            0,
 
-                        totalTrades: 0,
+                        totalTrades:
+                            0,
 
-                        withdrawableUSD: 0,
+                        withdrawable:
+                            0,
 
-                        currency: "USD"
+                        currency:
+                            "USDT",
 
-                    },
+                        status:
+                            "ACTIVE"
 
-                    message:
-                        "Wallet not found"
-
-                });
+                    });
 
             }
 
 
+            // =====================================
+            // موجودی دلار:: M
+            // =====================================
+
+            const balanceUSD =
+                Number(
+                    wallet.balance
+                );
+
+
+            const totalProfitUSD =
+                Number(
+                    wallet.totalProfit
+                );
+
+
+            const withdrawableUSD =
+                Number(
+                    wallet.withdrawable
+                );
+
+
+            // =====================================
+            // تبدیل به تومان:: M
+            // =====================================
+
+            const balanceDisplay =
+                await getWalletDisplayValues(
+                    balanceUSD
+                );
+
+
+            const profitDisplay =
+                await getWalletDisplayValues(
+                    totalProfitUSD
+                );
+
+
+            const withdrawableDisplay =
+                await getWalletDisplayValues(
+                    withdrawableUSD
+                );
+
+
+            // =====================================
+            // پاسخ به Mini App:: M
+            // =====================================
+
             return res.status(200).json({
 
-                success: true,
+                success:
+                    true,
 
-                wallet
+                wallet: {
+
+                    id:
+                        wallet._id,
+
+                    currency:
+                        wallet.currency,
+
+                    status:
+                        wallet.status,
+
+
+                    // =====================================
+                    // موجودی
+                    // =====================================
+
+                    balanceUSD,
+
+                    balanceToman:
+                        balanceDisplay.balanceToman,
+
+                    balanceUSDText:
+                        balanceDisplay.balanceUSDText,
+
+                    balanceTomanText:
+                        balanceDisplay.balanceTomanText,
+
+
+                    // =====================================
+                    // سود کل
+                    // =====================================
+
+                    totalProfitUSD,
+
+                    totalProfitToman:
+                        profitDisplay.balanceToman,
+
+                    totalProfitUSDText:
+                        profitDisplay.balanceUSDText,
+
+                    totalProfitTomanText:
+                        profitDisplay.balanceTomanText,
+
+
+                    // =====================================
+                    // قابل برداشت
+                    // =====================================
+
+                    withdrawableUSD,
+
+                    withdrawableToman:
+                        withdrawableDisplay.balanceToman,
+
+                    withdrawableUSDText:
+                        withdrawableDisplay.balanceUSDText,
+
+                    withdrawableTomanText:
+                        withdrawableDisplay.balanceTomanText,
+
+
+                    // =====================================
+                    // معاملات
+                    // =====================================
+
+                    totalTrades:
+                        wallet.totalTrades,
+
+
+                    // =====================================
+                    // نرخ دلار
+                    // =====================================
+
+                    exchangeRate:
+                        balanceDisplay.exchangeRate,
+
+                    exchangeRateText:
+                        balanceDisplay.exchangeRateText,
+
+
+                    // =====================================
+                    // زمان بروزرسانی
+                    // =====================================
+
+                    updatedAt:
+                        balanceDisplay.updatedAt
+
+                }
 
             });
+
 
         }
 
         catch (error) {
 
-            next(error);
+            console.error(
+                "Get Wallet Error:",
+                error
+            );
+
+
+            return res.status(500).json({
+
+                success:
+                    false,
+
+                message:
+                    "Failed to get wallet"
+
+            });
 
         }
 
     }
 );
 
+
+// =====================================
+// EXPORT ROUTER:: M
+// خروجی مسیرهای کیف پول
+// =====================================
 
 export default router;
