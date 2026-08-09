@@ -27,12 +27,24 @@ const userSchema = new mongoose.Schema(
 
         firstName: {
             type: String,
-            default: "",
+            required: true,
+            trim: true
+        },
+
+        lastName: {
+            type: String,
+            required: true,
+            trim: true
+        },
+
+        phoneNumber: {
+            type: String,
+            required: true,
             trim: true
         },
 
         // =====================================
-        // Account Access
+        // Access / Approval
         // =====================================
 
         accessEnabled: {
@@ -40,13 +52,25 @@ const userSchema = new mongoose.Schema(
             default: false
         },
 
+        approvalStatus: {
+            type: String,
+            enum: [
+                "PENDING",
+                "APPROVED",
+                "REJECTED"
+            ],
+            default: "PENDING",
+            index: true
+        },
+
         // =====================================
-        // Admin / Owner Control
+        // Admin / Owner
         // =====================================
 
         isAdmin: {
             type: Boolean,
-            default: false
+            default: false,
+            index: true
         },
 
         // =====================================
@@ -57,10 +81,6 @@ const userSchema = new mongoose.Schema(
             type: Boolean,
             default: false
         },
-
-        // =====================================
-        // Current Bot State
-        // =====================================
 
         botActive: {
             type: Boolean,
@@ -88,11 +108,12 @@ const userSchema = new mongoose.Schema(
                 "ACTIVE",
                 "BLOCKED"
             ],
-            default: "PENDING"
+            default: "PENDING",
+            index: true
         },
 
         // =====================================
-        // Last Login
+        // Login / Activity
         // =====================================
 
         lastLogin: {
