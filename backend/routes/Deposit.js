@@ -1,15 +1,17 @@
 // =====================================
-// Deposit Routes:: M
 // AutoTrade AI
+// Deposit Routes:: M
 // مسیرهای واریز
 // File: backend/routes/Deposit.js
 // =====================================
 
 import express from "express";
+import mongoose from "mongoose";
+
+import Deposit from "../models/Deposit.js";
 
 import {
-    createDepositRequest,
-    getDeposit,
+    createDeposit,
     getUserDeposits
 } from "../services/depositService.js";
 
@@ -31,15 +33,9 @@ router.post(
         try {
 
             const {
-
                 userId,
-
-                amountUSD,
-
-                usdToTomanRate,
-
+                amountToman,
                 method
-
             } = req.body;
 
 
@@ -49,8 +45,7 @@ router.post(
 
             if (
                 !userId ||
-                amountUSD == null ||
-                usdToTomanRate == null
+                amountToman == null
             ) {
 
                 return res.status(400).json({
@@ -59,7 +54,30 @@ router.post(
                         false,
 
                     message:
-                        "User ID, USD amount and exchange rate are required"
+                        "شناسه کاربر و مبلغ واریز الزامی است"
+
+                });
+
+            }
+
+
+            // =====================================
+            // بررسی شناسه کاربر:: M
+            // =====================================
+
+            if (
+                !mongoose.Types.ObjectId.isValid(
+                    userId
+                )
+            ) {
+
+                return res.status(400).json({
+
+                    success:
+                        false,
+
+                    message:
+                        "شناسه کاربر نامعتبر است"
 
                 });
 
@@ -71,13 +89,11 @@ router.post(
             // =====================================
 
             const deposit =
-                await createDepositRequest({
+                await createDeposit({
 
                     userId,
 
-                    amountUSD,
-
-                    usdToTomanRate,
+                    amountToman,
 
                     method:
                         method || "BANK"
@@ -91,7 +107,7 @@ router.post(
                     true,
 
                 message:
-                    "Deposit request created successfully",
+                    "درخواست واریز ایجاد شد",
 
                 deposit
 
@@ -114,7 +130,7 @@ router.post(
 
                 message:
                     error.message ||
-                    "Failed to create deposit request"
+                    "ایجاد درخواست واریز ناموفق بود"
 
             });
 
@@ -125,34 +141,153 @@ router.post(
 
 
 // =====================================
-// GET DEPOSIT:: M
-// دریافت یک واریز
-// GET /api/deposit/:userId/:depositId
+// GET USER DEPOSITS:: M
+// دریافت واریزهای کاربر
+// GET /api/deposit/:userId
 // =====================================
 
 router.get(
-    "/:userId/:depositId",
+    "/:userId",
     async (req, res) => {
 
         try {
 
             const {
-
-                userId,
-
-                depositId
-
+                userId
             } = req.params;
 
 
-            const deposit =
-                await getDeposit({
+            // =====================================
+            // بررسی شناسه کاربر:: M
+            // =====================================
 
-                    userId,
+            if (
+                !mongoose.Types.ObjectId.isValid(
+                    userId
+                )
+            ) {
 
-                    depositId
+                return res.status(400).json({
+
+                    success:
+                        false,
+
+                    message:
+                        "شناسه کاربر نامعتبر است"
 
                 });
+
+            }
+
+
+            // =====================================
+            // دریافت واریزها:: M
+            // =====================================
+
+            const deposits =
+                await getUserDeposits(
+                    userId
+                );
+
+
+            return res.status(200).json({
+
+                success:
+                    true,
+
+                deposits
+
+            });
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "Get Deposits Error:",
+                error
+            );
+
+
+            return res.status(500).json({
+
+                success:
+                    false,
+
+                message:
+                    "دریافت واریزها ناموفق بود"
+
+            });
+
+        }
+
+    }
+);
+
+
+// =====================================
+// GET SINGLE DEPOSIT:: M
+// دریافت یک واریز
+// GET /api/deposit/detail/:depositId
+// =====================================
+
+router.get(
+    "/detail/:depositId",
+    async (req, res) => {
+
+        try {
+
+            const {
+                depositId
+            } = req.params;
+
+
+            // =====================================
+            // بررسی شناسه واریز:: M
+            // =====================================
+
+            if (
+                !mongoose.Types.ObjectId.isValid(
+                    depositId
+                )
+            ) {
+
+                return res.status(400).json({
+
+                    success:
+                        false,
+
+                    message:
+                        "شناسه واریز نامعتبر است"
+
+                });
+
+            }
+
+
+            // =====================================
+            // دریافت واریز:: M
+            // =====================================
+
+            const deposit =
+                await Deposit.findById(
+                    depositId
+                );
+
+
+            if (!deposit) {
+
+                return res.status(404).json({
+
+                    success:
+                        false,
+
+                    message:
+                        "واریز پیدا نشد"
+
+                });
+
+            }
 
 
             return res.status(200).json({
@@ -174,82 +309,13 @@ router.get(
             );
 
 
-            return res.status(400).json({
+            return res.status(500).json({
 
                 success:
                     false,
 
                 message:
-                    error.message ||
-                    "Failed to get deposit"
-
-            });
-
-        }
-
-    }
-);
-
-
-// =====================================
-// GET USER DEPOSITS:: M
-// تاریخچه واریزها
-// GET /api/deposit/history/:userId
-// =====================================
-
-router.get(
-    "/history/:userId",
-    async (req, res) => {
-
-        try {
-
-            const {
-                userId
-            } = req.params;
-
-
-            const {
-                limit
-            } = req.query;
-
-
-            const deposits =
-                await getUserDeposits({
-
-                    userId,
-
-                    limit
-
-                });
-
-
-            return res.status(200).json({
-
-                success:
-                    true,
-
-                deposits
-
-            });
-
-        }
-
-        catch (error) {
-
-            console.error(
-                "Get Deposit History Error:",
-                error
-            );
-
-
-            return res.status(400).json({
-
-                success:
-                    false,
-
-                message:
-                    error.message ||
-                    "Failed to get deposit history"
+                    "دریافت اطلاعات واریز ناموفق بود"
 
             });
 
