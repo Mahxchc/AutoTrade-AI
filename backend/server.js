@@ -17,6 +17,7 @@ import tradeRoutes from "./routes/Trade.js";
 import botRoutes from "./routes/Bot.js";
 import withdrawRoutes from "./routes/withdraw.js";
 import depositRoutes from "./routes/Deposit.js";
+import currencyRoutes from "./routes/Currency.js";
 
 
 // =====================================
@@ -122,6 +123,17 @@ app.use(
 app.use(
     "/api/deposit",
     depositRoutes
+);
+
+
+// =====================================
+// Currency Routes:: M
+// مسیرهای نرخ دلار و تومان
+// =====================================
+
+app.use(
+    "/api/currency",
+    currencyRoutes
 );
 
 
