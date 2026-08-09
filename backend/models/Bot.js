@@ -18,13 +18,12 @@ const botSchema = new mongoose.Schema(
 
         // =====================================
         // User Reference:: M
-        // شناسه کاربر صاحب ربات
+        // کاربر صاحب ربات
         // =====================================
 
         userId: {
 
-            type:
-                mongoose.Schema.Types.ObjectId,
+            type: mongoose.Schema.Types.ObjectId,
 
             ref: "User",
 
@@ -39,7 +38,7 @@ const botSchema = new mongoose.Schema(
 
         // =====================================
         // Status:: M
-        // وضعیت فعلی ربات
+        // وضعیت ربات
         // =====================================
 
         status: {
@@ -48,17 +47,33 @@ const botSchema = new mongoose.Schema(
 
             enum: [
 
-                "ACTIVE",      // فعال
+                "ACTIVE",
 
-                "STOPPED",     // متوقف
+                "STOPPED",
 
-                "PAUSED",      // توقف موقت
+                "PAUSED",
 
-                "ERROR"        // خطای سیستم
+                "ERROR"
 
             ],
 
             default: "STOPPED",
+
+            index: true
+
+        },
+
+
+        // =====================================
+        // Enabled:: M
+        // اجازه فعالیت ربات
+        // =====================================
+
+        enabled: {
+
+            type: Boolean,
+
+            default: false,
 
             index: true
 
@@ -166,17 +181,17 @@ const botSchema = new mongoose.Schema(
 
 
         // =====================================
-        // Maximum Daily Loss:: M
-        // حداکثر درصد ضرر روزانه
+        // Maximum Consecutive Losses:: M
+        // حداکثر ضررهای متوالی
         // =====================================
 
-        maxDailyLossPercent: {
+        maxConsecutiveLosses: {
 
             type: Number,
 
-            default: 3,
+            default: 2,
 
-            min: 0.5,
+            min: 1,
 
             max: 10
 
@@ -184,8 +199,24 @@ const botSchema = new mongoose.Schema(
 
 
         // =====================================
+        // Consecutive Losses:: M
+        // تعداد ضررهای متوالی فعلی
+        // =====================================
+
+        consecutiveLosses: {
+
+            type: Number,
+
+            default: 0,
+
+            min: 0
+
+        },
+
+
+        // =====================================
         // Daily Profit USD:: M
-        // مجموع سود امروز به دلار
+        // سود امروز به دلار
         // =====================================
 
         dailyProfitUSD: {
@@ -199,7 +230,7 @@ const botSchema = new mongoose.Schema(
 
         // =====================================
         // Daily Loss USD:: M
-        // مجموع ضرر امروز به دلار
+        // ضرر امروز به دلار
         // =====================================
 
         dailyLossUSD: {
@@ -214,22 +245,8 @@ const botSchema = new mongoose.Schema(
 
 
         // =====================================
-        // Daily Reset:: M
-        // زمان شروع محاسبه روز جدید
-        // =====================================
-
-        dailyResetAt: {
-
-            type: Date,
-
-            default: Date.now
-
-        },
-
-
-        // =====================================
         // Open Trades:: M
-        // تعداد معاملات باز
+        // معاملات باز
         // =====================================
 
         openTrades: {
@@ -245,14 +262,14 @@ const botSchema = new mongoose.Schema(
 
         // =====================================
         // Maximum Open Trades:: M
-        // حداکثر تعداد معاملات همزمان
+        // حداکثر معاملات باز
         // =====================================
 
         maxOpenTrades: {
 
             type: Number,
 
-            default: 3,
+            default: 1,
 
             min: 1,
 
@@ -289,7 +306,7 @@ const botSchema = new mongoose.Schema(
 
         // =====================================
         // AI Accuracy:: M
-        // درصد دقت ثبت‌شده هوش مصنوعی
+        // دقت هوش مصنوعی
         // =====================================
 
         accuracy: {
@@ -339,7 +356,7 @@ const botSchema = new mongoose.Schema(
 
         // =====================================
         // Last Run:: M
-        // آخرین اجرای موتور ربات
+        // آخرین اجرای موتور
         // =====================================
 
         lastRun: {
@@ -367,7 +384,7 @@ const botSchema = new mongoose.Schema(
 
         // =====================================
         // Last Error:: M
-        // آخرین خطای ثبت‌شده
+        // آخرین خطای سیستم
         // =====================================
 
         lastError: {
@@ -397,7 +414,7 @@ const botSchema = new mongoose.Schema(
 
         // =====================================
         // Winning Trades:: M
-        // تعداد معاملات سودده
+        // معاملات سودده
         // =====================================
 
         winningTrades: {
@@ -413,7 +430,7 @@ const botSchema = new mongoose.Schema(
 
         // =====================================
         // Losing Trades:: M
-        // تعداد معاملات ضررده
+        // معاملات ضررده
         // =====================================
 
         losingTrades: {
@@ -429,7 +446,7 @@ const botSchema = new mongoose.Schema(
 
         // =====================================
         // Total Profit USD:: M
-        // مجموع سود خالص به دلار
+        // مجموع سود و زیان به دلار
         // =====================================
 
         totalProfitUSD: {
@@ -443,7 +460,7 @@ const botSchema = new mongoose.Schema(
 
         // =====================================
         // Total Fees USD:: M
-        // مجموع کارمزدها به دلار
+        // مجموع کارمزد به دلار
         // =====================================
 
         totalFeesUSD: {
@@ -458,17 +475,29 @@ const botSchema = new mongoose.Schema(
 
 
         // =====================================
-        // Enabled:: M
-        // اجازه فعالیت ربات
+        // Last Trade Profit USD:: M
+        // سود یا ضرر آخرین معامله
         // =====================================
 
-        enabled: {
+        lastTradeProfitUSD: {
 
-            type: Boolean,
+            type: Number,
 
-            default: false,
+            default: 0
 
-            index: true
+        },
+
+
+        // =====================================
+        // Last Trade Time:: M
+        // زمان آخرین معامله
+        // =====================================
+
+        lastTradeAt: {
+
+            type: Date,
+
+            default: null
 
         }
 
@@ -484,7 +513,7 @@ const botSchema = new mongoose.Schema(
 
 // =====================================
 // Database Indexes:: M
-// ایندکس‌های مورد نیاز دیتابیس
+// ایندکس‌های دیتابیس
 // =====================================
 
 botSchema.index({
