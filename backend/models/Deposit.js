@@ -8,18 +8,13 @@
 import mongoose from "mongoose";
 
 
-// =====================================
-// Deposit Schema:: M
-// ساختار اطلاعات واریز
-// =====================================
-
 const depositSchema =
     new mongoose.Schema(
 
         {
 
             // =====================================
-            // User:: M
+            // User Reference:: M
             // کاربر
             // =====================================
 
@@ -41,46 +36,8 @@ const depositSchema =
 
 
             // =====================================
-            // Amount USD:: M
-            // مبلغ دلار
-            // =====================================
-
-            amountUSD: {
-
-                type:
-                    Number,
-
-                required:
-                    true,
-
-                min:
-                    0
-
-            },
-
-
-            // =====================================
-            // USD To Toman Rate:: M
-            // نرخ دلار به تومان
-            // =====================================
-
-            usdToTomanRate: {
-
-                type:
-                    Number,
-
-                required:
-                    true,
-
-                min:
-                    0
-
-            },
-
-
-            // =====================================
             // Amount Toman:: M
-            // مبلغ معادل تومان
+            // مبلغ به تومان
             // =====================================
 
             amountToman: {
@@ -90,6 +47,44 @@ const depositSchema =
 
                 required:
                     true,
+
+                min:
+                    1
+
+            },
+
+
+            // =====================================
+            // Amount USD:: M
+            // مبلغ معادل دلار
+            // =====================================
+
+            amountUSD: {
+
+                type:
+                    Number,
+
+                default:
+                    0,
+
+                min:
+                    0
+
+            },
+
+
+            // =====================================
+            // Exchange Rate:: M
+            // نرخ تبدیل دلار
+            // =====================================
+
+            exchangeRate: {
+
+                type:
+                    Number,
+
+                default:
+                    0,
 
                 min:
                     0
@@ -111,18 +106,77 @@ const depositSchema =
 
                     "BANK",
 
-                    "CARD",
-
-                    "ONLINE",
-
-                    "CRYPTO",
+                    "GATEWAY",
 
                     "OTHER"
 
                 ],
 
                 default:
-                    "BANK"
+                    "GATEWAY"
+
+            },
+
+
+            // =====================================
+            // Payment Gateway:: M
+            // درگاه پرداخت
+            // =====================================
+
+            gateway: {
+
+                type:
+                    String,
+
+                default:
+                    null,
+
+                trim:
+                    true
+
+            },
+
+
+            // =====================================
+            // Payment ID:: M
+            // شناسه پرداخت
+            // =====================================
+
+            paymentId: {
+
+                type:
+                    String,
+
+                default:
+                    null,
+
+                index:
+                    true,
+
+                trim:
+                    true
+
+            },
+
+
+            // =====================================
+            // Transaction ID:: M
+            // شناسه تراکنش
+            // =====================================
+
+            transactionId: {
+
+                type:
+                    String,
+
+                default:
+                    null,
+
+                index:
+                    true,
+
+                trim:
+                    true
 
             },
 
@@ -161,62 +215,8 @@ const depositSchema =
 
 
             // =====================================
-            // Payment ID:: M
-            // شناسه پرداخت
-            // =====================================
-
-            paymentId: {
-
-                type:
-                    String,
-
-                default:
-                    null,
-
-                index:
-                    true
-
-            },
-
-
-            // =====================================
-            // Transaction ID:: M
-            // شناسه تراکنش
-            // =====================================
-
-            transactionId: {
-
-                type:
-                    String,
-
-                default:
-                    null,
-
-                index:
-                    true
-
-            },
-
-
-            // =====================================
-            // Gateway:: M
-            // درگاه پرداخت
-            // =====================================
-
-            gateway: {
-
-                type:
-                    String,
-
-                default:
-                    null
-
-            },
-
-
-            // =====================================
             // Wallet Credited:: M
-            // آیا موجودی شارژ شده؟
+            // آیا کیف پول شارژ شده؟
             // =====================================
 
             walletCredited: {
@@ -234,7 +234,7 @@ const depositSchema =
 
 
             // =====================================
-            // Confirmed At:: M
+            // Confirmation Time:: M
             // زمان تأیید
             // =====================================
 
@@ -250,17 +250,20 @@ const depositSchema =
 
 
             // =====================================
-            // Failure Reason:: M
-            // دلیل شکست
+            // Description:: M
+            // توضیحات
             // =====================================
 
-            failureReason: {
+            description: {
 
                 type:
                     String,
 
                 default:
-                    null
+                    "",
+
+                trim:
+                    true
 
             }
 
@@ -278,22 +281,14 @@ const depositSchema =
 
 // =====================================
 // Deposit Model:: M
-// مدل واریز
+// مدل نهایی
 // =====================================
 
 const Deposit =
     mongoose.model(
-
         "Deposit",
-
         depositSchema
-
     );
 
-
-// =====================================
-// Export:: M
-// خروجی مدل
-// =====================================
 
 export default Deposit;
