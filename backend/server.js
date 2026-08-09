@@ -1,6 +1,8 @@
 // =====================================
 // AutoTrade AI
-// Backend Server
+// Backend Server:: M
+// سرور اصلی بک‌اند
+// File: backend/server.js
 // =====================================
 
 import express from "express";
@@ -13,117 +15,200 @@ import userRoutes from "./routes/User.js";
 import walletRoutes from "./routes/Wallet.js";
 import tradeRoutes from "./routes/Trade.js";
 import botRoutes from "./routes/Bot.js";
+import withdrawRoutes from "./routes/withdraw.js";
 
 
 // =====================================
-// Environment
+// Environment:: M
+// تنظیمات محیط
 // =====================================
 
 dotenv.config();
 
 
 // =====================================
-// App
+// App:: M
 // =====================================
 
-const app = express();
-
-
-// =====================================
-// Middleware
-// =====================================
-
-app.use(cors());
-
-app.use(express.json());
+const app =
+    express();
 
 
 // =====================================
-// Health Check
+// Middleware:: M
 // =====================================
 
-app.get("/", (req, res) => {
+app.use(
+    cors()
+);
 
-    res.json({
-
-        status: "online",
-
-        message: "AutoTrade AI Backend Running 🚀"
-
-    });
-
-});
+app.use(
+    express.json()
+);
 
 
 // =====================================
-// API Routes
+// Health Check:: M
+// بررسی آنلاین بودن سرور
 // =====================================
 
-app.use("/api/users", userRoutes);
+app.get(
+    "/",
+    (req, res) => {
 
-app.use("/api/wallet", walletRoutes);
+        res.json({
 
-app.use("/api/trades", tradeRoutes);
+            success:
+                true,
 
-app.use("/api/bot", botRoutes);
+            status:
+                "online",
 
+            message:
+                "AutoTrade AI Backend Running 🚀"
 
-// =====================================
-// 404
-// =====================================
+        });
 
-app.use((req, res) => {
-
-    res.status(404).json({
-
-        success: false,
-
-        message: "API endpoint not found"
-
-    });
-
-});
+    }
+);
 
 
 // =====================================
-// Error Handler
+// API Routes:: M
+// مسیرهای API
 // =====================================
 
-app.use((error, req, res, next) => {
+app.use(
+    "/api/users",
+    userRoutes
+);
 
-    console.error("Server Error:", error);
 
-    res.status(500).json({
+app.use(
+    "/api/wallet",
+    walletRoutes
+);
 
-        success: false,
 
-        message: "Internal server error"
+app.use(
+    "/api/trades",
+    tradeRoutes
+);
 
-    });
 
-});
+app.use(
+    "/api/bot",
+    botRoutes
+);
 
 
 // =====================================
-// Server
+// Withdraw Routes:: M
+// مسیرهای برداشت
 // =====================================
 
-const PORT = process.env.PORT || 3000;
+app.use(
+    "/api/withdraw",
+    withdrawRoutes
+);
 
+
+// =====================================
+// 404:: M
+// مسیر پیدا نشد
+// =====================================
+
+app.use(
+    (req, res) => {
+
+        res.status(404).json({
+
+            success:
+                false,
+
+            message:
+                "API endpoint not found"
+
+        });
+
+    }
+);
+
+
+// =====================================
+// Error Handler:: M
+// مدیریت خطا
+// =====================================
+
+app.use(
+    (
+        error,
+        req,
+        res,
+        next
+    ) => {
+
+        console.error(
+            "Server Error:",
+            error
+        );
+
+
+        res.status(500).json({
+
+            success:
+                false,
+
+            message:
+                "Internal server error"
+
+        });
+
+    }
+);
+
+
+// =====================================
+// Server:: M
+// راه‌اندازی سرور
+// =====================================
+
+const PORT =
+    process.env.PORT ||
+    3000;
+
+
+// =====================================
+// Start Server:: M
+// شروع سرور
+// =====================================
 
 async function startServer() {
 
     try {
 
+        // =====================================
+        // اتصال دیتابیس:: M
+        // =====================================
+
         await connectDatabase();
 
-        app.listen(PORT, () => {
 
-            console.log(
-                `AutoTrade AI Backend running on port ${PORT}`
-            );
+        // =====================================
+        // اجرای سرور:: M
+        // =====================================
 
-        });
+        app.listen(
+            PORT,
+            () => {
+
+                console.log(
+                    `AutoTrade AI Backend running on port ${PORT}`
+                );
+
+            }
+        );
+
 
     }
 
@@ -134,7 +219,10 @@ async function startServer() {
             error.message
         );
 
-        process.exit(1);
+
+        process.exit(
+            1
+        );
 
     }
 
