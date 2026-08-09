@@ -8,12 +8,16 @@
 import mongoose from "mongoose";
 
 
+// =====================================
+// Wallet Schema:: M
+// =====================================
+
 const walletSchema = new mongoose.Schema(
 
     {
 
         // =====================================
-        // User Reference
+        // User Reference:: M
         // =====================================
 
         userId: {
@@ -33,10 +37,10 @@ const walletSchema = new mongoose.Schema(
 
 
         // =====================================
-        // Balance
+        // USD Balance:: M
         // =====================================
 
-        balance: {
+        balanceUSD: {
 
             type: Number,
 
@@ -48,10 +52,10 @@ const walletSchema = new mongoose.Schema(
 
 
         // =====================================
-        // Total Profit
+        // Total Profit USD:: M
         // =====================================
 
-        totalProfit: {
+        totalProfitUSD: {
 
             type: Number,
 
@@ -61,7 +65,7 @@ const walletSchema = new mongoose.Schema(
 
 
         // =====================================
-        // Total Trades
+        // Total Trades:: M
         // =====================================
 
         totalTrades: {
@@ -76,10 +80,10 @@ const walletSchema = new mongoose.Schema(
 
 
         // =====================================
-        // Withdrawable Balance
+        // Withdrawable USD:: M
         // =====================================
 
-        withdrawable: {
+        withdrawableUSD: {
 
             type: Number,
 
@@ -91,14 +95,14 @@ const walletSchema = new mongoose.Schema(
 
 
         // =====================================
-        // Currency
+        // Display Currency:: M
         // =====================================
 
         currency: {
 
             type: String,
 
-            default: "USDT",
+            default: "USD",
 
             uppercase: true,
 
@@ -108,7 +112,7 @@ const walletSchema = new mongoose.Schema(
 
 
         // =====================================
-        // Wallet Status
+        // Wallet Status:: M
         // =====================================
 
         status: {
@@ -123,7 +127,22 @@ const walletSchema = new mongoose.Schema(
 
             ],
 
-            default: "ACTIVE"
+            default: "ACTIVE",
+
+            index: true
+
+        },
+
+
+        // =====================================
+        // Last Balance Update:: M
+        // =====================================
+
+        lastBalanceUpdate: {
+
+            type: Date,
+
+            default: Date.now
 
         }
 
@@ -139,7 +158,7 @@ const walletSchema = new mongoose.Schema(
 
 
 // =====================================
-// Wallet Model
+// Wallet Model:: M
 // =====================================
 
 const Wallet = mongoose.model(
