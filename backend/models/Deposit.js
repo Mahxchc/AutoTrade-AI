@@ -1,240 +1,299 @@
 // =====================================
-// Deposit Model:: M
 // AutoTrade AI
-// مدل دیتابیس واریز
+// Deposit Model:: M
+// مدل واریز
 // File: backend/models/Deposit.js
 // =====================================
 
 import mongoose from "mongoose";
 
 
-const depositSchema = new mongoose.Schema(
+// =====================================
+// Deposit Schema:: M
+// ساختار اطلاعات واریز
+// =====================================
 
-    {
+const depositSchema =
+    new mongoose.Schema(
 
-        // =====================================
-        // User:: M
-        // کاربر
-        // =====================================
+        {
 
-        userId: {
+            // =====================================
+            // User:: M
+            // کاربر
+            // =====================================
 
-            type:
-                mongoose.Schema.Types.ObjectId,
+            userId: {
 
-            ref: "User",
+                type:
+                    mongoose.Schema.Types.ObjectId,
 
-            required: true,
+                ref:
+                    "User",
 
-            index: true
+                required:
+                    true,
+
+                index:
+                    true
+
+            },
+
+
+            // =====================================
+            // Amount USD:: M
+            // مبلغ دلار
+            // =====================================
+
+            amountUSD: {
+
+                type:
+                    Number,
+
+                required:
+                    true,
+
+                min:
+                    0
+
+            },
+
+
+            // =====================================
+            // USD To Toman Rate:: M
+            // نرخ دلار به تومان
+            // =====================================
+
+            usdToTomanRate: {
+
+                type:
+                    Number,
+
+                required:
+                    true,
+
+                min:
+                    0
+
+            },
+
+
+            // =====================================
+            // Amount Toman:: M
+            // مبلغ معادل تومان
+            // =====================================
+
+            amountToman: {
+
+                type:
+                    Number,
+
+                required:
+                    true,
+
+                min:
+                    0
+
+            },
+
+
+            // =====================================
+            // Payment Method:: M
+            // روش پرداخت
+            // =====================================
+
+            method: {
+
+                type:
+                    String,
+
+                enum: [
+
+                    "BANK",
+
+                    "CARD",
+
+                    "ONLINE",
+
+                    "CRYPTO",
+
+                    "OTHER"
+
+                ],
+
+                default:
+                    "BANK"
+
+            },
+
+
+            // =====================================
+            // Deposit Status:: M
+            // وضعیت واریز
+            // =====================================
+
+            status: {
+
+                type:
+                    String,
+
+                enum: [
+
+                    "PENDING",
+
+                    "PROCESSING",
+
+                    "COMPLETED",
+
+                    "FAILED",
+
+                    "CANCELLED"
+
+                ],
+
+                default:
+                    "PENDING",
+
+                index:
+                    true
+
+            },
+
+
+            // =====================================
+            // Payment ID:: M
+            // شناسه پرداخت
+            // =====================================
+
+            paymentId: {
+
+                type:
+                    String,
+
+                default:
+                    null,
+
+                index:
+                    true
+
+            },
+
+
+            // =====================================
+            // Transaction ID:: M
+            // شناسه تراکنش
+            // =====================================
+
+            transactionId: {
+
+                type:
+                    String,
+
+                default:
+                    null,
+
+                index:
+                    true
+
+            },
+
+
+            // =====================================
+            // Gateway:: M
+            // درگاه پرداخت
+            // =====================================
+
+            gateway: {
+
+                type:
+                    String,
+
+                default:
+                    null
+
+            },
+
+
+            // =====================================
+            // Wallet Credited:: M
+            // آیا موجودی شارژ شده؟
+            // =====================================
+
+            walletCredited: {
+
+                type:
+                    Boolean,
+
+                default:
+                    false,
+
+                index:
+                    true
+
+            },
+
+
+            // =====================================
+            // Confirmed At:: M
+            // زمان تأیید
+            // =====================================
+
+            confirmedAt: {
+
+                type:
+                    Date,
+
+                default:
+                    null
+
+            },
+
+
+            // =====================================
+            // Failure Reason:: M
+            // دلیل شکست
+            // =====================================
+
+            failureReason: {
+
+                type:
+                    String,
+
+                default:
+                    null
+
+            }
 
         },
 
+        {
 
-        // =====================================
-        // Wallet:: M
-        // کیف پول
-        // =====================================
-
-        walletId: {
-
-            type:
-                mongoose.Schema.Types.ObjectId,
-
-            ref: "Wallet",
-
-            required: true,
-
-            index: true
-
-        },
-
-
-        // =====================================
-        // Deposit Amount:: M
-        // مبلغ واریز
-        // =====================================
-
-        amountUSD: {
-
-            type: Number,
-
-            required: true,
-
-            min: 0
-
-        },
-
-
-        // =====================================
-        // Currency Rate:: M
-        // نرخ دلار هنگام واریز
-        // =====================================
-
-        usdToTomanRate: {
-
-            type: Number,
-
-            required: true,
-
-            min: 0
-
-        },
-
-
-        // =====================================
-        // Toman Amount:: M
-        // مبلغ تومانی
-        // =====================================
-
-        amountToman: {
-
-            type: Number,
-
-            required: true,
-
-            min: 0
-
-        },
-
-
-        // =====================================
-        // Payment Method:: M
-        // روش پرداخت
-        // =====================================
-
-        method: {
-
-            type: String,
-
-            enum: [
-
-                "BANK",
-
-                "GATEWAY",
-
-                "CRYPTO",
-
-                "OTHER"
-
-            ],
-
-            default: "BANK"
-
-        },
-
-
-        // =====================================
-        // External Payment ID:: M
-        // شناسه پرداخت
-        // =====================================
-
-        externalPaymentId: {
-
-            type: String,
-
-            default: null,
-
-            index: true
-
-        },
-
-
-        // =====================================
-        // Status:: M
-        // وضعیت واریز
-        // =====================================
-
-        status: {
-
-            type: String,
-
-            enum: [
-
-                "PENDING",
-
-                "PROCESSING",
-
-                "COMPLETED",
-
-                "FAILED",
-
-                "CANCELLED"
-
-            ],
-
-            default: "PENDING",
-
-            index: true
-
-        },
-
-
-        // =====================================
-        // Failure Reason:: M
-        // دلیل خطا
-        // =====================================
-
-        failureReason: {
-
-            type: String,
-
-            default: ""
-
-        },
-
-
-        // =====================================
-        // Payment Reference:: M
-        // کد پیگیری پرداخت
-        // =====================================
-
-        paymentReference: {
-
-            type: String,
-
-            default: "",
-
-            trim: true
-
-        },
-
-
-        // =====================================
-        // Completed At:: M
-        // زمان تکمیل
-        // =====================================
-
-        completedAt: {
-
-            type: Date,
-
-            default: null
+            timestamps:
+                true
 
         }
 
-    },
-
-    {
-
-        timestamps: true
-
-    }
-
-);
+    );
 
 
 // =====================================
 // Deposit Model:: M
+// مدل واریز
 // =====================================
 
-const Deposit = mongoose.model(
+const Deposit =
+    mongoose.model(
 
-    "Deposit",
+        "Deposit",
 
-    depositSchema
+        depositSchema
 
-);
+    );
 
+
+// =====================================
+// Export:: M
+// خروجی مدل
+// =====================================
 
 export default Deposit;
