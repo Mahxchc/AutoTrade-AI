@@ -9,21 +9,25 @@ import mongoose from "mongoose";
 
 import Deposit from "../models/Deposit.js";
 import Wallet from "../models/Wallet.js";
-import User from "../models/User.js";
-
-import {
-    getUsdToTomanRate
-} from "./currencyService.js";
 
 
 // =====================================
-// ایجاد درخواست واریز:: M
+// Create Deposit:: M
+// ایجاد درخواست واریز
 // =====================================
 
 export async function createDeposit({
+
     userId,
+
     amountToman,
-    method = "BANK"
+
+    exchangeRate,
+
+    method = "GATEWAY",
+
+    gateway = null
+
 }) {
 
     // =====================================
@@ -47,17 +51,13 @@ export async function createDeposit({
     // بررسی مبلغ:: M
     // =====================================
 
-    const numericToman =
-        Number(
-            amountToman
-        );
+    const toman =
+        Number(amountToman);
 
 
     if (
-        !Number.isFinite(
-            numericToman
-        ) ||
-        numericToman <= 0
+        !Number.isFinite(toman) ||
+        toman <= 0
     ) {
 
         throw new Error(
@@ -68,36 +68,11 @@ export async function createDeposit({
 
 
     // =====================================
-    // بررسی کاربر:: M
+    // بررسی نرخ دلار:: M
     // =====================================
-
-    const user =
-        await User.findById(
-            userId
-        );
-
-
-    if (!user) {
-
-        throw new Error(
-            "کاربر پیدا نشد"
-        );
-
-    }
-
-
-    // =====================================
-    // دریافت نرخ دلار:: M
-    // =====================================
-
-    const currency =
-        await getUsdToTomanRate();
-
 
     const rate =
-        Number(
-            currency.rate
-        );
+        Number(exchangeRate);
 
 
     if (
@@ -106,19 +81,22 @@ export async function createDeposit({
     ) {
 
         throw new Error(
-            "نرخ دلار معتبر نیست"
+            "نرخ دلار نامعتبر است"
         );
 
     }
 
 
     // =====================================
-    // تبدیل تومان به دلار:: M
+    // محاسبه معادل دلار:: M
     // =====================================
 
     const amountUSD =
-        numericToman /
-        rate;
+        Number(
+            (
+                toman / rate
+            ).toFixed(8)
+        );
 
 
     // =====================================
@@ -130,20 +108,17 @@ export async function createDeposit({
 
             userId,
 
-            amountUSD:
-                Number(
-                    amountUSD.toFixed(8)
-                ),
+            amountToman:
+                toman,
 
-            usdToTomanRate:
+            amountUSD,
+
+            exchangeRate:
                 rate,
 
-            amountToman:
-                Math.round(
-                    numericToman
-                ),
-
             method,
+
+            gateway,
 
             status:
                 "PENDING",
@@ -160,20 +135,26 @@ export async function createDeposit({
 
 
 // =====================================
-// تأیید واریز:: M
+// Confirm Deposit:: M
+// تأیید و شارژ کیف پول
 // =====================================
 //
 // مهم:
-// این تابع فقط زمانی باید اجرا شود که
-// پرداخت واقعاً توسط درگاه/سیستم پرداخت
-// تأیید شده باشد.
+//
+// این تابع فقط بعد از تأیید واقعی پرداخت
+// توسط درگاه باید فراخوانی شود.
 // =====================================
 
 export async function confirmDeposit({
+
     depositId,
+
     paymentId = null,
+
     transactionId = null,
+
     gateway = null
+
 }) {
 
     // =====================================
@@ -221,33 +202,22 @@ export async function confirmDeposit({
         deposit.status === "COMPLETED"
     ) {
 
+        const wallet =
+            await Wallet.findOne({
+                userId:
+                    deposit.userId
+            });
+
         return {
 
-            success:
-                true,
+            deposit,
+
+            wallet,
 
             alreadyCredited:
-                true,
-
-            deposit
+                true
 
         };
-
-    }
-
-
-    // =====================================
-    // وضعیت واریز:: M
-    // =====================================
-
-    if (
-        deposit.status === "CANCELLED" ||
-        deposit.status === "FAILED"
-    ) {
-
-        throw new Error(
-            "این درخواست واریز قابل تأیید نیست"
-        );
 
     }
 
@@ -263,71 +233,33 @@ export async function confirmDeposit({
         });
 
 
-    // =====================================
-    // ساخت کیف پول در صورت نبودن:: M
-    // =====================================
-
-    const targetWallet =
-        wallet ||
-        await Wallet.create({
-
-            userId:
-                deposit.userId,
-
-            balance:
-                0,
-
-            totalProfit:
-                0,
-
-            totalTrades:
-                0,
-
-            withdrawable:
-                0,
-
-            currency:
-                "USDT",
-
-            status:
-                "ACTIVE"
-
-        });
-
-
-    // =====================================
-    // بررسی وضعیت کیف پول:: M
-    // =====================================
-
-    if (
-        targetWallet.status !==
-        "ACTIVE"
-    ) {
+    if (!wallet) {
 
         throw new Error(
-            "کیف پول فعال نیست"
+            "کیف پول کاربر پیدا نشد"
         );
 
     }
 
 
     // =====================================
-    // شارژ موجودی:: M
+    // شارژ کیف پول:: M
     // =====================================
 
-    targetWallet.balance +=
-        deposit.amountUSD;
+    wallet.balance =
+        Number(wallet.balance || 0) +
+        Number(deposit.amountUSD || 0);
 
 
     // =====================================
     // ذخیره کیف پول:: M
     // =====================================
 
-    await targetWallet.save();
+    await wallet.save();
 
 
     // =====================================
-    // ثبت تأیید واریز:: M
+    // تکمیل واریز:: M
     // =====================================
 
     deposit.status =
@@ -336,17 +268,32 @@ export async function confirmDeposit({
     deposit.walletCredited =
         true;
 
-    deposit.paymentId =
-        paymentId;
-
-    deposit.transactionId =
-        transactionId;
-
-    deposit.gateway =
-        gateway;
-
     deposit.confirmedAt =
         new Date();
+
+
+    if (paymentId) {
+
+        deposit.paymentId =
+            paymentId;
+
+    }
+
+
+    if (transactionId) {
+
+        deposit.transactionId =
+            transactionId;
+
+    }
+
+
+    if (gateway) {
+
+        deposit.gateway =
+            gateway;
+
+    }
 
 
     await deposit.save();
@@ -354,16 +301,12 @@ export async function confirmDeposit({
 
     return {
 
-        success:
-            true,
-
-        alreadyCredited:
-            false,
-
         deposit,
 
-        wallet:
-            targetWallet
+        wallet,
+
+        alreadyCredited:
+            false
 
     };
 
@@ -371,7 +314,8 @@ export async function confirmDeposit({
 
 
 // =====================================
-// دریافت واریزها:: M
+// Get User Deposits:: M
+// دریافت واریزهای کاربر
 // =====================================
 
 export async function getUserDeposits(
@@ -391,19 +335,16 @@ export async function getUserDeposits(
     }
 
 
-    return await Deposit.find({
+    const deposits =
+        await Deposit.find({
+            userId
+        })
+        .sort({
+            createdAt: -1
+        })
+        .limit(100);
 
-        userId
 
-    })
-
-    .sort({
-
-        createdAt:
-            -1
-
-    })
-
-    .limit(100);
+    return deposits;
 
 }
