@@ -16,6 +16,7 @@ import walletRoutes from "./routes/Wallet.js";
 import tradeRoutes from "./routes/Trade.js";
 import botRoutes from "./routes/Bot.js";
 import withdrawRoutes from "./routes/withdraw.js";
+import depositRoutes from "./routes/Deposit.js";
 
 
 // =====================================
@@ -110,6 +111,17 @@ app.use(
 app.use(
     "/api/withdraw",
     withdrawRoutes
+);
+
+
+// =====================================
+// Deposit Routes:: M
+// مسیرهای واریز
+// =====================================
+
+app.use(
+    "/api/deposit",
+    depositRoutes
 );
 
 
