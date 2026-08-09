@@ -1,109 +1,114 @@
-۰// =====================================
+// =====================================
 // AutoTrade AI
 // AI Service
 // Decision Layer
 // =====================================
 
+import {
+    analyzeMarket as analyzeMarketEngine,
+    validateSignal
+} from "../engine/aiEngine.js";
 
-// تحلیل بازار
 
-async function analyzeMarket({
+// =====================================
+// Analyze Market
+// =====================================
 
+export async function analyzeMarket({
     symbol,
-
     marketData = {}
-
 }) {
-
-
     if (!symbol) {
-
         throw new Error(
             "Symbol is required"
         );
-
     }
 
+    // =====================================
+    // Extract Price Data
+    // =====================================
 
+    const priceData =
+        Array.isArray(
+            marketData.priceData
+        )
+            ? marketData.priceData
+            : [];
 
-    // بعداً مدل AI واقعی اینجا قرار می‌گیرد
+    // =====================================
+    // Run AI / Strategy Engine
+    // =====================================
 
-    let decision = "WAIT";
-
-    let confidence = 0;
-
-
-
-    return {
-
-        symbol,
-
-        decision,
-
-        confidence,
-
-        analysis: {
-
-            trend: "UNKNOWN",
-
-            risk: "UNKNOWN"
-
-        },
-
-        timestamp: new Date()
-
-    };
-
-}
-
-
-
-
-
-// ساخت سیگنال AI
-
-async function generateSignal({
-
-    symbol,
-
-    marketData
-
-}) {
-
-
-    const result =
-        await analyzeMarket({
-
+    const analysis =
+        analyzeMarketEngine({
             symbol,
-
-            marketData
-
+            priceData
         });
 
-
-
     return {
+        symbol: analysis.symbol,
 
-        symbol,
+        decision:
+            analysis.action,
 
-        signal: result.decision,
+        confidence:
+            analysis.confidence,
 
-        confidence: result.confidence,
+        analysis: {
+            reason:
+                analysis.reason,
 
-        createdAt: new Date()
+            priceChange:
+                analysis.priceChange ?? 0
+        },
 
+        timestamp:
+            analysis.timestamp ||
+            new Date()
     };
-
 }
 
 
+// =====================================
+// Generate Signal
+// =====================================
 
+export async function generateSignal({
+    symbol,
+    marketData = {},
+    minimumConfidence = 70
+}) {
+    const result =
+        await analyzeMarket({
+            symbol,
+            marketData
+        });
 
+    const valid =
+        validateSignal({
+            confidence:
+                result.confidence,
 
-module.exports = {
+            minimumConfidence
+        });
 
-    analyzeMarket,
+    return {
+        symbol,
 
-    generateSignal
+        signal:
+            valid
+                ? result.decision
+                : "WAIT",
 
-};
+        confidence:
+            result.confidence,
+
+        valid,
+
+        analysis:
+            result.analysis,
+
+        createdAt:
+            new Date()
+    };
+}
