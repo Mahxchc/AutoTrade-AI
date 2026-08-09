@@ -15,8 +15,7 @@ import {
 } from "../middleware/auth.js";
 
 
-const router =
-    express.Router();
+const router = express.Router();
 
 
 // =====================================
@@ -24,228 +23,72 @@ const router =
 // POST /api/users
 // =====================================
 
-router.post(
-    "/",
-    async (req, res, next) => {
+router.post("/", async (req, res, next) => {
 
-        try {
+    try {
 
-            const {
+        const {
 
-                telegramId,
+            telegramId,
+            username,
+            firstName,
+            lastName,
+            phoneNumber
 
-                username,
-
-                firstName,
-
-                lastName,
-
-                phoneNumber
-
-            } = req.body;
+        } = req.body;
 
 
-            // =====================================
-            // Validate Required Data
-            // =====================================
+        // =====================================
+        // Validate Required Data
+        // =====================================
 
-            if (
+        if (
+            !telegramId ||
+            !firstName ||
+            !lastName ||
+            !phoneNumber
+        ) {
 
-                !telegramId ||
+            return res.status(400).json({
 
-                !firstName ||
-
-                !lastName ||
-
-                !phoneNumber
-
-            ) {
-
-                return res.status(400).json({
-
-                    success: false,
-
-                    message:
-                        "Telegram ID, first name, last name and phone number are required"
-
-                });
-
-            }
-
-
-            // =====================================
-            // Find Existing User
-            // =====================================
-
-            let user =
-                await User.findOne({
-
-                    telegramId
-
-                });
-
-
-            // =====================================
-            // Existing User
-            // =====================================
-
-            if (user) {
-
-                user.username =
-                    username || user.username;
-
-                user.firstName =
-                    firstName;
-
-                user.lastName =
-                    lastName;
-
-                user.phoneNumber =
-                    phoneNumber;
-
-                user.lastLogin =
-                    new Date();
-
-
-                await user.save();
-
-
-                return res.status(200).json({
-
-                    success: true,
-
-                    message:
-                        "User information updated",
-
-                    user
-
-                });
-
-            }
-
-
-            // =====================================
-            // Create New User
-            // =====================================
-
-            user =
-                await User.create({
-
-                    telegramId,
-
-                    username:
-                        username || "",
-
-                    firstName,
-
-                    lastName,
-
-                    phoneNumber,
-
-                    accessEnabled:
-                        false,
-
-                    approvalStatus:
-                        "PENDING",
-
-                    isAdmin:
-                        false,
-
-                    botAccess:
-                        false,
-
-                    botActive:
-                        false,
-
-                    status:
-                        "PENDING"
-
-                });
-
-
-            return res.status(201).json({
-
-                success: true,
+                success: false,
 
                 message:
-                    "Your approval request has been sent to the owner.",
-
-                user
+                    "Telegram ID, first name, last name and phone number are required"
 
             });
 
         }
 
-        catch (error) {
 
-            next(error);
+        // =====================================
+        // Find Existing User
+        // =====================================
 
-        }
+        let user = await User.findOne({
 
-    }
-);
+            telegramId
 
-
-// =====================================
-// GET USER BY TELEGRAM ID
-// GET /api/users/:telegramId
-// =====================================
-//
-// This endpoint is intentionally public
-// for the initial registration/status flow.
-//
-// Telegram WebApp authentication must be
-// verified server-side before production.
-// =====================================
-
-router.get(
-
-    "/:telegramId",
-
-    async (req, res, next) => {
-
-        try {
-
-            const {
-                telegramId
-            } = req.params;
+        });
 
 
-            if (!telegramId) {
+        // =====================================
+        // Existing User
+        // =====================================
 
-                return res.status(400).json({
+        if (user) {
 
-                    success: false,
+            user.username =
+                username || user.username;
 
-                    message:
-                        "Telegram ID is required"
+            user.firstName =
+                firstName;
 
-                });
+            user.lastName =
+                lastName;
 
-            }
-
-
-            const user =
-                await User.findOne({
-
-                    telegramId
-
-                });
-
-
-            if (!user) {
-
-                return res.status(404).json({
-
-                    success: false,
-
-                    message:
-                        "User not found"
-
-                });
-
-            }
-
+            user.phoneNumber =
+                phoneNumber;
 
             user.lastLogin =
                 new Date();
@@ -258,21 +101,70 @@ router.get(
 
                 success: true,
 
+                message:
+                    "User information updated",
+
                 user
 
             });
 
         }
 
-        catch (error) {
 
-            next(error);
+        // =====================================
+        // New User
+        // =====================================
 
-        }
+        user = await User.create({
+
+            telegramId,
+
+            username:
+                username || "",
+
+            firstName,
+
+            lastName,
+
+            phoneNumber,
+
+            accessEnabled: false,
+
+            approvalStatus:
+                "PENDING",
+
+            isAdmin: false,
+
+            botAccess: false,
+
+            botActive: false,
+
+            status:
+                "PENDING"
+
+        });
+
+
+        return res.status(201).json({
+
+            success: true,
+
+            message:
+                "Your approval request has been sent to the owner.",
+
+            user
+
+        });
 
     }
 
-);
+    catch (error) {
+
+        next(error);
+
+    }
+
+});
 
 
 // =====================================
@@ -280,36 +172,28 @@ router.get(
 // GET /api/users/me
 // =====================================
 
-router.get(
+router.get("/me", requireUser, async (req, res, next) => {
 
-    "/me",
+    try {
 
-    requireUser,
+        return res.status(200).json({
 
-    async (req, res, next) => {
+            success: true,
 
-        try {
+            user:
+                req.user
 
-            return res.status(200).json({
-
-                success: true,
-
-                user:
-                    req.user
-
-            });
-
-        }
-
-        catch (error) {
-
-            next(error);
-
-        }
+        });
 
     }
 
-);
+    catch (error) {
+
+        next(error);
+
+    }
+
+});
 
 
 // =====================================
@@ -318,22 +202,16 @@ router.get(
 // =====================================
 
 router.post(
-
     "/admin/:userId/approve",
-
     requireUser,
-
     requireAdmin,
-
     async (req, res, next) => {
 
         try {
 
             const user =
                 await User.findById(
-
                     req.params.userId
-
                 );
 
 
@@ -363,6 +241,9 @@ router.post(
             user.status =
                 "ACTIVE";
 
+            user.botActive =
+                false;
+
 
             await user.save();
 
@@ -387,7 +268,6 @@ router.post(
         }
 
     }
-
 );
 
 
@@ -397,22 +277,16 @@ router.post(
 // =====================================
 
 router.post(
-
     "/admin/:userId/reject",
-
     requireUser,
-
     requireAdmin,
-
     async (req, res, next) => {
 
         try {
 
             const user =
                 await User.findById(
-
                     req.params.userId
-
                 );
 
 
@@ -469,7 +343,6 @@ router.post(
         }
 
     }
-
 );
 
 
@@ -479,13 +352,9 @@ router.post(
 // =====================================
 
 router.get(
-
     "/admin/pending",
-
     requireUser,
-
     requireAdmin,
-
     async (req, res, next) => {
 
         try {
@@ -499,8 +368,7 @@ router.get(
                 })
                 .sort({
 
-                    createdAt:
-                        -1
+                    createdAt: -1
 
                 });
 
@@ -525,7 +393,6 @@ router.get(
         }
 
     }
-
 );
 
 
@@ -535,13 +402,9 @@ router.get(
 // =====================================
 
 router.get(
-
     "/admin/all",
-
     requireUser,
-
     requireAdmin,
-
     async (req, res, next) => {
 
         try {
@@ -550,8 +413,7 @@ router.get(
                 await User.find({})
                 .sort({
 
-                    createdAt:
-                        -1
+                    createdAt: -1
 
                 });
 
@@ -576,7 +438,84 @@ router.get(
         }
 
     }
+);
 
+
+// =====================================
+// GET USER BY TELEGRAM ID
+// GET /api/users/:telegramId
+// =====================================
+
+router.get(
+    "/:telegramId",
+    async (req, res, next) => {
+
+        try {
+
+            const {
+                telegramId
+            } = req.params;
+
+
+            if (!telegramId) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    message:
+                        "Telegram ID is required"
+
+                });
+
+            }
+
+
+            const user =
+                await User.findOne({
+
+                    telegramId
+
+                });
+
+
+            if (!user) {
+
+                return res.status(404).json({
+
+                    success: false,
+
+                    message:
+                        "User not found"
+
+                });
+
+            }
+
+
+            user.lastLogin =
+                new Date();
+
+            await user.save();
+
+
+            return res.status(200).json({
+
+                success: true,
+
+                user
+
+            });
+
+        }
+
+        catch (error) {
+
+            next(error);
+
+        }
+
+    }
 );
 
 
