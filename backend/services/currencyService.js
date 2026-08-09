@@ -1,35 +1,203 @@
 // =====================================
-// Currency Service:: M
 // AutoTrade AI
-// سرویس تبدیل دلار و تومان
+// Currency Service:: M
+// سرویس نرخ ارز
 // File: backend/services/currencyService.js
 // =====================================
 
+import https from "https";
+
 
 // =====================================
-// نرخ پیش‌فرض دلار به تومان:: M
+// تنظیمات:: M
+// =====================================
+
+const DEFAULT_TIMEOUT = 10000;
+
+
+// =====================================
+// درخواست HTTP:: M
+// =====================================
+
+function requestJSON(url) {
+
+    return new Promise(
+        (resolve, reject) => {
+
+            const request =
+                https.get(
+                    url,
+                    {
+                        headers: {
+                            "User-Agent":
+                                "AutoTrade-AI/1.0"
+                        }
+                    },
+                    (response) => {
+
+                        let data = "";
+
+                        response.on(
+                            "data",
+                            (chunk) => {
+
+                                data += chunk;
+
+                            }
+                        );
+
+
+                        response.on(
+                            "end",
+                            () => {
+
+                                try {
+
+                                    if (
+                                        response.statusCode < 200 ||
+                                        response.statusCode >= 300
+                                    ) {
+
+                                        return reject(
+                                            new Error(
+                                                `Currency API returned status ${response.statusCode}`
+                                            )
+                                        );
+
+                                    }
+
+
+                                    const json =
+                                        JSON.parse(data);
+
+
+                                    resolve(json);
+
+                                }
+
+                                catch (error) {
+
+                                    reject(
+                                        new Error(
+                                            "Invalid currency API response"
+                                        )
+                                    );
+
+                                }
+
+                            }
+                        );
+
+                    }
+                );
+
+
+            request.setTimeout(
+                DEFAULT_TIMEOUT,
+                () => {
+
+                    request.destroy();
+
+                    reject(
+                        new Error(
+                            "Currency API request timed out"
+                        )
+                    );
+
+                }
+            );
+
+
+            request.on(
+                "error",
+                (error) => {
+
+                    reject(error);
+
+                }
+            );
+
+        }
+    );
+
+}
+
+
+// =====================================
+// دریافت نرخ دلار/تومان:: M
 // =====================================
 //
-// این مقدار موقت است.
-// بعداً به API واقعی نرخ ارز متصل می‌شود.
-// =====================================
-
-const DEFAULT_USD_TO_TOMAN_RATE =
-    170000;
-
-
-// =====================================
-// دریافت نرخ دلار به تومان:: M
+// نکته:
+// آدرس API از ENV خوانده می‌شود.
+// بنابراین نرخ را می‌توان بدون تغییر
+// کد از طریق Render تنظیم کرد.
 // =====================================
 
 export async function getUsdToTomanRate() {
 
-    const rate =
-        Number(
-            process.env.USD_TO_TOMAN_RATE ||
-            DEFAULT_USD_TO_TOMAN_RATE
+    const apiUrl =
+        process.env.CURRENCY_API_URL;
+
+
+    if (!apiUrl) {
+
+        throw new Error(
+            "CURRENCY_API_URL is not configured"
         );
 
+    }
+
+
+    const data =
+        await requestJSON(
+            apiUrl
+        );
+
+
+    // =====================================
+    // استخراج نرخ:: M
+    // =====================================
+
+    let rate = null;
+
+
+    if (
+        data?.rate !== undefined
+    ) {
+
+        rate =
+            Number(
+                data.rate
+            );
+
+    }
+
+    else if (
+        data?.usdToToman !== undefined
+    ) {
+
+        rate =
+            Number(
+                data.usdToToman
+            );
+
+    }
+
+    else if (
+        data?.data?.rate !== undefined
+    ) {
+
+        rate =
+            Number(
+                data.data.rate
+            );
+
+    }
+
+
+    // =====================================
+    // بررسی نرخ:: M
+    // =====================================
 
     if (
         !Number.isFinite(rate) ||
@@ -37,7 +205,7 @@ export async function getUsdToTomanRate() {
     ) {
 
         throw new Error(
-            "Invalid USD to Toman exchange rate"
+            "Invalid USD to Toman rate received"
         );
 
     }
@@ -45,18 +213,17 @@ export async function getUsdToTomanRate() {
 
     return {
 
-        usd:
+        currency:
             "USD",
 
-        toman:
+        targetCurrency:
             "IRR",
 
-        rate,
+        rate:
 
-        source:
-            process.env.USD_TO_TOMAN_RATE
-                ? "ENV"
-                : "DEFAULT",
+            Number(
+                rate.toFixed(0)
+            ),
 
         updatedAt:
             new Date()
@@ -70,17 +237,25 @@ export async function getUsdToTomanRate() {
 // تبدیل دلار به تومان:: M
 // =====================================
 
-export async function usdToToman(
-    amountUsd
-) {
+export async function convertUsdToToman({
 
-    const usd =
-        Number(amountUsd);
+    amountUSD,
+
+    rate = null
+
+}) {
+
+    const numericAmount =
+        Number(
+            amountUSD
+        );
 
 
     if (
-        !Number.isFinite(usd) ||
-        usd < 0
+        !Number.isFinite(
+            numericAmount
+        ) ||
+        numericAmount < 0
     ) {
 
         throw new Error(
@@ -90,30 +265,55 @@ export async function usdToToman(
     }
 
 
-    const exchange =
-        await getUsdToTomanRate();
+    let numericRate =
+        Number(
+            rate
+        );
 
 
-    const toman =
-        usd *
-        exchange.rate;
+    // =====================================
+    // اگر نرخ داده نشده باشد
+    // نرخ واقعی دریافت می‌شود
+    // =====================================
+
+    if (
+        !Number.isFinite(
+            numericRate
+        ) ||
+        numericRate <= 0
+    ) {
+
+        const currency =
+            await getUsdToTomanRate();
+
+
+        numericRate =
+            currency.rate;
+
+    }
+
+
+    const amountToman =
+        Math.round(
+            numericAmount *
+            numericRate
+        );
 
 
     return {
 
-        usd:
+        amountUSD:
             Number(
-                usd.toFixed(8)
+                numericAmount.toFixed(2)
             ),
 
-        toman:
-            Math.round(toman),
+        usdToTomanRate:
+            numericRate,
 
-        rate:
-            exchange.rate,
+        amountToman,
 
-        updatedAt:
-            exchange.updatedAt
+        formattedToman:
+            `${amountToman.toLocaleString("fa-IR")} تومان`
 
     };
 
@@ -124,17 +324,25 @@ export async function usdToToman(
 // تبدیل تومان به دلار:: M
 // =====================================
 
-export async function tomanToUsd(
-    amountToman
-) {
+export async function convertTomanToUsd({
 
-    const toman =
-        Number(amountToman);
+    amountToman,
+
+    rate = null
+
+}) {
+
+    const numericToman =
+        Number(
+            amountToman
+        );
 
 
     if (
-        !Number.isFinite(toman) ||
-        toman < 0
+        !Number.isFinite(
+            numericToman
+        ) ||
+        numericToman < 0
     ) {
 
         throw new Error(
@@ -144,30 +352,48 @@ export async function tomanToUsd(
     }
 
 
-    const exchange =
-        await getUsdToTomanRate();
+    let numericRate =
+        Number(
+            rate
+        );
 
 
-    const usd =
-        toman /
-        exchange.rate;
+    if (
+        !Number.isFinite(
+            numericRate
+        ) ||
+        numericRate <= 0
+    ) {
+
+        const currency =
+            await getUsdToTomanRate();
+
+
+        numericRate =
+            currency.rate;
+
+    }
+
+
+    const amountUSD =
+        numericToman /
+        numericRate;
 
 
     return {
 
-        toman:
-            Math.round(toman),
-
-        usd:
-            Number(
-                usd.toFixed(8)
+        amountToman:
+            Math.round(
+                numericToman
             ),
 
-        rate:
-            exchange.rate,
+        usdToTomanRate:
+            numericRate,
 
-        updatedAt:
-            exchange.updatedAt
+        amountUSD:
+            Number(
+                amountUSD.toFixed(2)
+            )
 
     };
 
@@ -175,42 +401,70 @@ export async function tomanToUsd(
 
 
 // =====================================
-// اطلاعات نمایشی کیف پول:: M
+// فرمت نمایش دلار:: M
 // =====================================
 
-export async function getWalletDisplayValues(
-    usdBalance
+export function formatUSD(
+    amount
 ) {
 
-    const result =
-        await usdToToman(
-            usdBalance
+    const numericAmount =
+        Number(
+            amount
         );
 
 
-    return {
+    if (
+        !Number.isFinite(
+            numericAmount
+        )
+    ) {
 
-        balanceUSD:
-            result.usd,
+        return "$0.00";
 
-        balanceToman:
-            result.toman,
+    }
 
-        exchangeRate:
-            result.rate,
 
-        balanceUSDText:
-            `$${result.usd.toFixed(2)}`,
+    return (
+        "$" +
+        numericAmount.toFixed(2)
+    );
 
-        balanceTomanText:
-            `${result.toman.toLocaleString("fa-IR")} تومان`,
+}
 
-        exchangeRateText:
-            `${result.rate.toLocaleString("fa-IR")} تومان`,
 
-        updatedAt:
-            result.updatedAt
+// =====================================
+// فرمت نمایش تومان:: M
+// =====================================
 
-    };
+export function formatToman(
+    amount
+) {
 
-      }
+    const numericAmount =
+        Number(
+            amount
+        );
+
+
+    if (
+        !Number.isFinite(
+            numericAmount
+        )
+    ) {
+
+        return "۰ تومان";
+
+    }
+
+
+    return (
+        Math.round(
+            numericAmount
+        ).toLocaleString(
+            "fa-IR"
+        ) +
+        " تومان"
+    );
+
+}
