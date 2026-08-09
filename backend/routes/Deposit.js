@@ -1,19 +1,19 @@
 // =====================================
 // AutoTrade AI
 // Deposit Routes:: M
-// مسیرهای واریز
+// مسیرهای واریز برای Mini App
 // File: backend/routes/Deposit.js
 // =====================================
 
 import express from "express";
 import mongoose from "mongoose";
 
-import Deposit from "../models/Deposit.js";
-
 import {
     createDeposit,
     getUserDeposits
 } from "../services/depositService.js";
+
+import Deposit from "../models/Deposit.js";
 
 
 const router =
@@ -33,9 +33,17 @@ router.post(
         try {
 
             const {
+
                 userId,
+
                 amountToman,
-                method
+
+                exchangeRate,
+
+                method,
+
+                gateway
+
             } = req.body;
 
 
@@ -45,7 +53,8 @@ router.post(
 
             if (
                 !userId ||
-                amountToman == null
+                amountToman == null ||
+                exchangeRate == null
             ) {
 
                 return res.status(400).json({
@@ -54,7 +63,7 @@ router.post(
                         false,
 
                     message:
-                        "شناسه کاربر و مبلغ واریز الزامی است"
+                        "اطلاعات واریز کامل نیست"
 
                 });
 
@@ -62,30 +71,7 @@ router.post(
 
 
             // =====================================
-            // بررسی شناسه کاربر:: M
-            // =====================================
-
-            if (
-                !mongoose.Types.ObjectId.isValid(
-                    userId
-                )
-            ) {
-
-                return res.status(400).json({
-
-                    success:
-                        false,
-
-                    message:
-                        "شناسه کاربر نامعتبر است"
-
-                });
-
-            }
-
-
-            // =====================================
-            // ایجاد درخواست:: M
+            // ایجاد درخواست واریز:: M
             // =====================================
 
             const deposit =
@@ -95,8 +81,15 @@ router.post(
 
                     amountToman,
 
+                    exchangeRate,
+
                     method:
-                        method || "BANK"
+                        method ||
+                        "GATEWAY",
+
+                    gateway:
+                        gateway ||
+                        null
 
                 });
 
@@ -142,12 +135,12 @@ router.post(
 
 // =====================================
 // GET USER DEPOSITS:: M
-// دریافت واریزهای کاربر
-// GET /api/deposit/:userId
+// دریافت لیست واریزهای کاربر
+// GET /api/deposit/user/:userId
 // =====================================
 
 router.get(
-    "/:userId",
+    "/user/:userId",
     async (req, res) => {
 
         try {
@@ -204,7 +197,7 @@ router.get(
         catch (error) {
 
             console.error(
-                "Get Deposits Error:",
+                "Get User Deposits Error:",
                 error
             );
 
@@ -215,6 +208,7 @@ router.get(
                     false,
 
                 message:
+                    error.message ||
                     "دریافت واریزها ناموفق بود"
 
             });
@@ -226,13 +220,13 @@ router.get(
 
 
 // =====================================
-// GET SINGLE DEPOSIT:: M
-// دریافت یک واریز
-// GET /api/deposit/detail/:depositId
+// GET DEPOSIT STATUS:: M
+// دریافت وضعیت یک واریز
+// GET /api/deposit/:depositId
 // =====================================
 
 router.get(
-    "/detail/:depositId",
+    "/:depositId",
     async (req, res) => {
 
         try {
@@ -266,7 +260,7 @@ router.get(
 
 
             // =====================================
-            // دریافت واریز:: M
+            // پیدا کردن واریز:: M
             // =====================================
 
             const deposit =
@@ -304,7 +298,7 @@ router.get(
         catch (error) {
 
             console.error(
-                "Get Deposit Error:",
+                "Get Deposit Status Error:",
                 error
             );
 
@@ -315,7 +309,7 @@ router.get(
                     false,
 
                 message:
-                    "دریافت اطلاعات واریز ناموفق بود"
+                    "دریافت وضعیت واریز ناموفق بود"
 
             });
 
