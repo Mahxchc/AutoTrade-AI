@@ -1,145 +1,154 @@
 // =====================================
+// Wallet Model:: M
 // AutoTrade AI
-// Wallet Service
-// Wallet Management Layer
+// Wallet Database Model
+// File: backend/models/Wallet.js
 // =====================================
 
-
-const Wallet = require("../models/Wallet");
-
+import mongoose from "mongoose";
 
 
-// ذخیره موقت کیف پول‌ها
-// بعداً با Database جایگزین می‌شود
+const walletSchema = new mongoose.Schema(
 
-const wallets = {};
+    {
+
+        // =====================================
+        // User Reference
+        // =====================================
+
+        userId: {
+
+            type:
+                mongoose.Schema.Types.ObjectId,
+
+            ref: "User",
+
+            required: true,
+
+            unique: true,
+
+            index: true
+
+        },
 
 
+        // =====================================
+        // Balance
+        // =====================================
+
+        balance: {
+
+            type: Number,
+
+            default: 0,
+
+            min: 0
+
+        },
 
 
-// گرفتن یا ساخت کیف پول کاربر
+        // =====================================
+        // Total Profit
+        // =====================================
 
-function getWallet(userId){
+        totalProfit: {
+
+            type: Number,
+
+            default: 0
+
+        },
 
 
-    if(!wallets[userId]){
+        // =====================================
+        // Total Trades
+        // =====================================
+
+        totalTrades: {
+
+            type: Number,
+
+            default: 0,
+
+            min: 0
+
+        },
 
 
-        wallets[userId] =
-            new Wallet({
+        // =====================================
+        // Withdrawable Balance
+        // =====================================
 
-                userId
+        withdrawable: {
 
-            });
+            type: Number,
 
+            default: 0,
+
+            min: 0
+
+        },
+
+
+        // =====================================
+        // Currency
+        // =====================================
+
+        currency: {
+
+            type: String,
+
+            default: "USDT",
+
+            uppercase: true,
+
+            trim: true
+
+        },
+
+
+        // =====================================
+        // Wallet Status
+        // =====================================
+
+        status: {
+
+            type: String,
+
+            enum: [
+
+                "ACTIVE",
+
+                "LOCKED"
+
+            ],
+
+            default: "ACTIVE"
+
+        }
+
+    },
+
+    {
+
+        timestamps: true
 
     }
 
+);
 
-    return wallets[userId];
 
+// =====================================
+// Wallet Model
+// =====================================
 
-}
+const Wallet = mongoose.model(
 
+    "Wallet",
 
+    walletSchema
 
+);
 
 
-
-// اضافه کردن سود
-
-function addProfit({
-
-    userId,
-
-    amount
-
-}){
-
-
-    const wallet =
-        getWallet(userId);
-
-
-
-    wallet.addProfit(amount);
-
-
-
-    return wallet.getInfo();
-
-
-}
-
-
-
-
-
-
-// ثبت معامله
-
-function registerTrade(userId){
-
-
-    const wallet =
-        getWallet(userId);
-
-
-
-    wallet.addTrade();
-
-
-
-    return wallet.getInfo();
-
-
-}
-
-
-
-
-
-
-// برداشت
-
-function withdraw({
-
-    userId,
-
-    amount
-
-}){
-
-
-    const wallet =
-        getWallet(userId);
-
-
-
-    wallet.withdraw(amount);
-
-
-
-    return wallet.getInfo();
-
-
-}
-
-
-
-
-
-
-module.exports = {
-
-
-    getWallet,
-
-    addProfit,
-
-    registerTrade,
-
-    withdraw
-
-
-};
+export default Wallet;
