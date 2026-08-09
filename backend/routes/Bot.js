@@ -11,6 +11,11 @@ import mongoose from "mongoose";
 import Bot from "../models/Bot.js";
 import User from "../models/User.js";
 
+import {
+    reactivateBot
+} from "../engine/tradingEngine.js";
+
+
 const router = express.Router();
 
 
@@ -24,25 +29,40 @@ router.get("/:userId", async (req, res) => {
 
     try {
 
-        const { userId } = req.params;
+        const { userId } =
+            req.params;
 
 
-        // بررسی معتبر بودن شناسه کاربر
-        if (!mongoose.Types.ObjectId.isValid(userId)) {
+        // =====================================
+        // بررسی شناسه کاربر:: M
+        // =====================================
+
+        if (
+            !mongoose.Types.ObjectId.isValid(
+                userId
+            )
+        ) {
 
             return res.status(400).json({
 
                 success: false,
 
-                message: "Invalid user ID"
+                message:
+                    "Invalid user ID"
 
             });
 
         }
 
 
-        // پیدا کردن کاربر
-        const user = await User.findById(userId);
+        // =====================================
+        // پیدا کردن کاربر:: M
+        // =====================================
+
+        const user =
+            await User.findById(
+                userId
+            );
 
 
         if (!user) {
@@ -51,18 +71,30 @@ router.get("/:userId", async (req, res) => {
 
                 success: false,
 
-                message: "User not found"
+                message:
+                    "User not found"
 
             });
 
         }
 
 
-        // پیدا کردن ربات
-        const bot = await Bot.findOne({ userId });
+        // =====================================
+        // پیدا کردن ربات:: M
+        // =====================================
+
+        const bot =
+            await Bot.findOne({
+
+                userId
+
+            });
 
 
-        // اگر ربات هنوز ساخته نشده باشد
+        // =====================================
+        // اگر ربات وجود نداشت:: M
+        // =====================================
+
         if (!bot) {
 
             return res.status(200).json({
@@ -71,29 +103,47 @@ router.get("/:userId", async (req, res) => {
 
                 bot: {
 
-                    status: "STOPPED",
+                    status:
+                        "STOPPED",
 
-                    enabled: false,
+                    enabled:
+                        false,
 
-                    strategy: "AI Scalping",
+                    strategy:
+                        "AI Scalping",
 
-                    market: "crypto",
+                    market:
+                        "crypto",
 
-                    riskLevel: "LOW",
+                    riskLevel:
+                        "LOW",
 
-                    riskPercent: 1,
+                    riskPercent:
+                        1,
 
-                    maxDailyLossPercent: 3,
+                    maxOpenTrades:
+                        1,
 
-                    openTrades: 0,
+                    openTrades:
+                        0,
 
-                    maxOpenTrades: 3,
+                    maxConsecutiveLosses:
+                        2,
 
-                    lastSignal: "WAIT",
+                    consecutiveLosses:
+                        0,
 
-                    accuracy: 0,
+                    lastSignal:
+                        "WAIT",
 
-                    confidence: 0
+                    accuracy:
+                        0,
+
+                    confidence:
+                        0,
+
+                    stopReason:
+                        ""
 
                 }
 
@@ -123,7 +173,8 @@ router.get("/:userId", async (req, res) => {
 
             success: false,
 
-            message: "Failed to get bot status"
+            message:
+                "Failed to get bot status"
 
         });
 
@@ -138,126 +189,199 @@ router.get("/:userId", async (req, res) => {
 // POST /api/bot/start/:userId
 // =====================================
 
-router.post("/start/:userId", async (req, res) => {
+router.post(
+    "/start/:userId",
+    async (req, res) => {
 
-    try {
+        try {
 
-        const { userId } = req.params;
+            const { userId } =
+                req.params;
 
-
-        // بررسی شناسه کاربر
-        if (!mongoose.Types.ObjectId.isValid(userId)) {
-
-            return res.status(400).json({
-
-                success: false,
-
-                message: "Invalid user ID"
-
-            });
-
-        }
-
-
-        // پیدا کردن کاربر
-        const user = await User.findById(userId);
-
-
-        if (!user) {
-
-            return res.status(404).json({
-
-                success: false,
-
-                message: "User not found"
-
-            });
-
-        }
-
-
-        // =====================================
-        // بررسی تأیید دسترسی کاربر
-        // =====================================
-
-        if (
-
-            user.approvalStatus !== "APPROVED" ||
-
-            user.accessEnabled !== true ||
-
-            user.botAccess !== true ||
-
-            user.status !== "ACTIVE"
-
-        ) {
-
-            return res.status(403).json({
-
-                success: false,
-
-                message:
-                    "Your trading access has not been approved yet."
-
-            });
-
-        }
-
-
-        // =====================================
-        // پیدا کردن یا ساخت ربات
-        // =====================================
-
-        let bot = await Bot.findOne({ userId });
-
-
-        if (!bot) {
-
-            bot = await Bot.create({
-
-                userId,
-
-                status: "ACTIVE",
-
-                enabled: true,
-
-                strategy: "AI Scalping",
-
-                market: "crypto",
-
-                riskLevel: "LOW",
-
-                riskPercent: 1,
-
-                maxDailyLossPercent: 3,
-
-                maxOpenTrades: 3,
-
-                lastSignal: "WAIT",
-
-                lastRun: new Date(),
-
-                lastHeartbeat: new Date(),
-
-                stopReason: ""
-
-            });
-
-        }
-
-        else {
 
             // =====================================
-            // بررسی وضعیت فعلی ربات
+            // بررسی شناسه کاربر:: M
             // =====================================
 
-            if (bot.status === "ACTIVE" && bot.enabled === true) {
+            if (
+                !mongoose.Types.ObjectId.isValid(
+                    userId
+                )
+            ) {
 
-                return res.status(200).json({
+                return res.status(400).json({
 
-                    success: true,
+                    success: false,
 
-                    message: "Trading bot is already active",
+                    message:
+                        "Invalid user ID"
+
+                });
+
+            }
+
+
+            // =====================================
+            // پیدا کردن کاربر:: M
+            // =====================================
+
+            const user =
+                await User.findById(
+                    userId
+                );
+
+
+            if (!user) {
+
+                return res.status(404).json({
+
+                    success: false,
+
+                    message:
+                        "User not found"
+
+                });
+
+            }
+
+
+            // =====================================
+            // بررسی دسترسی کاربر:: M
+            // =====================================
+
+            if (
+
+                user.approvalStatus !==
+                    "APPROVED" ||
+
+                user.accessEnabled !==
+                    true ||
+
+                user.botAccess !==
+                    true ||
+
+                user.status !==
+                    "ACTIVE"
+
+            ) {
+
+                return res.status(403).json({
+
+                    success: false,
+
+                    message:
+                        "Your trading access has not been approved yet."
+
+                });
+
+            }
+
+
+            // =====================================
+            // پیدا کردن ربات:: M
+            // =====================================
+
+            let bot =
+                await Bot.findOne({
+
+                    userId
+
+                });
+
+
+            // =====================================
+            // ساخت ربات در صورت نبودن:: M
+            // =====================================
+
+            if (!bot) {
+
+                bot =
+                    await Bot.create({
+
+                        userId,
+
+                        status:
+                            "ACTIVE",
+
+                        enabled:
+                            true,
+
+                        strategy:
+                            "AI Scalping",
+
+                        market:
+                            "crypto",
+
+                        riskLevel:
+                            "LOW",
+
+                        riskPercent:
+                            1,
+
+                        maxOpenTrades:
+                            1,
+
+                        openTrades:
+                            0,
+
+                        maxConsecutiveLosses:
+                            2,
+
+                        consecutiveLosses:
+                            0,
+
+                        lastSignal:
+                            "WAIT",
+
+                        lastRun:
+                            new Date(),
+
+                        lastHeartbeat:
+                            new Date(),
+
+                        stopReason:
+                            ""
+
+                    });
+
+            }
+
+
+            // =====================================
+            // جلوگیری از شروع مجدد بعد از ۲ ضرر:: M
+            // =====================================
+
+            if (
+
+                bot.consecutiveLosses >=
+                bot.maxConsecutiveLosses
+
+            ) {
+
+                bot.status =
+                    "PAUSED";
+
+                bot.enabled =
+                    false;
+
+                bot.stopReason =
+                    "Maximum consecutive losses reached";
+
+                await bot.save();
+
+
+                user.botActive =
+                    false;
+
+                await user.save();
+
+
+                return res.status(409).json({
+
+                    success: false,
+
+                    message:
+                        "Bot is paused. Please reactivate it first.",
 
                     bot
 
@@ -267,116 +391,71 @@ router.post("/start/:userId", async (req, res) => {
 
 
             // =====================================
-            // فعال کردن ربات
+            // اگر از قبل فعال است:: M
             // =====================================
 
-            bot.status = "ACTIVE";
+            if (
 
-            bot.enabled = true;
+                bot.status ===
+                    "ACTIVE" &&
 
-            bot.stopReason = "";
+                bot.enabled ===
+                    true
 
-            bot.lastError = "";
+            ) {
 
-            bot.lastRun = new Date();
+                return res.status(200).json({
 
-            bot.lastHeartbeat = new Date();
+                    success: true,
+
+                    message:
+                        "Trading bot is already active",
+
+                    bot
+
+                });
+
+            }
+
+
+            // =====================================
+            // فعال کردن ربات:: M
+            // =====================================
+
+            bot.status =
+                "ACTIVE";
+
+
+            bot.enabled =
+                true;
+
+
+            bot.stopReason =
+                "";
+
+
+            bot.lastError =
+                "";
+
+
+            bot.lastRun =
+                new Date();
+
+
+            bot.lastHeartbeat =
+                new Date();
 
 
             await bot.save();
 
-        }
 
+            // =====================================
+            // همگام‌سازی User:: M
+            // =====================================
 
-        // همگام‌سازی وضعیت ربات در User
-        user.botActive = true;
+            user.botActive =
+                true;
 
-        await user.save();
-
-
-        return res.status(200).json({
-
-            success: true,
-
-            message: "Trading bot started successfully",
-
-            bot
-
-        });
-
-
-    } catch (error) {
-
-        console.error(
-            "Start Bot Error:",
-            error
-        );
-
-
-        return res.status(500).json({
-
-            success: false,
-
-            message: "Failed to start bot"
-
-        });
-
-    }
-
-});
-
-
-// =====================================
-// STOP BOT:: M
-// توقف ربات
-// POST /api/bot/stop/:userId
-// =====================================
-
-router.post("/stop/:userId", async (req, res) => {
-
-    try {
-
-        const { userId } = req.params;
-
-
-        // بررسی شناسه کاربر
-        if (!mongoose.Types.ObjectId.isValid(userId)) {
-
-            return res.status(400).json({
-
-                success: false,
-
-                message: "Invalid user ID"
-
-            });
-
-        }
-
-
-        // پیدا کردن کاربر
-        const user = await User.findById(userId);
-
-
-        if (!user) {
-
-            return res.status(404).json({
-
-                success: false,
-
-                message: "User not found"
-
-            });
-
-        }
-
-
-        // پیدا کردن ربات
-        const bot = await Bot.findOne({ userId });
-
-
-        if (!bot) {
-
-            user.botActive = false;
 
             await user.save();
 
@@ -385,67 +464,353 @@ router.post("/stop/:userId", async (req, res) => {
 
                 success: true,
 
-                message: "Trading bot is already stopped",
+                message:
+                    "Trading bot started successfully",
 
-                bot: null
+                bot
+
+            });
+
+
+        } catch (error) {
+
+            console.error(
+                "Start Bot Error:",
+                error
+            );
+
+
+            return res.status(500).json({
+
+                success: false,
+
+                message:
+                    "Failed to start bot"
 
             });
 
         }
 
-
-        // =====================================
-        // توقف ربات
-        // =====================================
-
-        bot.status = "STOPPED";
-
-        bot.enabled = false;
-
-        bot.stopReason = "Stopped by user";
-
-        bot.lastHeartbeat = new Date();
+    }
+);
 
 
-        await bot.save();
+// =====================================
+// STOP BOT:: M
+// توقف دستی ربات
+// POST /api/bot/stop/:userId
+// =====================================
+
+router.post(
+    "/stop/:userId",
+    async (req, res) => {
+
+        try {
+
+            const { userId } =
+                req.params;
 
 
-        // همگام‌سازی وضعیت کاربر
-        user.botActive = false;
+            // =====================================
+            // بررسی شناسه کاربر:: M
+            // =====================================
 
-        await user.save();
+            if (
+                !mongoose.Types.ObjectId.isValid(
+                    userId
+                )
+            ) {
 
+                return res.status(400).json({
 
-        return res.status(200).json({
+                    success: false,
 
-            success: true,
+                    message:
+                        "Invalid user ID"
 
-            message: "Trading bot stopped successfully",
+                });
 
-            bot
-
-        });
-
-
-    } catch (error) {
-
-        console.error(
-            "Stop Bot Error:",
-            error
-        );
+            }
 
 
-        return res.status(500).json({
+            // =====================================
+            // پیدا کردن کاربر:: M
+            // =====================================
 
-            success: false,
+            const user =
+                await User.findById(
+                    userId
+                );
 
-            message: "Failed to stop bot"
 
-        });
+            if (!user) {
+
+                return res.status(404).json({
+
+                    success: false,
+
+                    message:
+                        "User not found"
+
+                });
+
+            }
+
+
+            // =====================================
+            // پیدا کردن ربات:: M
+            // =====================================
+
+            const bot =
+                await Bot.findOne({
+
+                    userId
+
+                });
+
+
+            if (!bot) {
+
+                user.botActive =
+                    false;
+
+                await user.save();
+
+
+                return res.status(200).json({
+
+                    success: true,
+
+                    message:
+                        "Trading bot is already stopped",
+
+                    bot:
+                        null
+
+                });
+
+            }
+
+
+            // =====================================
+            // توقف دستی:: M
+            // =====================================
+
+            bot.status =
+                "STOPPED";
+
+
+            bot.enabled =
+                false;
+
+
+            bot.stopReason =
+                "Stopped by user";
+
+
+            bot.lastHeartbeat =
+                new Date();
+
+
+            await bot.save();
+
+
+            // =====================================
+            // همگام‌سازی User:: M
+            // =====================================
+
+            user.botActive =
+                false;
+
+
+            await user.save();
+
+
+            return res.status(200).json({
+
+                success: true,
+
+                message:
+                    "Trading bot stopped successfully",
+
+                bot
+
+            });
+
+
+        } catch (error) {
+
+            console.error(
+                "Stop Bot Error:",
+                error
+            );
+
+
+            return res.status(500).json({
+
+                success: false,
+
+                message:
+                    "Failed to stop bot"
+
+            });
+
+        }
 
     }
+);
 
-});
+
+// =====================================
+// REACTIVATE BOT:: M
+// فعال‌سازی مجدد بعد از توقف خودکار
+// POST /api/bot/reactivate/:userId
+// =====================================
+
+router.post(
+    "/reactivate/:userId",
+    async (req, res) => {
+
+        try {
+
+            const { userId } =
+                req.params;
+
+
+            // =====================================
+            // بررسی شناسه کاربر:: M
+            // =====================================
+
+            if (
+                !mongoose.Types.ObjectId.isValid(
+                    userId
+                )
+            ) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    message:
+                        "Invalid user ID"
+
+                });
+
+            }
+
+
+            // =====================================
+            // پیدا کردن کاربر:: M
+            // =====================================
+
+            const user =
+                await User.findById(
+                    userId
+                );
+
+
+            if (!user) {
+
+                return res.status(404).json({
+
+                    success: false,
+
+                    message:
+                        "User not found"
+
+                });
+
+            }
+
+
+            // =====================================
+            // بررسی دسترسی کاربر:: M
+            // =====================================
+
+            if (
+
+                user.approvalStatus !==
+                    "APPROVED" ||
+
+                user.accessEnabled !==
+                    true ||
+
+                user.botAccess !==
+                    true ||
+
+                user.status !==
+                    "ACTIVE"
+
+            ) {
+
+                return res.status(403).json({
+
+                    success: false,
+
+                    message:
+                        "Your trading access has not been approved yet."
+
+                });
+
+            }
+
+
+            // =====================================
+            // فعال‌سازی مجدد از Trading Engine:: M
+            // =====================================
+
+            const bot =
+                await reactivateBot({
+
+                    userId
+
+                });
+
+
+            // =====================================
+            // همگام‌سازی User:: M
+            // =====================================
+
+            user.botActive =
+                true;
+
+
+            await user.save();
+
+
+            return res.status(200).json({
+
+                success: true,
+
+                message:
+                    "Trading bot reactivated successfully",
+
+                bot
+
+            });
+
+
+        } catch (error) {
+
+            console.error(
+                "Reactivate Bot Error:",
+                error
+            );
+
+
+            return res.status(500).json({
+
+                success: false,
+
+                message:
+                    "Failed to reactivate bot"
+
+            });
+
+        }
+
+    }
+);
 
 
 // =====================================
