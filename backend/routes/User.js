@@ -33,10 +33,14 @@ router.get("/:telegramId", async (req, res) => {
             });
         }
 
-        return res.json({
+        user.lastLogin = new Date();
+        await user.save();
+
+        return res.status(200).json({
             success: true,
             user
         });
+
     } catch (error) {
         console.error("Get User Error:", error);
 
@@ -48,7 +52,7 @@ router.get("/:telegramId", async (req, res) => {
 });
 
 // =====================================
-// CREATE USER
+// CREATE USER / APPLICATION
 // POST /api/users
 // =====================================
 
@@ -57,43 +61,78 @@ router.post("/", async (req, res) => {
         const {
             telegramId,
             username,
-            firstName
+            firstName,
+            lastName,
+            phoneNumber
         } = req.body;
 
-        if (!telegramId) {
+        if (
+            !telegramId ||
+            !firstName ||
+            !lastName ||
+            !phoneNumber
+        ) {
             return res.status(400).json({
                 success: false,
-                message: "Telegram ID is required"
+                message: "Telegram ID, first name, last name and phone number are required"
             });
         }
 
-        const existingUser = await User.findOne({ telegramId });
+        let user = await User.findOne({ telegramId });
 
-        if (existingUser) {
+        // =====================================
+        // Existing User
+        // =====================================
+
+        if (user) {
+            user.username = username || user.username;
+            user.firstName = firstName;
+            user.lastName = lastName;
+            user.phoneNumber = phoneNumber;
+            user.lastLogin = new Date();
+
+            await user.save();
+
             return res.status(200).json({
                 success: true,
-                message: "User already exists",
-                user: existingUser
+                message: "User information updated",
+                user
             });
         }
 
-        const user = await User.create({
+        // =====================================
+        // New User
+        // =====================================
+
+        user = await User.create({
             telegramId,
             username: username || "",
-            firstName: firstName || ""
+            firstName,
+            lastName,
+            phoneNumber,
+
+            accessEnabled: false,
+            approvalStatus: "PENDING",
+
+            botAccess: false,
+            botActive: false,
+
+            status: "PENDING"
         });
 
         return res.status(201).json({
             success: true,
-            message: "User created successfully",
+            message:
+                "Your request has been sent to the owner for approval.",
             user
         });
+
     } catch (error) {
         console.error("Create User Error:", error);
 
         return res.status(500).json({
             success: false,
-            message: "Failed to create user"
+            message: "Failed to submit application"
         });
     }
 });
