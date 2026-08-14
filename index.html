@@ -1,703 +1,460 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
-
 <head>
+  <meta charset="UTF-8">
 
-<meta charset="UTF-8">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+  >
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#050816">
 
-<title>
-AutoTrade AI
-</title>
+  <title>AutoTrade AI</title>
 
+  <link rel="stylesheet" href="style.css">
 
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-
-
-<link rel="stylesheet" href="style.css">
-
-
+  <!-- Telegram Mini App -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
-
 
 <body>
 
+  <div id="app">
 
-<div class="app">
+    <!-- ================= HEADER ================= -->
+    <header class="top-header">
 
+      <div class="header-title">
+        <span>AutoTrade AI</span>
+      </div>
 
-<header class="top-header">
+      <button class="header-button" id="menuBtn" aria-label="منو">
+        ☰
+      </button>
 
+      <div class="header-actions">
 
-<div class="brand">
+        <button class="icon-button" id="notificationBtn">
+          🔔
+          <span class="notification-count" id="notificationCount">3</span>
+        </button>
 
+        <div class="profile-mini">
+          <div class="profile-avatar">
+            🤖
+          </div>
 
-<div class="logo">
-🤖
-</div>
+          <div class="profile-text">
+            <div>
+              سلام
+              <strong id="userName">کاربر</strong>
+              👋
+            </div>
 
+            <small>خوش آمدید به AutoTrade AI</small>
+          </div>
+        </div>
 
-<div>
+      </div>
 
-<h1>
-ربات معامله‌گر اتوماتیک
-</h1>
+    </header>
 
 
-<p id="username">
-در حال اتصال...
-</p>
+    <!-- ================= MAIN ================= -->
+    <main class="main-content">
 
 
-</div>
+      <!-- ================= WELCOME ================= -->
+      <section class="welcome-section">
 
+        <div>
+          <h1>ربات معامله‌گر خودکار</h1>
+          <p>
+            هوش مصنوعی معاملات شما را مدیریت می‌کند
+          </p>
+        </div>
 
-</div>
+      </section>
 
 
-<div class="notification">
-🔔
-</div>
+      <!-- ================= WALLET ================= -->
+      <section class="balance-card">
 
+        <div class="balance-info">
 
-</header>
+          <div class="balance-label">
+            موجودی حساب
+            <span>◉</span>
+          </div>
 
+          <div class="balance-value" id="balance">
+            $0.00
+          </div>
 
+          <div class="balance-rial">
+            ≈ <span id="balanceRial">0</span> تومان
+          </div>
 
-<main id="app-content">
+          <div class="balance-actions">
 
+            <button
+              class="primary-button"
+              id="depositBtn"
+            >
+              افزایش موجودی
+              <span>＋</span>
+            </button>
 
-<section class="page active" id="home-page">
+            <button
+              class="secondary-button"
+              id="withdrawBtn"
+            >
+              برداشت
+              <span>⇧</span>
+            </button>
 
+          </div>
 
-<div class="balance-card">
+        </div>
 
+        <div class="wallet-illustration">
+          💰
+        </div>
 
-<p>
-موجودی حساب
-</p>
+      </section>
 
 
-<h2 id="balance">
-0.00 USDT
-</h2>
+      <!-- ================= STATS ================= -->
+      <section class="stats-grid">
 
+        <div class="stat-card green">
 
-<span id="balanceIR">
-≈ 0 تومان
-</span>
+          <span class="stat-title">
+            سود کل
+          </span>
 
+          <strong id="totalProfit">
+            $0.00
+          </strong>
 
-</div>
+          <small id="totalProfitPercent">
+            0%
+          </small>
 
+          <div class="mini-chart">
+            ╱╲╱╲╱╲
+          </div>
 
+        </div>
 
-<div class="cards-grid">
 
+        <div class="stat-card blue">
 
-<div class="info-card">
+          <span class="stat-title">
+            سود امروز
+          </span>
 
-<span>
-سود امروز
-</span>
+          <strong id="todayProfit">
+            $0.00
+          </strong>
 
-<strong id="today-profit">
-0%
-</strong>
+          <small id="todayProfitPercent">
+            0%
+          </small>
 
-</div>
+          <div class="mini-chart">
+            ╱╲╱╲╱╲
+          </div>
 
+        </div>
 
 
-<div class="info-card">
+        <div class="stat-card purple">
 
-<span>
-سود کل
-</span>
+          <span class="stat-title">
+            کل معاملات
+          </span>
 
-<strong id="total-profit">
-0$
-</strong>
+          <strong id="totalTrades">
+            0
+          </strong>
 
-</div>
+          <small id="tradePercent">
+            0%
+          </small>
 
+          <div class="mini-chart">
+            ╱╲╱╲╱╲
+          </div>
 
-</div>
+        </div>
 
 
-<!-- AI Section -->
+        <div class="stat-card orange">
 
-<section class="ai-card">
+          <span class="stat-title">
+            درحال اجرا
+          </span>
 
+          <strong id="activeTrades">
+            0
+          </strong>
 
-<div class="card-title">
+          <small id="activePercent">
+            0%
+          </small>
 
-<h2>
-🤖 هوش مصنوعی
-</h2>
+          <div class="mini-chart">
+            ╱╲╱╲╱╲
+          </div>
 
+        </div>
 
-<span id="bot-status">
-خاموش
-</span>
+      </section>
 
 
-</div>
+      <!-- ================= AI ENGINE ================= -->
+      <section class="ai-card">
 
+        <div class="ai-header">
 
+          <div>
+            <h2>
+              موتور هوش مصنوعی
+              <span class="brain-icon">🧠</span>
+            </h2>
 
-<div class="ai-row">
+            <span
+              class="ai-status stopped"
+              id="aiStatus"
+            >
+              <i></i>
+              خاموش
+            </span>
+          </div>
 
-<span>
-استراتژی
-</span>
+        </div>
 
 
-<strong>
-Crypto AI Scalping
-</strong>
+        <div class="ai-content">
 
+          <div class="confidence-circle">
 
-</div>
+            <div class="confidence-value">
+              <span id="aiConfidence">0</span>%
+            </div>
 
+          </div>
 
+          <span class="confidence-label">
+            اعتماد AI
+          </span>
 
 
-<div class="ai-row">
+          <div class="ai-details">
 
-<span>
-دقت تحلیل
-</span>
+            <div>
+              <span>وضعیت:</span>
+              <strong id="botStatus">
+                غیرفعال
+              </strong>
+            </div>
 
+            <div>
+              <span>استراتژی:</span>
+              <strong id="strategy">
+                انتخاب نشده
+              </strong>
+            </div>
 
-<strong id="ai-accuracy">
-0%
-</strong>
+            <div>
+              <span>ریسک:</span>
+              <strong id="riskLevel">
+                -
+              </strong>
+            </div>
 
+          </div>
 
-</div>
+        </div>
 
 
+        <button
+          class="ai-start-button"
+          id="startAiBtn"
+        >
+          <span>▶</span>
+          شروع معامله‌گری با AI
+        </button>
 
+      </section>
 
 
-<div class="ai-row">
+      <!-- ================= SIGNAL + TRADES ================= -->
+      <section class="two-column">
 
-<span>
-اعتماد سیگنال
-</span>
 
+        <!-- SIGNAL -->
+        <div class="small-card">
 
-<strong id="confidence">
-0%
-</strong>
+          <div class="card-title">
+            <span>آخرین سیگنال</span>
+            <span>🎯</span>
+          </div>
 
+          <div
+            class="empty-state"
+            id="latestSignal"
+          >
+            هیچ سیگنالی وجود ندارد
+          </div>
 
-</div>
+          <div
+            class="signal-value"
+            id="signalValue"
+          >
+            -
+          </div>
 
+        </div>
 
 
-</section>
+        <!-- TRADES -->
+        <div class="small-card">
 
+          <div class="card-title">
+            <span>آخرین معاملات</span>
+            <span>☷</span>
+          </div>
 
+          <div
+            class="empty-state"
+            id="recentTrades"
+          >
+            هیچ معامله‌ای ثبت نشده است
+          </div>
 
+          <button
+            class="view-trades"
+            id="viewTradesBtn"
+          >
+            مشاهده همه معاملات
+          </button>
 
+        </div>
 
+      </section>
 
-<!-- Performance -->
 
-<section class="chart-card">
+      <!-- ================= VIP ================= -->
+      <section class="vip-card">
 
+        <div class="vip-icon">
+          👑
+        </div>
 
-<div class="card-title">
+        <div class="vip-content">
 
-<h2>
-📈 عملکرد ربات
-</h2>
+          <h3>
+            نسخه حرفه‌ای
+          </h3>
 
+          <p>
+            دسترسی به استراتژی‌های پیشرفته،
+            ربات 24/7 و پشتیبانی VIP
+          </p>
 
-<span>
-لحظه‌ای
-</span>
+        </div>
 
+        <button
+          class="vip-button"
+          id="upgradeBtn"
+        >
+          ارتقا دهید
+        </button>
 
-</div>
+      </section>
 
 
+      <!-- ================= QUICK ACTIONS ================= -->
+      <section class="quick-actions">
 
-<div class="chart-box">
+        <button id="supportBtn">
+          <span>🎧</span>
+          <small>پشتیبانی</small>
+        </button>
 
-<div id="chart-line">
+        <button id="depositQuickBtn">
+          <span>⇩</span>
+          <small>واریز</small>
+        </button>
 
-</div>
+        <button id="withdrawQuickBtn">
+          <span>⇧</span>
+          <small>برداشت</small>
+        </button>
 
+        <button id="historyBtn">
+          <span>↶</span>
+          <small>تاریخچه</small>
+        </button>
 
-</div>
+      </section>
 
+    </main>
 
 
+    <!-- ================= BOTTOM NAVIGATION ================= -->
+    <nav class="bottom-nav">
 
+      <button
+        class="nav-item active"
+        data-page="home"
+      >
+        <span>⌂</span>
+        <small>خانه</small>
+      </button>
 
-<div class="stats">
+      <button
+        class="nav-item"
+        data-page="wallet"
+      >
+        <span>▣</span>
+        <small>کیف پول</small>
+      </button>
 
+      <button
+        class="nav-item"
+        data-page="trades"
+      >
+        <span>⌁</span>
+        <small>معاملات</small>
+      </button>
 
-<div>
+      <button
+        class="nav-item"
+        data-page="ai"
+      >
+        <span>🤖</span>
+        <small>AI</small>
+      </button>
 
-<span>
-معاملات
-</span>
+      <button
+        class="nav-item"
+        data-page="profile"
+      >
+        <span>♙</span>
+        <small>پروفایل</small>
+      </button>
 
-<strong id="trade-count">
-0
-</strong>
+    </nav>
 
+  </div>
 
-</div>
 
-
-
-<div>
-
-<span>
-موفقیت
-</span>
-
-<strong id="win-rate">
-0%
-</strong>
-
-
-</div>
-
-
-
-<div>
-
-<span>
-سود
-</span>
-
-<strong id="profit">
-0$
-</strong>
-
-
-</div>
-
-
-</div>
-
-
-
-</section>
-
-
-<!-- AI Signal -->
-
-<section class="signal-card">
-
-
-<div class="card-title">
-
-<h2>
-🚀 آخرین سیگنال AI
-</h2>
-
-
-</div>
-
-
-
-
-<div class="signal-box">
-
-
-<div>
-
-<p>
-ارز
-</p>
-
-
-<strong id="signal-symbol">
----
-</strong>
-
-
-</div>
-
-
-
-
-<div>
-
-<p>
-عملیات
-</p>
-
-
-<strong id="signal-type">
-WAIT
-</strong>
-
-
-</div>
-
-
-
-</div>
-
-
-
-
-
-<div class="confidence">
-
-
-<span>
-اعتماد هوش مصنوعی
-</span>
-
-
-<strong id="signal-confidence">
-0%
-</strong>
-
-
-</div>
-
-
-
-</section>
-
-
-
-
-
-
-
-<!-- Recent Trades -->
-
-
-<section class="trades-card">
-
-
-<div class="card-title">
-
-
-<h2>
-📊 آخرین معاملات
-</h2>
-
-
-</div>
-
-
-
-
-<div id="trade-list">
-
-
-<div class="trade-row">
-
-
-<div>
-
-<strong>
-BTC/USDT
-</strong>
-
-
-<p>
-در انتظار معامله
-</p>
-
-
-</div>
-
-
-<span>
-0$
-</span>
-
-
-</div>
-
-
-
-</div>
-
-
-
-</section>
-
-
-
-
-
-
-
-<!-- Start Bot -->
-
-
-<section class="start-section">
-
-
-<button id="startBot">
-
-
-🤖 شروع ربات معامله‌گر
-
-
-</button>
-
-
-  </section>
-
-  <!-- Wallet Page -->
-
-<section class="page" id="wallet-page">
-
-
-<div class="box">
-
-
-<h2>
-💼 کیف پول
-</h2>
-
-
-<p>
-موجودی و تراکنش‌ها
-</p>
-
-
-<h3 id="wallet-balance">
-0 USDT
-</h3>
-
-
-</div>
-
-
-</section>
-
-
-
-
-
-
-<!-- Trades Page -->
-
-<section class="page" id="trades-page">
-
-
-<div class="box">
-
-
-<h2>
-📈 معاملات
-</h2>
-
-
-<div id="all-trades">
-
-
-<p>
-هنوز معامله‌ای انجام نشده
-</p>
-
-
-</div>
-
-
-</div>
-
-
-</section>
-
-
-
-
-
-
-<!-- AI Page -->
-
-<section class="page" id="ai-page">
-
-
-<div class="box">
-
-
-<h2>
-🤖 مرکز هوش مصنوعی
-</h2>
-
-
-<p>
-تحلیل بازار و مدیریت ریسک
-</p>
-
-
-</div>
-
-
-</section>
-
-
-
-
-
-
-<!-- Profile Page -->
-
-<section class="page" id="profile-page">
-
-
-<div class="box">
-
-
-<h2>
-👤 پروفایل
-</h2>
-
-
-<p id="profile-info">
-کاربر تلگرام
-</p>
-
-
-</div>
-
-
-</section>
-
-
-
-
-
-</main>
-
-
-
-
-
-
-
-<!-- Bottom Navigation -->
-
-
-<nav class="bottom-nav">
-
-
-
-<button 
-class="nav-btn active"
-data-page="home-page">
-
-
-🏠
-
-<span>
-خانه
-</span>
-
-
-</button>
-
-
-
-
-
-<button 
-class="nav-btn"
-data-page="wallet-page">
-
-
-💼
-
-<span>
-کیف پول
-</span>
-
-
-</button>
-
-
-
-
-
-<button 
-class="nav-btn"
-data-page="trades-page">
-
-
-📈
-
-<span>
-معاملات
-</span>
-
-
-</button>
-
-
-
-
-
-<button 
-class="nav-btn"
-data-page="ai-page">
-
-
-🤖
-
-<span>
-AI
-</span>
-
-
-</button>
-
-
-
-
-
-<button 
-class="nav-btn"
-data-page="profile-page">
-
-
-👤
-
-<span>
-پروفایل
-</span>
-
-
-</button>
-
-
-
-</nav>
-
-
-
-
-
-</div>
-
-
-
-
-
-<script src="app.js"></script>
-
+  <!-- ================= APP SCRIPT ================= -->
+  <script src="app.js"></script>
 
 </body>
-
-
 </html>
-
-  
