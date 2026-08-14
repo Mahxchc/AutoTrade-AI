@@ -1,663 +1,422 @@
-// =================================
-// AutoTrade AI
-// APP.JS VERSION 1
-// بخش ۱: Telegram + Settings
-// =================================
+// ============================================================
+// ::M AutoTrade AI
+// APP.JS VERSION 2
+// Telegram + Dashboard + Backend + Navigation
+// ============================================================
+
+"use strict";
 
 
+// ============================================================
+// ::M TELEGRAM
+// ============================================================
 
-// Telegram
-
-const tg = window.Telegram.WebApp;
-
-
-tg.ready();
-
-tg.expand();
-
-
-
-
-
-// وضعیت ربات
-
-const bot = {
-
-
-    active:false,
-
-
-    balance:0,
-
-
-    profit:0,
-
-
-    trades:0,
-
-
-    winRate:0,
-
-
-    aiAccuracy:0
-
-
-};
-
-
-
-
-
-
-
-// کاربر
+const tg = window.Telegram?.WebApp || null;
 
 let user = null;
 
+if (tg) {
+    tg.ready();
+    tg.expand();
 
-
-if(tg.initDataUnsafe.user){
-
-
-    user = tg.initDataUnsafe.user;
-
-
-
-    document.getElementById("username").innerHTML =
-
-    "سلام "
-
-    +
-
-    user.first_name
-
-    +
-
-    " 👋";
-
-
-
-    document.getElementById("profile-info").innerHTML =
-
-    user.first_name;
-
-
-
-}
-
-else{
-
-
-    document.getElementById("username").innerHTML =
-
-    "کاربر مهمان";
-
-
+    user = tg.initDataUnsafe?.user || null;
 }
 
 
-
-
-
-
-console.log(
-
-"AutoTrade Ready",
-
-user
-
-);
-
-
-// =================================
-// بخش ۲: Navigation
-// =================================
-
-
-
-const navButtons = document.querySelectorAll(".nav-btn");
-
-const pages = document.querySelectorAll(".page");
-
-
-
-
-
-
-function openPage(pageId){
-
-
-
-    pages.forEach(page=>{
-
-
-        page.classList.remove("active");
-
-
-    });
-
-
-
-
-    const page = document.getElementById(pageId);
-
-
-
-    if(page){
-
-
-        page.classList.add("active");
-
-
-    }
-
-
-
-}
-
-
-
-
-
-
-
-
-navButtons.forEach(button=>{
-
-
-    button.addEventListener(
-
-        "click",
-
-        ()=>{
-
-
-            navButtons.forEach(btn=>{
-
-
-                btn.classList.remove("active");
-
-
-            });
-
-
-
-
-
-            button.classList.add("active");
-
-
-
-
-
-            const pageId =
-
-            button.dataset.page;
-
-
-
-
-            openPage(pageId);
-
-
-
-            console.log(
-
-                "Page:",
-                pageId
-
-            );
-
-
-
-        }
-
-
-    );
-
-
-});
-
-
-// =================================
-// بخش ۳: Bot Control
-// =================================
-
-
-
-const startButton = document.getElementById(
-    "startBot"
-);
-
-const botStatus = document.getElementById(
-    "bot-status"
-);
-
-
-
-
-
-
-function updateBotUI(){
-
-
-
-    if(bot.active){
-
-
-
-        botStatus.innerHTML =
-
-        "● Online";
-
-
-
-        botStatus.style.color =
-
-        "#22c55e";
-
-
-
-
-        startButton.innerHTML =
-
-        "⛔ توقف ربات معامله‌گر";
-
-
-
-        startButton.classList.add(
-
-            "active"
-
-        );
-
-
-
-    }
-
-    else{
-
-
-
-        botStatus.innerHTML =
-
-        "خاموش";
-
-
-
-        botStatus.style.color =
-
-        "#ef4444";
-
-
-
-
-
-        startButton.innerHTML =
-
-        "🤖 شروع ربات معامله‌گر";
-
-
-
-        startButton.classList.remove(
-
-            "active"
-
-        );
-
-
-    }
-
-
-
-}
-
-
-
-
-
-
-
-
-
-startButton.addEventListener(
-
-"click",
-
-()=>{
-
-
-    bot.active = !bot.active;
-
-
-
-    console.log(
-
-        "Bot status:",
-
-        bot.active
-
-    );
-
-
-
-    updateBotUI();
-
-
-
-}
-
-);
-
-
-
-
-
-// وضعیت اولیه
-
-updateBotUI();
-
-// =================================
-// بخش ۴: Dashboard Data
-// =================================
-
-
-
-function updateDashboard(data){
-
-
-
-    if(!data)
-
-    return;
-
-
-
-
-
-    if(data.balance !== undefined){
-
-
-        document.getElementById(
-            "balance"
-        ).innerHTML =
-
-
-        data.balance + " USDT";
-
-
-
-    }
-
-
-
-
-
-
-    if(data.profit !== undefined){
-
-
-        document.getElementById(
-            "profit"
-        ).innerHTML =
-
-
-        data.profit + "$";
-
-
-
-    }
-
-
-
-
-
-
-    if(data.aiAccuracy !== undefined){
-
-
-        document.getElementById(
-            "ai-accuracy"
-        ).innerHTML =
-
-
-        data.aiAccuracy + "%";
-
-
-
-    }
-
-
-
-
-
-
-    if(data.confidence !== undefined){
-
-
-        document.getElementById(
-            "signal-confidence"
-        ).innerHTML =
-
-
-        data.confidence + "%";
-
-
-
-    }
-
-
-
-
-
-
-    if(data.trades !== undefined){
-
-
-        document.getElementById(
-            "trade-count"
-        ).innerHTML =
-
-
-        data.trades;
-
-
-
-    }
-
-
-
-
-
-
-
-    if(data.winRate !== undefined){
-
-
-        document.getElementById(
-            "win-rate"
-        ).innerHTML =
-
-
-        data.winRate + "%";
-
-
-
-    }
-
-
-
-
-
-}
-
-
-
-
-
-
-
-
-// داده تست اولیه برای جلوگیری از خالی بودن صفحه
-
-updateDashboard({
-
-
-    balance:0,
-
-
-    profit:0,
-
-
-    aiAccuracy:0,
-
-
-    confidence:0,
-
-
-    trades:0,
-
-
-    winRate:0
-
-
-
-});
-
-
-// =================================
-// بخش ۵: Backend Connection
-// =================================
-
-
+// ============================================================
+// ::M CONFIG
+// ============================================================
 
 const API_URL =
+    "https://autotrade-backend-02cc.onrender.com";
 
-"https://autotrade-backend-02cc.onrender.com";
-
-
-
+const REFRESH_INTERVAL = 30000;
 
 
+// ============================================================
+// ::M BOT STATE
+// ============================================================
+
+const bot = {
+    active: false,
+    balance: 0,
+    totalProfit: 0,
+    todayProfit: 0,
+    totalTrades: 0,
+    activeTrades: 0,
+    confidence: 0,
+    accuracy: 0,
+    strategy: "AI Scalping",
+    riskLevel: "MEDIUM",
+    signal: "WAIT"
+};
 
 
-async function loadServerData(){
+// ============================================================
+// ::M HELPERS
+// ============================================================
+
+function $(id) {
+    return document.getElementById(id);
+}
 
 
-    try{
+function setText(id, value) {
 
+    const element = $(id);
 
-        const response = await fetch(
-
-            API_URL + "/api/dashboard",
-
-            {
-
-
-                method:"POST",
-
-
-                headers:{
-
-
-                    "Content-Type":
-
-                    "application/json"
-
-
-                },
-
-
-                body:JSON.stringify({
-
-
-                    telegramId:
-
-                    user ?
-
-                    user.id :
-
-                    "guest"
-
-
-
-                })
-
-
-            }
-
-
-        );
-
-
-
-
-
-        const data = await response.json();
-
-
-
-
-        console.log(
-
-            "Server Response:",
-
-            data
-
-        );
-
-
-
-
-
-        updateDashboard(data);
-
-
-
+    if (element) {
+        element.textContent = value;
     }
-
-
-    catch(error){
-
-
-        console.log(
-
-            "Server Error:",
-
-            error
-
-        );
-
-
-    }
-
 
 }
 
 
+function formatMoney(value) {
+
+    const number = Number(value) || 0;
+
+    return "$" + number.toFixed(2);
+
+}
 
 
+function formatNumber(value) {
+
+    const number = Number(value) || 0;
+
+    return number.toLocaleString("en-US");
+
+}
 
 
+// ============================================================
+// ::M USER
+// ============================================================
+
+function updateUserUI() {
+
+    if (!user) {
+
+        setText(
+            "userName",
+            "کاربر"
+        );
+
+        return;
+    }
 
 
-// هر ۳۰ ثانیه بروزرسانی
-
-setInterval(()=>{
-
-
-    loadServerData();
+    const firstName =
+        user.first_name ||
+        user.username ||
+        "کاربر";
 
 
+    setText(
+        "userName",
+        firstName
+    );
 
-},30000);
+}
 
 
+updateUserUI();
 
 
+// ============================================================
+// ::M DASHBOARD
+// ============================================================
+
+function updateDashboard(data) {
+
+    if (!data) {
+        return;
+    }
 
 
-// اجرای اولیه
+    // --------------------------------------------------------
+    // Balance
+    // --------------------------------------------------------
 
-loadServerData();
+    if (data.balance !== undefined) {
 
+        bot.balance =
+            Number(data.balance) || 0;
+
+    }
+
+
+    setText(
+        "balance",
+        formatMoney(bot.balance)
+    );
+
+
+    // تومان فعلاً بدون نرخ تبدیل واقعی
+    setText(
+        "balanceRial",
+        "0"
+    );
+
+
+    // --------------------------------------------------------
+    // Profit
+    // --------------------------------------------------------
+
+    if (data.totalProfit !== undefined) {
+
+        bot.totalProfit =
+            Number(data.totalProfit) || 0;
+
+    }
+
+    else if (data.profit !== undefined) {
+
+        bot.totalProfit =
+            Number(data.profit) || 0;
+
+    }
+
+
+    setText(
+        "totalProfit",
+        formatMoney(bot.totalProfit)
+    );
+
+
+    // --------------------------------------------------------
+    // Today Profit
+    // --------------------------------------------------------
+
+    if (data.todayProfit !== undefined) {
+
+        bot.todayProfit =
+            Number(data.todayProfit) || 0;
+
+    }
+
+
+    setText(
+        "todayProfit",
+        formatMoney(bot.todayProfit)
+    );
+
+
+    // --------------------------------------------------------
+    // Trades
+    // --------------------------------------------------------
+
+    if (data.totalTrades !== undefined) {
+
+        bot.totalTrades =
+            Number(data.totalTrades) || 0;
+
+    }
+
+    else if (data.trades !== undefined) {
+
+        bot.totalTrades =
+            Number(data.trades) || 0;
+
+    }
+
+
+    setText(
+        "totalTrades",
+        formatNumber(bot.totalTrades)
+    );
+
+
+    // --------------------------------------------------------
+    // Active Trades
+    // --------------------------------------------------------
+
+    if (data.activeTrades !== undefined) {
+
+        bot.activeTrades =
+            Number(data.activeTrades) || 0;
+
+    }
+
+
+    setText(
+        "activeTrades",
+        formatNumber(bot.activeTrades)
+    );
+
+
+    // --------------------------------------------------------
+    // AI Confidence
+    // --------------------------------------------------------
+
+    if (data.confidence !== undefined) {
+
+        bot.confidence =
+            Number(data.confidence) || 0;
+
+    }
+
+    else if (data.aiAccuracy !== undefined) {
+
+        bot.confidence =
+            Number(data.aiAccuracy) || 0;
+
+    }
+
+
+    setText(
+        "aiConfidence",
+        Math.round(bot.confidence)
+    );
+
+
+    // --------------------------------------------------------
+    // Accuracy
+    // --------------------------------------------------------
+
+    if (data.aiAccuracy !== undefined) {
+
+        bot.accuracy =
+            Number(data.aiAccuracy) || 0;
+
+    }
+
+
+    // --------------------------------------------------------
+    // Strategy
+    // --------------------------------------------------------
+
+    if (data.strategy) {
+
+        bot.strategy =
+            data.strategy;
+
+    }
+
+
+    setText(
+        "strategy",
+        bot.strategy
+    );
+
+
+    // --------------------------------------------------------
+    // Risk
+    // --------------------------------------------------------
+
+    if (data.riskLevel) {
+
+        bot.riskLevel =
+            data.riskLevel;
+
+    }
+
+
+    setText(
+        "riskLevel",
+        bot.riskLevel
+    );
+
+
+    // --------------------------------------------------------
+    // Signal
+    // --------------------------------------------------------
+
+    if (data.signal) {
+
+        bot.signal =
+            data.signal;
+
+    }
+
+
+    updateSignalUI();
+
+}
+
+
+// ============================================================
+// ::M SIGNAL
+// ============================================================
+
+function updateSignalUI() {
+
+    const signal =
+        String(bot.signal || "WAIT")
+            .toUpperCase();
+
+
+    const latestSignal =
+        $("latestSignal");
+
+    const signalValue =
+        $("signalValue");
+
+
+    if (!latestSignal ||
+        !signalValue) {
+
+        return;
+    }
+
+
+    if (
+        signal === "BUY" ||
+        signal === "LONG"
+    ) {
+
+        latestSignal.textContent =
+            "سیگنال خرید";
+
+        signalValue.textContent =
+            "BUY";
+
+        signalValue.style.color =
+            "#00d982";
+
+        return;
+    }
+
+
+    if (
+        signal === "SELL" ||
+        signal === "SHORT"
+    ) {
+
+        latestSignal.textContent =
+            "سیگنال فروش";
+
+        signalValue.textContent =
+            "SELL";
+
+        signalValue.style.color =
+            "#ff5364";
+
+        return;
+    }
+
+
+    latestSignal.textContent =
+        "در حال انتظار برای سیگنال";
+
+    signalValue.textContent =
+        "WAIT";
+
+    signalValue.style.color =
+        "#a34cff";
+
+}
+
+
+// ============================================================
+// ::M BOT STATUS UI
+// ============================================================
+
+function updateBotUI() {
+
+    const status =
+        $("aiStatus");
+
+    const statusText =
+        $("bot
