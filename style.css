@@ -1,381 +1,131 @@
-/* =========================================================
-   AutoTrade AI — Main UI
-   ========================================================= */
-
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  -webkit-tap-highlight-color: transparent;
-}
-
-:root {
-  --bg: #050817;
-  --bg2: #080d20;
-  --card: #10172b;
-  --card2: #131b31;
-  --border: rgba(255,255,255,.08);
-
-  --text: #f7f8ff;
-  --muted: #9299b0;
-
-  --purple: #9b4dff;
-  --purple2: #d24cff;
-  --blue: #3b68ff;
-  --cyan: #19c4ff;
-
-  --green: #00d982;
-  --orange: #ff8b32;
-  --red: #ff5364;
-  --gold: #ffc928;
-}
-
-html {
-  background: var(--bg);
-}
-
-body {
-  width: 100%;
-  min-height: 100vh;
-  overflow-x: hidden;
-  background: var(--bg);
-  color: var(--text);
-  font-family: Tahoma, Arial, sans-serif;
-}
-
-button {
-  font: inherit;
-}
-
-button:active {
-  transform: scale(.97);
-}
-
-/* =========================================================
-   APP
-   ========================================================= */
-
-#app {
-  width: 100%;
-  min-height: 100vh;
-  padding-bottom: 92px;
-
-  background:
-    radial-gradient(
-      circle at 85% 5%,
-      rgba(155,77,255,.14),
-      transparent 25%
-    ),
-    radial-gradient(
-      circle at 5% 35%,
-      rgba(40,92,255,.08),
-      transparent 28%
-    ),
-    linear-gradient(
-      180deg,
-      #050716 0%,
-      #070c1c 55%,
-      #080d1f 100%
-    );
-}
-
-/* =========================================================
-   HEADER
-   ========================================================= */
-
-.top-header {
-  position: relative;
-
-  width: 100%;
-  min-height: 82px;
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  padding: 16px 18px 12px;
-
-  border-bottom: 1px solid rgba(255,255,255,.04);
-}
-
-.header-title {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-
-  font-size: 21px;
-  font-weight: 900;
-  white-space: nowrap;
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.header-button,
-.icon-button {
-  border: 0;
-  background: transparent;
-  color: white;
-  cursor: pointer;
-}
-
-.header-button {
-  order: 3;
-
-  width: 42px;
-  height: 42px;
-
-  border-radius: 13px;
-
-  background: rgba(255,255,255,.05);
-
-  font-size: 23px;
-}
-
-.icon-button {
-  position: relative;
-
-  width: 42px;
-  height: 42px;
-
-  border-radius: 13px;
-
-  background: rgba(255,255,255,.05);
-
-  font-size: 19px;
-}
-
-.notification-count {
-  position: absolute;
-
-  top: -3px;
-  right: -3px;
-
-  min-width: 17px;
-  height: 17px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 50%;
-
-  background: var(--red);
-
-  color: white;
-
-  font-size: 10px;
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
   font-weight: 800;
 }
 
-.profile-mini {
-  display: flex;
-  align-items: center;
-  gap: 9px;
+/* =========================================================
+   MINI CHART
+   ========================================================= */
+
+.mini-chart {
+  margin-top: 10px;
+  height: 20px;
+
+  color: currentColor;
+  opacity: .9;
+
+  font-size: 18px;
+  letter-spacing: 2px;
 }
 
-.profile-avatar {
-  width: 42px;
-  height: 42px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 14px;
-
-  background:
-    linear-gradient(
-      135deg,
-      rgba(155,77,255,.35),
-      rgba(40,92,255,.25)
-    );
-
-  border: 1px solid rgba(155,77,255,.35);
-
-  font-size: 20px;
+.stat-card.green {
+  color: var(--green);
 }
 
-.profile-text {
-  text-align: right;
-  font-size: 12px;
-  line-height: 1.7;
+.stat-card.blue {
+  color: var(--cyan);
 }
 
-.profile-text strong {
-  color: white;
+.stat-card.purple {
+  color: var(--purple2);
 }
 
-.profile-text small {
-  display: block;
-  color: var(--muted);
-  font-size: 9px;
+.stat-card.orange {
+  color: var(--orange);
+}
+
+.stat-card .stat-title,
+.stat-card strong {
+  color: var(--text);
 }
 
 /* =========================================================
-   MAIN
+   AI CARD
    ========================================================= */
 
-.main-content {
-  width: min(100%, 760px);
-  margin: 0 auto;
-  padding: 16px;
-}
-
-/* =========================================================
-   WELCOME
-   ========================================================= */
-
-.welcome-section {
-  margin-bottom: 16px;
-}
-
-.welcome-section h1 {
-  font-size: 22px;
-  line-height: 1.5;
-  font-weight: 900;
-}
-
-.welcome-section p {
-  margin-top: 4px;
-
-  color: var(--muted);
-
-  font-size: 12px;
-}
-
-/* =========================================================
-   BALANCE CARD
-   ========================================================= */
-
-.balance-card {
+.ai-card {
   position: relative;
 
-  min-height: 190px;
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  padding: 23px;
-
   margin-bottom: 14px;
-
-  overflow: hidden;
+  padding: 22px;
 
   border-radius: 24px;
 
   background:
-    radial-gradient(
-      circle at 90% 15%,
-      rgba(209,76,255,.22),
-      transparent 35%
-    ),
     linear-gradient(
       135deg,
-      #17142e,
-      #10162b
+      rgba(255,255,255,.075),
+      rgba(255,255,255,.025)
     );
 
-  border: 1px solid rgba(155,77,255,.18);
+  border: 1px solid rgba(130,160,255,.28);
+
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 
   box-shadow:
-    0 15px 45px rgba(0,0,0,.25);
+    inset 0 1px 0 rgba(255,255,255,.08),
+    0 15px 40px rgba(0,0,0,.22);
 }
 
-.balance-info {
-  position: relative;
-  z-index: 2;
-}
-
-.balance-label {
+.ai-header {
   display: flex;
-  align-items: center;
-  gap: 7px;
-
-  color: #b6b9c9;
-
-  font-size: 12px;
+  justify-content: flex-start;
 }
 
-.balance-label span {
+.ai-header h2 {
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.brain-icon {
+  margin-right: 5px;
   color: var(--purple2);
 }
 
-.balance-value {
+.ai-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
   margin-top: 8px;
+  padding: 5px 10px;
 
-  font-size: 34px;
-  font-weight: 900;
-  letter-spacing: -.8px;
-}
-
-.balance-rial {
-  margin-top: 3px;
-
-  color: var(--muted);
+  border-radius: 9px;
 
   font-size: 10px;
 }
 
-.balance-actions {
+.ai-status i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: block;
+}
+
+.ai-status.stopped {
+  color: #ff6573;
+  background: rgba(255,83,100,.12);
+}
+
+.ai-status.stopped i {
+  background: var(--red);
+  box-shadow: 0 0 10px var(--red);
+}
+
+.ai-content {
+  position: relative;
+
+  min-height: 170px;
+
   display: flex;
-  gap: 9px;
-
-  margin-top: 18px;
+  align-items: center;
 }
 
-.primary-button,
-.secondary-button {
-  border: 0;
-
-  min-height: 39px;
-
-  padding: 0 15px;
-
-  border-radius: 12px;
-
-  cursor: pointer;
-
-  font-size: 11px;
-  font-weight: 800;
-}
-
-.primary-button {
-  color: white;
-
-  background:
-    linear-gradient(
-      135deg,
-      var(--purple),
-      var(--purple2)
-    );
-
-  box-shadow:
-    0 8px 22px rgba(155,77,255,.25);
-}
-
-.secondary-button {
-  color: #e4e6f1;
-
-  background: rgba(255,255,255,.06);
-
-  border: 1px solid rgba(255,255,255,.08);
-}
-
-.wallet-illustration {
-  position: absolute;
-
-  left: 22px;
-  top: 50%;
-
-  transform: translateY(-50%);
-
-  width: 105px;
-  height: 105px;
+.confidence-circle {
+  width: 115px;
+  height: 115px;
 
   display: flex;
   align-items: center;
@@ -386,20 +136,256 @@ button:active {
   background:
     radial-gradient(
       circle,
-      rgba(155,77,255,.22),
-      transparent 68%
+      #10172b 57%,
+      transparent 59%
     );
 
-  font-size: 62px;
+  border: 8px solid rgba(90,110,170,.35);
 
-  opacity: .8;
+  box-shadow:
+    inset 0 0 20px rgba(80,100,200,.08);
+}
+
+.confidence-value {
+  font-size: 25px;
+  font-weight: 900;
+}
+
+.confidence-label {
+  position: absolute;
+
+  left: 25px;
+  bottom: 3px;
+
+  color: var(--muted);
+
+  font-size: 11px;
+}
+
+.ai-details {
+  margin-right: auto;
+
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  text-align: right;
+
+  font-size: 12px;
+}
+
+.ai-details div {
+  display: flex;
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+.ai-details span {
+  color: var(--muted);
+}
+
+.ai-details strong {
+  color: var(--text);
+}
+
+.ai-start-button {
+  width: 100%;
+  min-height: 48px;
+
+  border: 0;
+  border-radius: 14px;
+
+  color: white;
+
+  cursor: pointer;
+
+  font-size: 13px;
+  font-weight: 900;
+
+  background:
+    linear-gradient(
+      100deg,
+      var(--purple2),
+      var(--blue)
+    );
+
+  box-shadow:
+    0 10px 30px rgba(100,70,255,.28);
 }
 
 /* =========================================================
-   STATS
+   TWO COLUMN
    ========================================================= */
 
-.stats-grid {
+.two-column {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 14px;
+
+  margin-bottom: 14px;
+}
+
+.small-card {
+  min-height: 155px;
+
+  padding: 18px;
+
+  border-radius: 20px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255,255,255,.06),
+      rgba(255,255,255,.025)
+    );
+
+  border: 1px solid rgba(100,130,220,.22);
+
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.card-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.card-title span:last-child {
+  color: var(--purple2);
+  font-size: 19px;
+}
+
+.empty-state {
+  margin-top: 30px;
+
+  color: var(--muted);
+
+  text-align: center;
+
+  font-size: 11px;
+}
+
+.signal-value {
+  margin-top: 8px;
+
+  text-align: center;
+
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.view-trades {
+  display: block;
+
+  margin: 14px auto 0;
+
+  border: 0;
+  background: transparent;
+
+  color: var(--purple2);
+
+  cursor: pointer;
+
+  font-size: 11px;
+  font-weight: 800;
+}
+
+/* =========================================================
+   VIP
+   ========================================================= */
+
+.vip-card {
+  position: relative;
+
+  min-height: 95px;
+
+  display: flex;
+  align-items: center;
+  gap: 15px;
+
+  padding: 18px;
+
+  margin-bottom: 14px;
+
+  border-radius: 20px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255,201,40,.06),
+      rgba(255,255,255,.025)
+    );
+
+  border: 1px solid rgba(255,174,40,.55);
+
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.vip-icon {
+  order: 3;
+
+  width: 48px;
+  height: 48px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: rgba(255,201,40,.08);
+
+  font-size: 25px;
+}
+
+.vip-content {
+  flex: 1;
+}
+
+.vip-content h3 {
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.vip-content p {
+  margin-top: 5px;
+
+  color: var(--muted);
+
+  font-size: 10px;
+  line-height: 1.7;
+}
+
+.vip-button {
+  border: 1px solid var(--gold);
+
+  border-radius: 10px;
+
+  padding: 9px 13px;
+
+  background: transparent;
+
+  color: var(--gold);
+
+  cursor: pointer;
+
+  font-size: 10px;
+  font-weight: 900;
+}
+
+/* =========================================================
+   QUICK ACTIONS
+   ========================================================= */
+
+.quick-actions {
   display: grid;
 
   grid-template-columns:
@@ -407,78 +393,322 @@ button:active {
 
   gap: 10px;
 
-  margin-bottom: 14px;
+  margin-bottom: 15px;
 }
 
-.stat-card {
-  position: relative;
+.quick-actions button {
+  min-height: 72px;
 
-  min-height: 130px;
+  border: 1px solid rgba(120,150,230,.18);
 
-  padding: 14px;
-
-  overflow: hidden;
-
-  border-radius: 18px;
+  border-radius: 16px;
 
   background:
     linear-gradient(
       145deg,
       rgba(255,255,255,.055),
-      rgba(255,255,255,.025)
+      rgba(255,255,255,.02)
     );
 
-  border: 1px solid var(--border);
+  color: var(--text);
+
+  cursor: pointer;
+
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
 }
 
-.stat-card::before {
-  content: "";
-
-  position: absolute;
-
-  top: 0;
-  right: 0;
-
-  width: 55px;
-  height: 55px;
-
-  border-radius: 0 18px 0 55px;
-
-  opacity: .16;
-}
-
-.stat-card.green::before {
-  background: var(--green);
-}
-
-.stat-card.blue::before {
-  background: var(--blue);
-}
-
-.stat-card.purple::before {
-  background: var(--purple);
-}
-
-.stat-card.orange::before {
-  background: var(--orange);
-}
-
-.stat-title {
+.quick-actions span {
   display: block;
 
-  color: var(--muted);
+  font-size: 22px;
+}
+
+.quick-actions small {
+  display: block;
+
+  margin-top: 5px;
+
+  color: #cbd0e0;
 
   font-size: 10px;
 }
 
-.stat-card strong {
-  display: block;
+/* =========================================================
+   BOTTOM NAV
+   ========================================================= */
 
-  margin-top: 9px;
+.bottom-nav {
+  position: fixed;
 
-  font-size: 18px;
-  font-weight: 900;
+  left: 12px;
+  right: 12px;
+  bottom: 10px;
+
+  z-index: 100;
+
+  height: 70px;
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(5, 1fr);
+
+  padding: 5px;
+
+  border-radius: 20px;
+
+  background:
+    rgba(10,15,35,.78);
+
+  border: 1px solid rgba(130,150,230,.18);
+
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+
+  box-shadow:
+    0 15px 40px rgba(0,0,0,.4);
 }
 
-.stat-card small {
-  display:
+.nav-item {
+  border: 0;
+
+  border-radius: 15px;
+
+  background: transparent;
+
+  color: #9ba2b8;
+
+  cursor: pointer;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  gap: 3px;
+}
+
+.nav-item span {
+  font-size: 22px;
+}
+
+.nav-item small {
+  font-size: 9px;
+}
+
+.nav-item.active {
+  color: white;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(155,77,255,.35),
+      rgba(40,92,255,.25)
+    );
+
+  box-shadow:
+    inset 0 0 20px rgba(155,77,255,.12);
+}
+
+.nav-item.active span {
+  color: var(--purple2);
+}
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 600px) {
+
+  #app {
+    padding-bottom: 88px;
+  }
+
+  .top-header {
+    min-height: 76px;
+    padding: 13px 14px;
+  }
+
+  .header-title {
+    font-size: 18px;
+  }
+
+  .header-actions {
+    gap: 6px;
+  }
+
+  .profile-text {
+    display: none;
+  }
+
+  .profile-avatar,
+  .icon-button,
+  .header-button {
+    width: 40px;
+    height: 40px;
+  }
+
+  .main-content {
+    padding: 14px 12px;
+  }
+
+  .welcome-section h1 {
+    font-size: 21px;
+  }
+
+  .balance-card {
+    min-height: 185px;
+    padding: 18px;
+  }
+
+  .wallet-illustration {
+    left: 5px;
+    width: 100px;
+    height: 100px;
+    font-size: 58px;
+  }
+
+  .balance-value {
+    font-size: 32px;
+  }
+
+  .balance-actions {
+    gap: 7px;
+  }
+
+  .primary-button,
+  .secondary-button {
+    padding: 0 12px;
+    font-size: 10px;
+  }
+
+  .stats-grid {
+    grid-template-columns:
+      repeat(4, minmax(0, 1fr));
+
+    gap: 7px;
+  }
+
+  .stat-card {
+    min-height: 112px;
+    padding: 10px 7px;
+
+    border-radius: 16px;
+  }
+
+  .stat-title {
+    font-size: 8px;
+  }
+
+  .stat-card strong {
+    font-size: 15px;
+  }
+
+  .stat-card small {
+    font-size: 10px;
+  }
+
+  .mini-chart {
+    font-size: 14px;
+    letter-spacing: 0;
+  }
+
+  .ai-card {
+    padding: 18px;
+    border-radius: 20px;
+  }
+
+  .ai-header h2 {
+    font-size: 19px;
+  }
+
+  .ai-content {
+    min-height: 155px;
+  }
+
+  .confidence-circle {
+    width: 100px;
+    height: 100px;
+  }
+
+  .confidence-label {
+    left: 17px;
+  }
+
+  .ai-details {
+    font-size: 11px;
+    gap: 8px;
+  }
+
+  .ai-start-button {
+    min-height: 46px;
+    font-size: 12px;
+  }
+
+  .two-column {
+    gap: 8px;
+  }
+
+  .small-card {
+    min-height: 145px;
+    padding: 14px 10px;
+  }
+
+  .card-title {
+    font-size: 11px;
+  }
+
+  .vip-card {
+    padding: 13px;
+    gap: 9px;
+  }
+
+  .vip-content h3 {
+    font-size: 13px;
+  }
+
+  .vip-content p {
+    font-size: 9px;
+  }
+
+  .vip-button {
+    padding: 8px 9px;
+    font-size: 9px;
+  }
+
+  .quick-actions {
+    gap: 7px;
+  }
+
+  .quick-actions button {
+    min-height: 65px;
+    border-radius: 14px;
+  }
+
+  .quick-actions span {
+    font-size: 19px;
+  }
+
+  .quick-actions small {
+    font-size: 9px;
+  }
+
+  .bottom-nav {
+    left: 7px;
+    right: 7px;
+    bottom: 7px;
+
+    height: 66px;
+
+    border-radius: 18px;
+  }
+
+  .nav-item span {
+    font-size: 20px;
+  }
+
+  .nav-item small {
+    font-size: 8px;
+  }
+     }
