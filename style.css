@@ -1,5 +1,5 @@
 /* =========================================================
-   ::M AutoTrade AI - Main UI
+   AutoTrade AI — Main UI
    ========================================================= */
 
 * {
@@ -11,84 +11,91 @@
 
 :root {
   --bg: #050817;
-  --bg-2: #080d20;
-  --card: #101629;
-  --card-2: #121a2f;
-  --border: rgba(255, 255, 255, 0.10);
+  --bg2: #080d20;
+  --card: #10172b;
+  --card2: #131b31;
+  --border: rgba(255,255,255,.08);
 
-  --text: #f7f7fb;
-  --muted: #9298ad;
+  --text: #f7f8ff;
+  --muted: #9299b0;
 
   --purple: #9b4dff;
-  --purple-2: #d14cff;
-  --blue: #285cff;
-  --cyan: #12bfff;
+  --purple2: #d24cff;
+  --blue: #3b68ff;
+  --cyan: #19c4ff;
 
   --green: #00d982;
-  --orange: #ff8a2b;
+  --orange: #ff8b32;
   --red: #ff5364;
   --gold: #ffc928;
 }
 
-html,
-body {
-  width: 100%;
-  min-height: 100%;
+html {
   background: var(--bg);
-  color: var(--text);
-  font-family:
-    Tahoma,
-    Arial,
-    sans-serif;
 }
 
 body {
+  width: 100%;
   min-height: 100vh;
   overflow-x: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Tahoma, Arial, sans-serif;
+}
+
+button {
+  font: inherit;
+}
+
+button:active {
+  transform: scale(.97);
 }
 
 /* =========================================================
-   ::M APP
+   APP
    ========================================================= */
 
 #app {
   width: 100%;
   min-height: 100vh;
+  padding-bottom: 92px;
+
   background:
     radial-gradient(
-      circle at 85% 8%,
-      rgba(137, 54, 255, 0.12),
-      transparent 24%
+      circle at 85% 5%,
+      rgba(155,77,255,.14),
+      transparent 25%
     ),
     radial-gradient(
-      circle at 10% 35%,
-      rgba(23, 74, 255, 0.07),
+      circle at 5% 35%,
+      rgba(40,92,255,.08),
       transparent 28%
     ),
     linear-gradient(
       180deg,
       #050716 0%,
-      #070c1c 50%,
+      #070c1c 55%,
       #080d1f 100%
     );
 }
 
 /* =========================================================
-   ::M HEADER
+   HEADER
    ========================================================= */
 
 .top-header {
   position: relative;
+
+  width: 100%;
+  min-height: 82px;
+
   display: flex;
   align-items: center;
   justify-content: space-between;
 
-  width: 100%;
-  min-height: 86px;
+  padding: 16px 18px 12px;
 
-  padding: 18px 18px 12px;
-
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid rgba(255,255,255,.04);
 }
 
 .header-title {
@@ -96,9 +103,15 @@ body {
   left: 50%;
   transform: translateX(-50%);
 
-  font-size: 22px;
-  font-weight: 800;
+  font-size: 21px;
+  font-weight: 900;
   white-space: nowrap;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .header-button,
@@ -111,16 +124,361 @@ body {
 
 .header-button {
   order: 3;
-  font-size: 25px;
+
   width: 42px;
   height: 42px;
-}
 
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 13px;
+  border-radius: 13px;
+
+  background: rgba(255,255,255,.05);
+
+  font-size: 23px;
 }
 
 .icon-button {
-  position
+  position: relative;
+
+  width: 42px;
+  height: 42px;
+
+  border-radius: 13px;
+
+  background: rgba(255,255,255,.05);
+
+  font-size: 19px;
+}
+
+.notification-count {
+  position: absolute;
+
+  top: -3px;
+  right: -3px;
+
+  min-width: 17px;
+  height: 17px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: var(--red);
+
+  color: white;
+
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.profile-mini {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.profile-avatar {
+  width: 42px;
+  height: 42px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 14px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(155,77,255,.35),
+      rgba(40,92,255,.25)
+    );
+
+  border: 1px solid rgba(155,77,255,.35);
+
+  font-size: 20px;
+}
+
+.profile-text {
+  text-align: right;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.profile-text strong {
+  color: white;
+}
+
+.profile-text small {
+  display: block;
+  color: var(--muted);
+  font-size: 9px;
+}
+
+/* =========================================================
+   MAIN
+   ========================================================= */
+
+.main-content {
+  width: min(100%, 760px);
+  margin: 0 auto;
+  padding: 16px;
+}
+
+/* =========================================================
+   WELCOME
+   ========================================================= */
+
+.welcome-section {
+  margin-bottom: 16px;
+}
+
+.welcome-section h1 {
+  font-size: 22px;
+  line-height: 1.5;
+  font-weight: 900;
+}
+
+.welcome-section p {
+  margin-top: 4px;
+
+  color: var(--muted);
+
+  font-size: 12px;
+}
+
+/* =========================================================
+   BALANCE CARD
+   ========================================================= */
+
+.balance-card {
+  position: relative;
+
+  min-height: 190px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 23px;
+
+  margin-bottom: 14px;
+
+  overflow: hidden;
+
+  border-radius: 24px;
+
+  background:
+    radial-gradient(
+      circle at 90% 15%,
+      rgba(209,76,255,.22),
+      transparent 35%
+    ),
+    linear-gradient(
+      135deg,
+      #17142e,
+      #10162b
+    );
+
+  border: 1px solid rgba(155,77,255,.18);
+
+  box-shadow:
+    0 15px 45px rgba(0,0,0,.25);
+}
+
+.balance-info {
+  position: relative;
+  z-index: 2;
+}
+
+.balance-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+
+  color: #b6b9c9;
+
+  font-size: 12px;
+}
+
+.balance-label span {
+  color: var(--purple2);
+}
+
+.balance-value {
+  margin-top: 8px;
+
+  font-size: 34px;
+  font-weight: 900;
+  letter-spacing: -.8px;
+}
+
+.balance-rial {
+  margin-top: 3px;
+
+  color: var(--muted);
+
+  font-size: 10px;
+}
+
+.balance-actions {
+  display: flex;
+  gap: 9px;
+
+  margin-top: 18px;
+}
+
+.primary-button,
+.secondary-button {
+  border: 0;
+
+  min-height: 39px;
+
+  padding: 0 15px;
+
+  border-radius: 12px;
+
+  cursor: pointer;
+
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.primary-button {
+  color: white;
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--purple),
+      var(--purple2)
+    );
+
+  box-shadow:
+    0 8px 22px rgba(155,77,255,.25);
+}
+
+.secondary-button {
+  color: #e4e6f1;
+
+  background: rgba(255,255,255,.06);
+
+  border: 1px solid rgba(255,255,255,.08);
+}
+
+.wallet-illustration {
+  position: absolute;
+
+  left: 22px;
+  top: 50%;
+
+  transform: translateY(-50%);
+
+  width: 105px;
+  height: 105px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(155,77,255,.22),
+      transparent 68%
+    );
+
+  font-size: 62px;
+
+  opacity: .8;
+}
+
+/* =========================================================
+   STATS
+   ========================================================= */
+
+.stats-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+
+  gap: 10px;
+
+  margin-bottom: 14px;
+}
+
+.stat-card {
+  position: relative;
+
+  min-height: 130px;
+
+  padding: 14px;
+
+  overflow: hidden;
+
+  border-radius: 18px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255,255,255,.055),
+      rgba(255,255,255,.025)
+    );
+
+  border: 1px solid var(--border);
+}
+
+.stat-card::before {
+  content: "";
+
+  position: absolute;
+
+  top: 0;
+  right: 0;
+
+  width: 55px;
+  height: 55px;
+
+  border-radius: 0 18px 0 55px;
+
+  opacity: .16;
+}
+
+.stat-card.green::before {
+  background: var(--green);
+}
+
+.stat-card.blue::before {
+  background: var(--blue);
+}
+
+.stat-card.purple::before {
+  background: var(--purple);
+}
+
+.stat-card.orange::before {
+  background: var(--orange);
+}
+
+.stat-title {
+  display: block;
+
+  color: var(--muted);
+
+  font-size: 10px;
+}
+
+.stat-card strong {
+  display: block;
+
+  margin-top: 9px;
+
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.stat-card small {
+  display:
