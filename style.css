@@ -7,29 +7,56 @@
 <title>AutoTrade AI</title>
 
 <style>
+
+/* =========================================================
+   RESET
+========================================================= */
+
 *{
-    box-sizing:border-box;
     margin:0;
     padding:0;
+    box-sizing:border-box;
     -webkit-tap-highlight-color:transparent;
 }
 
 :root{
     --bg:#020817;
-    --blue:#2869f4;
-    --purple:#7145ff;
-    --green:#1bd5a4;
-    --orange:#ff9b2f;
+    --bg-top:#071733;
+
+    --card:#0b2148;
+    --card2:#102c5c;
+
+    --border:rgba(88,139,228,.45);
+    --border-light:rgba(117,157,231,.22);
+
     --text:#f7f9ff;
-    --muted:#9caed0;
+    --muted:#96a8ca;
+
+    --blue:#2869f4;
+    --blue-light:#4c82ff;
+
+    --purple:#7445ff;
+    --purple-light:#9b6aff;
+
+    --green:#19d5a5;
+    --red:#ff5d73;
+    --orange:#ff9f35;
+
+    --radius:26px;
 }
 
-html,body{
+html,
+body{
     width:100%;
     min-height:100%;
-    background:#020817;
+    background:var(--bg);
     color:var(--text);
-    font-family:Tahoma,Arial,"Segoe UI",sans-serif;
+
+    font-family:
+        Tahoma,
+        Arial,
+        "Segoe UI",
+        sans-serif;
 }
 
 body{
@@ -38,72 +65,93 @@ body{
 
 button{
     font-family:inherit;
-    cursor:pointer;
 }
+
+
+/* =========================================================
+   APP
+========================================================= */
 
 .app{
     min-height:100vh;
-    padding-bottom:110px;
 
     background:
         radial-gradient(
-            circle at 85% 8%,
-            rgba(42,91,210,.18),
+            circle at 85% 5%,
+            rgba(53,105,224,.17),
             transparent 28%
         ),
+
         radial-gradient(
-            circle at 5% 45%,
-            rgba(27,76,180,.13),
+            circle at 0% 45%,
+            rgba(35,81,180,.10),
             transparent 30%
         ),
+
         linear-gradient(
             180deg,
-            #06132d 0%,
+            #071633 0%,
             #020817 100%
         );
+
+    padding-bottom:120px;
 }
 
-/* ================= TOP BAR ================= */
+
+/* =========================================================
+   TOP BAR
+========================================================= */
 
 .topbar{
-    height:76px;
-    padding:12px 22px;
+    height:72px;
+
+    padding:10px 20px;
 
     display:flex;
     align-items:center;
     justify-content:space-between;
 
-    border-bottom:1px solid rgba(90,130,205,.18);
+    position:sticky;
+    top:0;
 
-    background:rgba(3,12,31,.82);
+    z-index:100;
 
-    backdrop-filter:blur(20px);
-    -webkit-backdrop-filter:blur(20px);
+    background:
+        rgba(3,12,31,.78);
 
-    position:relative;
-    z-index:20;
+    border-bottom:
+        1px solid rgba(93,136,215,.18);
+
+    backdrop-filter:blur(22px);
+    -webkit-backdrop-filter:blur(22px);
 }
 
 .brand{
-    font-size:24px;
-    font-weight:800;
+    font-size:23px;
+    font-weight:900;
+
+    letter-spacing:-.6px;
+
+    color:#fff;
 }
 
 .top-actions{
     display:flex;
     align-items:center;
-    gap:10px;
+    gap:9px;
 }
 
 .top-btn{
-    width:47px;
-    height:47px;
+    width:44px;
+    height:44px;
 
-    border-radius:16px;
+    border-radius:15px;
 
-    border:1px solid rgba(88,133,218,.55);
+    border:
+        1px solid rgba(91,137,219,.48);
 
-    background:rgba(15,39,81,.72);
+    background:
+        rgba(14,37,77,.72);
 
     color:#fff;
 
@@ -111,56 +159,71 @@ button{
     align-items:center;
     justify-content:center;
 
-    font-size:25px;
+    font-size:23px;
+
+    cursor:pointer;
 }
 
-/* ================= MAIN ================= */
+
+/* =========================================================
+   MAIN CONTAINER
+========================================================= */
 
 .container{
     width:100%;
     max-width:760px;
+
     margin:0 auto;
 
-    padding:20px 22px 30px;
+    padding:
+        20px 20px 35px;
 }
 
-/* ================= WELCOME ================= */
+
+/* =========================================================
+   WELCOME
+========================================================= */
 
 .welcome{
-    min-height:108px;
+    min-height:105px;
 
     display:flex;
     align-items:center;
 
-    gap:17px;
+    gap:14px;
 
     position:relative;
 
-    padding:10px 4px 15px;
+    padding:
+        8px 5px 15px;
 }
 
-.welcome::before{
-    content:"";
-
+.welcome-line{
     position:absolute;
 
     right:0;
-    top:17px;
+    top:18px;
 
     width:4px;
-    height:67px;
+    height:63px;
 
-    border-radius:8px;
+    border-radius:10px;
 
-    background:#8294c1;
-    opacity:.65;
+    background:
+        linear-gradient(
+            180deg,
+            #587cff,
+            #7046ff
+        );
+
+    opacity:.8;
 }
 
 .bot-avatar{
-    width:78px;
-    height:78px;
+    width:72px;
+    height:72px;
 
-    flex:0 0 78px;
+    flex:0 0 72px;
 
     border-radius:50%;
 
@@ -168,26 +231,33 @@ button{
     align-items:center;
     justify-content:center;
 
-    border:1px solid rgba(111,91,255,.9);
+    border:
+        1px solid rgba(124,102,255,.8);
 
     background:
         radial-gradient(
             circle,
-            rgba(48,101,226,.25),
-            rgba(8,24,58,.75)
+            rgba(55,105,224,.25),
+            rgba(7,24,57,.92)
         );
 
     box-shadow:
-        inset 0 0 15px rgba(55,116,255,.12);
+        inset 0 0 18px rgba(55,116,255,.12),
+        0 8px 20px rgba(0,0,0,.15);
 }
 
 .bot-avatar svg{
-    width:49px;
-    height:49px;
+    width:44px;
+    height:44px;
+
+    fill:none;
 
     stroke:#aebfff;
-    fill:none;
+
     stroke-width:1.5;
+
+    stroke-linecap:round;
+    stroke-linejoin:round;
 }
 
 .welcome-text{
@@ -195,46 +265,57 @@ button{
 }
 
 .welcome-title{
-    font-size:20px;
-    line-height:1.8;
+    font-size:18px;
+
+    line-height:1.9;
+
+    color:#fff;
 }
 
-.welcome-title .name{
-    color:#4c82ff;
-    font-weight:800;
+.user-name{
+    color:#4e83ff;
+    font-weight:900;
 }
 
 .welcome-subtitle{
     margin-top:2px;
-    color:#9aabce;
-    font-size:13px;
+
+    color:#96a8ca;
+
+    font-size:12px;
 }
 
 .welcome-subtitle span{
-    color:#7955ff;
+    color:#9568ff;
 }
 
-/* ================= BALANCE ================= */
+
+/* =========================================================
+   BALANCE CARD
+========================================================= */
 
 .balance-card{
     position:relative;
 
-    min-height:292px;
+    min-height:290px;
 
-    border-radius:28px;
+    padding:25px;
 
-    border:1px solid rgba(90,139,229,.72);
+    border-radius:29px;
+
+    border:
+        1px solid rgba(89,139,230,.62);
 
     background:
         linear-gradient(
             145deg,
-            rgba(24,61,128,.88),
-            rgba(9,29,70,.94)
+            rgba(24,61,128,.91),
+            rgba(8,28,66,.96)
         );
 
     box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.08),
-        0 15px 35px rgba(0,0,0,.13);
+        inset 0 1px 0 rgba(255,255,255,.07),
+        0 15px 35px rgba(0,0,0,.15);
 
     overflow:hidden;
 }
@@ -247,112 +328,131 @@ button{
     width:280px;
     height:280px;
 
-    left:-110px;
-    top:-120px;
+    left:-140px;
+    top:-130px;
 
     border-radius:50%;
 
     background:
         radial-gradient(
             circle,
-            rgba(64,117,238,.12),
+            rgba(61,119,244,.16),
             transparent 70%
         );
+
+    pointer-events:none;
 }
 
-/* balance information */
+
+/* =========================================================
+   BALANCE INFORMATION
+========================================================= */
 
 .balance-content{
     position:absolute;
 
     top:25px;
-    right:27px;
+    right:25px;
 
-    z-index:6;
+    z-index:10;
 
     text-align:right;
 }
 
 .balance-label{
-    color:#c0cbe0;
+    color:#bdc9df;
+
     font-size:14px;
 }
 
 .balance-value{
-    margin-top:12px;
-
-    font-size:44px;
-    line-height:1;
-
-    font-weight:800;
+    margin-top:11px;
 
     direction:ltr;
+
     text-align:right;
+
+    font-size:43px;
+
+    line-height:1;
+
+    font-weight:900;
+
+    letter-spacing:-1px;
+
+    color:#fff;
 }
 
 .balance-toman{
-    margin-top:10px;
+    margin-top:9px;
 
-    color:#9eafd0;
-    font-size:14px;
+    color:#99aaca;
+
+    font-size:13px;
 }
 
-/* ================= WALLET ================= */
+
+/* =========================================================
+   WALLET VISUAL
+========================================================= */
 
 .wallet-visual{
     position:absolute;
 
-    left:22px;
-    top:57px;
+    left:15px;
+    top:66px;
 
-    width:220px;
-    height:175px;
+    width:210px;
+    height:170px;
 
     z-index:3;
 
-    transform:scale(.86);
+    transform:scale(.78);
+
     transform-origin:left top;
 }
 
 .wallet-shadow{
     position:absolute;
 
-    left:10px;
-    bottom:4px;
+    left:7px;
+    bottom:3px;
 
-    width:200px;
-    height:35px;
+    width:190px;
+    height:32px;
 
     border-radius:50%;
 
-    background:rgba(33,108,235,.28);
+    background:
+        rgba(30,102,228,.28);
 
-    filter:blur(4px);
+    filter:blur(5px);
 }
 
 .wallet-body{
     position:absolute;
 
-    left:32px;
-    bottom:20px;
+    left:29px;
+    bottom:21px;
 
-    width:172px;
-    height:110px;
+    width:169px;
+    height:108px;
 
     border-radius:18px;
 
     background:
         linear-gradient(
             145deg,
-            #2e78ee,
+            #347ef0,
             #1555bd
         );
 
-    border:1px solid rgba(111,165,255,.72);
+    border:
+        1px solid rgba(119,172,255,.68);
 
     box-shadow:
         inset 0 2px 5px rgba(255,255,255,.12),
-        0 14px 25px rgba(0,0,0,.20);
+        0 15px 25px rgba(0,0,0,.25);
 }
 
 .wallet-body::before{
@@ -366,23 +466,25 @@ button{
     width:100%;
     height:1px;
 
-    background:rgba(255,255,255,.13);
+    background:
+        rgba(255,255,255,.13);
 }
 
 .wallet-clasp{
     position:absolute;
 
-    right:-22px;
-    top:47px;
+    right:-21px;
+    top:46px;
 
-    width:55px;
+    width:52px;
     height:42px;
 
     border-radius:10px;
 
     background:#2867cd;
 
-    border:1px solid rgba(111,164,244,.6);
+    border:
+        1px solid rgba(115,169,249,.55);
 }
 
 .wallet-button{
@@ -407,30 +509,36 @@ button{
             #5430d1
         );
 
+    border:
+        2px solid rgba(182,148,255,.7);
+
     color:#fff;
 
-    font-size:18px;
+    font-size:17px;
 }
 
-/* coins */
+
+/* =========================================================
+   COINS COMING OUT OF WALLET
+========================================================= */
 
 .wallet-coins{
     position:absolute;
 
-    left:43px;
-    top:2px;
+    left:41px;
+    top:3px;
 
     width:150px;
-    height:80px;
+    height:75px;
 
-    z-index:6;
+    z-index:8;
 }
 
 .coin{
     position:absolute;
 
-    width:62px;
-    height:62px;
+    width:61px;
+    height:61px;
 
     border-radius:50%;
 
@@ -438,17 +546,20 @@ button{
     align-items:center;
     justify-content:center;
 
-    border:3px solid rgba(255,255,255,.25);
+    font-weight:900;
+
+    border:
+        3px solid rgba(255,255,255,.25);
 
     box-shadow:
-        0 6px 13px rgba(0,0,0,.25);
-
-    font-weight:900;
+        0 7px 14px rgba(0,0,0,.28);
 }
 
 .bitcoin{
     left:0;
-    top:8px;
+    top:9px;
+
+    z-index:3;
 
     background:
         linear-gradient(
@@ -458,64 +569,70 @@ button{
         );
 
     font-size:28px;
-    z-index:3;
 }
 
 .ethereum{
-    left:53px;
+    left:52px;
     top:0;
+
+    z-index:2;
 
     background:
         linear-gradient(
             145deg,
-            #b3bee5,
-            #6576bd
+            #b9c5ed,
+            #6375bd
         );
 
-    font-size:27px;
-    z-index:2;
+    font-size:26px;
 }
 
-/* ================= BALANCE BUTTONS ================= */
+
+/* =========================================================
+   BALANCE BUTTONS
+========================================================= */
 
 .balance-buttons{
     position:absolute;
 
-    right:27px;
-    left:27px;
-    bottom:22px;
+    right:25px;
+    left:25px;
+
+    bottom:20px;
 
     display:flex;
-    gap:10px;
 
-    z-index:10;
+    gap:9px;
+
+    z-index:20;
 }
 
 .main-btn{
-    height:52px;
-
     flex:1;
 
-    border-radius:17px;
+    height:51px;
 
-    border:1px solid rgba(90,137,219,.72);
+    border-radius:16px;
+
+    border:
+        1px solid rgba(91,137,219,.62);
 
     background:
-        rgba(13,38,80,.82);
+        rgba(11,34,72,.85);
 
     color:#fff;
 
     font-size:13px;
-    font-weight:700;
 
-    box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.06);
+    font-weight:800;
 
-    transition:.2s;
+    cursor:pointer;
+
+    transition:.18s ease;
 }
 
 .main-btn:active{
-    transform:scale(.97);
+    transform:scale(.98);
 }
 
 .main-btn.primary{
@@ -529,35 +646,41 @@ button{
         );
 
     box-shadow:
-        0 7px 20px rgba(66,80,255,.22);
+        0 7px 18px rgba(69,76,230,.20);
 }
 
-/* ================= STATS ================= */
+
+/* =========================================================
+   STATISTICS
+========================================================= */
 
 .stats{
     margin-top:20px;
 
     display:grid;
 
-    grid-template-columns:repeat(4,1fr);
+    grid-template-columns:
+        repeat(4,1fr);
 
-    gap:10px;
+    gap:9px;
 }
 
 .stat-card{
     min-height:145px;
 
-    padding:16px 7px 10px;
+    padding:
+        15px 6px 11px;
 
-    border-radius:22px;
+    border-radius:21px;
 
-    border:1px solid rgba(92,139,224,.30);
+    border:
+        1px solid var(--border-light);
 
     background:
         linear-gradient(
             145deg,
-            rgba(19,47,96,.72),
-            rgba(7,27,62,.78)
+            rgba(18,46,95,.72),
+            rgba(7,27,62,.80)
         );
 
     text-align:center;
@@ -565,46 +688,57 @@ button{
     position:relative;
 
     overflow:hidden;
+
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
 }
 
 .stat-card:nth-child(1){
-    border-color:rgba(23,205,178,.65);
+    border-color:
+        rgba(23,205,178,.55);
 }
 
 .stat-card:nth-child(2){
-    border-color:rgba(66,119,235,.65);
+    border-color:
+        rgba(66,119,235,.55);
 }
 
 .stat-card:nth-child(3){
-    border-color:rgba(150,84,255,.65);
+    border-color:
+        rgba(150,84,255,.55);
 }
 
 .stat-card:nth-child(4){
-    border-color:rgba(255,169,58,.65);
+    border-color:
+        rgba(255,169,58,.55);
 }
 
 .stat-title{
-    color:#aab8d4;
+    color:#a9b8d5;
+
     font-size:10px;
+
     white-space:nowrap;
 }
 
 .stat-number{
-    margin-top:16px;
-
-    font-size:21px;
-    font-weight:800;
+    margin-top:17px;
 
     direction:ltr;
+
+    font-size:21px;
+
+    font-weight:900;
 }
 
 .stat-percent{
-    margin-top:7px;
+    margin-top:6px;
+
     font-size:12px;
 }
 
 .green{
-    color:#1bd7a5;
+    color:var(--green);
 }
 
 .blue{
@@ -619,41 +753,28 @@ button{
     color:#ff9d32;
 }
 
-.chart{
-    height:29px;
-    margin-top:11px;
-}
 
-.chart svg{
-    width:100%;
-    height:100%;
-}
-
-.chart polyline{
-    fill:none;
-    stroke-width:1.8;
-    stroke-linecap:round;
-    stroke-linejoin:round;
-}
-
-/* ================= AI CARD ================= */
+/* =========================================================
+   AI CARD
+========================================================= */
 
 .ai-card{
     margin-top:22px;
 
-    min-height:300px;
+    min-height:315px;
 
     padding:23px;
 
     border-radius:27px;
 
-    border:1px solid rgba(89,137,222,.68);
+    border:
+        1px solid rgba(89,137,222,.62);
 
     background:
         linear-gradient(
             145deg,
-            rgba(20,48,100,.74),
-            rgba(7,26,60,.82)
+            rgba(20,48,100,.76),
+            rgba(7,26,60,.84)
         );
 
     box-shadow:
@@ -668,19 +789,24 @@ button{
     display:flex;
     align-items:center;
     justify-content:flex-start;
+
+    gap:9px;
 }
 
 .ai-title{
     font-size:20px;
-    font-weight:800;
+
+    font-weight:900;
 }
 
 .ai-brain{
     font-size:25px;
-    margin-right:7px;
 }
 
-/* status */
+
+/* =========================================================
+   AI STATUS
+========================================================= */
 
 .ai-status{
     position:absolute;
@@ -688,71 +814,73 @@ button{
     right:23px;
     top:63px;
 
-    display:inline-flex;
-
+    display:flex;
     align-items:center;
 
     gap:7px;
 
-    padding:7px 12px;
+    padding:
+        7px 11px;
 
     border-radius:11px;
 
-    background:rgba(171,48,80,.18);
+    background:
+        rgba(171,48,80,.17);
 
     color:#ff687b;
 
-    font-size:12px;
+    font-size:11px;
 }
 
 .status-dot{
-    width:8px;
-    height:8px;
+    width:7px;
+    height:7px;
 
     border-radius:50%;
 
     background:#ff5067;
 }
 
-/* information */
+
+/* =========================================================
+   AI INFORMATION
+========================================================= */
 
 .ai-info{
     position:absolute;
 
     right:23px;
-    top:105px;
+    top:106px;
 
-    width:220px;
-
-    display:flex;
-
-    flex-direction:column;
-
-    gap:1px;
+    width:185px;
 
     color:#aebbd3;
 
-    font-size:13px;
+    font-size:12px;
 
     line-height:2;
+
+    z-index:2;
 }
 
 .info-item strong{
     color:#fff;
 }
 
-/* confidence */
+
+/* =========================================================
+   AI CONFIDENCE
+========================================================= */
 
 .ai-confidence{
     position:absolute;
 
-    left:23px;
-    top:63px;
+    left:15px;
+    top:65px;
 
-    width:130px;
+    width:120px;
 
     display:flex;
-
     flex-direction:column;
 
     align-items:center;
@@ -761,16 +889,16 @@ button{
 }
 
 .confidence-circle{
-    width:110px;
-    height:110px;
+    width:104px;
+    height:104px;
 
     border-radius:50%;
+
+    position:relative;
 
     display:flex;
     align-items:center;
     justify-content:center;
-
-    position:relative;
 
     background:
         radial-gradient(
@@ -780,18 +908,11 @@ button{
             #051229 100%
         );
 
-    border:9px solid #19366f;
+    border:
+        9px solid #19366f;
 
     box-shadow:
-        inset 0 0 20px rgba(41,105,244,.10),
-        0 0 18px rgba(35,86,190,.08);
-
-    color:#fff;
-
-    font-size:27px;
-    font-weight:800;
-
-    direction:ltr;
+        inset 0 0 20px rgba(41,105,244,.10);
 }
 
 .confidence-circle::before{
@@ -803,17 +924,26 @@ button{
 
     border-radius:50%;
 
-    border:9px solid transparent;
+    border:
+        9px solid transparent;
 
     border-top-color:#315eff;
     border-right-color:#315eff;
 
-    transform:rotate(-35deg);
+    transform:
+        rotate(-35deg);
 }
 
 .confidence-value{
     position:relative;
+
     z-index:2;
+
+    direction:ltr;
+
+    font-size:25px;
+
+    font-weight:900;
 }
 
 .confidence-text{
@@ -823,12 +953,15 @@ button{
 
     font-size:10px;
 
-    text-align:center;
-
     white-space:nowrap;
+
+    text-align:center;
 }
 
-/* AI button */
+
+/* =========================================================
+   AI START
+========================================================= */
 
 .ai-start{
     position:absolute;
@@ -838,13 +971,14 @@ button{
 
     bottom:19px;
 
-    width:calc(100% - 46px);
+    width:
+        calc(100% - 46px);
 
     height:51px;
 
     border:0;
 
-    border-radius:17px;
+    border-radius:16px;
 
     background:
         linear-gradient(
@@ -855,37 +989,49 @@ button{
 
     color:#fff;
 
-    font-size:14px;
-    font-weight:800;
+    font-size:13px;
+
+    font-weight:900;
+
+    cursor:pointer;
 }
 
-/* ================= DATA ================= */
+
+/* =========================================================
+   DATA SECTION
+========================================================= */
 
 .data-grid{
+    margin-top:22px;
+
     display:grid;
 
-    grid-template-columns:1fr 1fr;
+    grid-template-columns:
+        1fr 1fr;
 
-    gap:12px;
-
-    margin-top:22px;
+    gap:10px;
 }
 
 .data-card{
     min-height:155px;
 
-    padding:19px 15px;
+    padding:
+        18px 13px;
 
     border-radius:23px;
 
-    border:1px solid rgba(84,130,216,.55);
+    border:
+        1px solid rgba(84,130,216,.50);
 
     background:
         linear-gradient(
             145deg,
             rgba(17,43,91,.72),
-            rgba(7,26,59,.78)
+            rgba(7,26,59,.80)
         );
+
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
 }
 
 .data-head{
@@ -893,12 +1039,14 @@ button{
     align-items:center;
     justify-content:space-between;
 
-    font-size:15px;
-    font-weight:700;
+    font-size:14px;
+
+    font-weight:800;
 }
 
 .data-icon{
     color:#9b65ff;
+
     font-size:21px;
 }
 
@@ -917,14 +1065,17 @@ button{
 .data-link{
     display:block;
 
-    margin-top:7px;
+    margin-top:6px;
 
     color:#895cff;
 
     text-decoration:none;
 }
 
-/* ================= BOTTOM NAV ================= */
+
+/* =========================================================
+   BOTTOM NAVIGATION
+========================================================= */
 
 .bottom-nav{
     position:fixed;
@@ -934,23 +1085,26 @@ button{
 
     transform:translateX(-50%);
 
-    width:calc(100% - 18px);
+    width:
+        calc(100% - 18px);
 
     max-width:720px;
 
     height:82px;
 
-    padding:6px;
+    padding:5px;
 
     display:grid;
 
-    grid-template-columns:repeat(5,1fr);
+    grid-template-columns:
+        repeat(5,1fr);
 
-    gap:5px;
+    gap:4px;
 
     border-radius:25px;
 
-    border:1px solid rgba(91,138,222,.65);
+    border:
+        1px solid rgba(91,138,222,.60);
 
     background:
         rgba(10,29,63,.90);
@@ -983,7 +1137,9 @@ button{
 
     gap:4px;
 
-    transition:.2s;
+    cursor:pointer;
+
+    transition:.18s ease;
 }
 
 .nav-item:active{
@@ -1000,12 +1156,12 @@ button{
 }
 
 .nav-icon svg{
-    width:25px;
-    height:25px;
-
-    stroke:currentColor;
+    width:24px;
+    height:24px;
 
     fill:none;
+
+    stroke:currentColor;
 
     stroke-width:1.8;
 
@@ -1014,7 +1170,7 @@ button{
 }
 
 .nav-label{
-    font-size:10px;
+    font-size:9px;
 }
 
 .nav-item.active{
@@ -1027,115 +1183,90 @@ button{
             #5739ce
         );
 
-    border:1px solid rgba(143,104,255,.9);
+    border:
+        1px solid rgba(143,104,255,.85);
 
     box-shadow:
         0 5px 18px rgba(92,62,220,.20);
 }
 
-/* ================= MOBILE ================= */
 
-@media(max-width:560px){
+/* =========================================================
+   RESPONSIVE
+========================================================= */
 
-    .topbar{
-        height:68px;
-        padding:10px 15px;
+@media(min-width:561px){
+
+    .wallet-visual{
+        left:30px;
+        top:68px;
+
+        transform:scale(.9);
     }
 
-    .brand{
-        font-size:21px;
+    .balance-card{
+        min-height:300px;
     }
 
-    .top-btn{
-        width:43px;
-        height:43px;
+    .balance-value{
+        font-size:46px;
     }
+}
+
+
+@media(max-width:390px){
 
     .container{
-        padding:17px 16px 25px;
-    }
-
-    .welcome{
-        min-height:108px;
-        gap:12px;
-    }
-
-    .bot-avatar{
-        width:70px;
-        height:70px;
-        flex-basis:70px;
-    }
-
-    .bot-avatar svg{
-        width:43px;
-        height:43px;
+        padding-left:14px;
+        padding-right:14px;
     }
 
     .welcome-title{
         font-size:17px;
     }
 
-    .welcome-subtitle{
-        font-size:11px;
-    }
-
-    /* balance */
-
     .balance-card{
         min-height:285px;
-        border-radius:26px;
+
+        padding:21px;
     }
 
     .balance-content{
-        top:23px;
         right:21px;
-    }
-
-    .balance-label{
-        font-size:12px;
+        top:22px;
     }
 
     .balance-value{
-        font-size:38px;
-        margin-top:10px;
-    }
-
-    .balance-toman{
-        font-size:12px;
-        margin-top:9px;
+        font-size:37px;
     }
 
     .wallet-visual{
         left:0;
-        top:74px;
+        top:69px;
 
         transform:scale(.68);
-        transform-origin:left top;
     }
 
     .balance-buttons{
-        right:20px;
-        left:20px;
+        right:21px;
+        left:21px;
+
         bottom:18px;
-        gap:8px;
     }
 
     .main-btn{
-        height:49px;
         font-size:11px;
-        padding:0 5px;
+        height:49px;
     }
 
-    /* stats */
-
     .stats{
-        gap:7px;
+        gap:6px;
     }
 
     .stat-card{
-        min-height:138px;
-        padding:14px 4px 9px;
-        border-radius:20px;
+        min-height:137px;
+
+        border-radius:19px;
     }
 
     .stat-title{
@@ -1144,176 +1275,34 @@ button{
 
     .stat-number{
         font-size:18px;
-        margin-top:15px;
     }
-
-    .stat-percent{
-        font-size:11px;
-    }
-
-    .chart{
-        margin-top:10px;
-        height:26px;
-    }
-
-    /* AI */
 
     .ai-card{
-        min-height:300px;
-        padding:20px;
-        border-radius:25px;
-    }
-
-    .ai-title{
-        font-size:18px;
-    }
-
-    .ai-brain{
-        font-size:23px;
-    }
-
-    .ai-status{
-        right:20px;
-        top:60px;
-        font-size:10px;
-        padding:6px 9px;
+        min-height:305px;
     }
 
     .ai-info{
-        right:20px;
-        top:101px;
-        width:180px;
-        font-size:11px;
-        line-height:2;
-    }
-
-    .ai-confidence{
-        left:15px;
-        top:63px;
-        width:105px;
-    }
-
-    .confidence-circle{
-        width:95px;
-        height:95px;
-        border-width:8px;
-        font-size:23px;
-    }
-
-    .confidence-circle::before{
-        inset:-8px;
-        border-width:8px;
-    }
-
-    .confidence-text{
-        font-size:9px;
-    }
-
-    .ai-start{
-        right:20px;
-        left:20px;
-        width:calc(100% - 40px);
-        bottom:18px;
-        height:49px;
-        font-size:12px;
-    }
-
-    /* data */
-
-    .data-grid{
-        gap:9px;
-    }
-
-    .data-card{
-        min-height:145px;
-        padding:17px 10px;
-    }
-
-    .data-head{
-        font-size:13px;
-    }
-
-    .data-empty{
+        width:175px;
         font-size:11px;
     }
 
-    /* nav */
-
     .bottom-nav{
-        height:79px;
-        width:calc(100% - 14px);
-        bottom:6px;
-    }
-
-    .nav-label{
-        font-size:9px;
-    }
-
-    .nav-icon,
-    .nav-icon svg{
-        width:23px;
-        height:23px;
+        height:80px;
     }
 }
 
-@media(max-width:390px){
-
-    .container{
-        padding-left:12px;
-        padding-right:12px;
-    }
-
-    .balance-card{
-        min-height:280px;
-    }
-
-    .balance-value{
-        font-size:35px;
-    }
-
-    .wallet-visual{
-        left:-4px;
-        top:72px;
-        transform:scale(.62);
-    }
-
-    .balance-buttons{
-        right:17px;
-        left:17px;
-    }
-
-    .main-btn{
-        font-size:10px;
-    }
-
-    .stats{
-        gap:5px;
-    }
-
-    .stat-card{
-        min-height:132px;
-    }
-
-    .stat-number{
-        font-size:17px;
-    }
-
-    .ai-card{
-        min-height:295px;
-    }
-
-    .bottom-nav{
-        height:76px;
-    }
-}
 </style>
 </head>
+
 
 <body>
 
 <div class="app">
 
-<!-- ================= TOP BAR ================= -->
+
+<!-- =====================================================
+     TOP BAR
+===================================================== -->
 
 <header class="topbar">
 
@@ -1323,7 +1312,12 @@ button{
 
     <div class="top-actions">
 
-        <button class="top-btn" onclick="toggleMenu()">
+        <button
+            class="top-btn"
+            type="button"
+            aria-label="منو"
+            onclick="openMenu()"
+        >
             ☰
         </button>
 
@@ -1332,11 +1326,18 @@ button{
 </header>
 
 
+
 <main class="container">
 
-<!-- ================= WELCOME ================= -->
+
+<!-- =====================================================
+     WELCOME
+===================================================== -->
 
 <section class="welcome">
+
+    <div class="welcome-line"></div>
+
 
     <div class="bot-avatar">
 
@@ -1360,16 +1361,14 @@ button{
 
             <circle
                 cx="9"
-                cy="12"
+                cy="13"
                 r="1"
-                fill="#aebfff"
             />
 
             <circle
                 cx="15"
-                cy="12"
+                cy="13"
                 r="1"
-                fill="#aebfff"
             />
 
             <path d="M9 16h6"/>
@@ -1378,16 +1377,28 @@ button{
 
     </div>
 
+
     <div class="welcome-text">
 
         <div class="welcome-title">
-            سلام 👋
-            <span class="name">Mehdi</span>
+
+            سلام
+            <span
+                class="user-name"
+                id="userName"
+            >
+                کاربر
+            </span>
+            👋
+
         </div>
 
         <div class="welcome-subtitle">
-            خوش آمدید
+
+            به
             <span>AutoTrade AI</span>
+            خوش آمدید
+
         </div>
 
     </div>
@@ -1395,54 +1406,15 @@ button{
 </section>
 
 
-<!-- ================= BALANCE ================= -->
+
+<!-- =====================================================
+     BALANCE
+===================================================== -->
 
 <section class="balance-card">
+
 
     <div class="balance-content">
 
         <div class="balance-label">
-            ◉ موجودی حساب
-        </div>
-
-        <div
-            class="balance-value"
-            id="balance"
-        >
-            $0.00
-        </div>
-
-        <div
-            class="balance-toman"
-            id="toman"
-        >
-            ≈ ۰ تومان
-        </div>
-
-    </div>
-
-
-    <!-- WALLET -->
-
-    <div class="wallet-visual">
-
-        <div class="wallet-shadow"></div>
-
-        <div class="wallet-coins">
-
-            <div class="coin bitcoin">
-                ₿
-            </div>
-
-            <div class="coin ethereum">
-                Ξ
-            </div>
-
-        </div>
-
-        <div class="wallet-body">
-
-            <div class="wallet-clasp"></div>
-
-            <div class="wallet-button">
- 
+            موج
