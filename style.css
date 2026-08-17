@@ -2,11 +2,16 @@
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+>
 
 <title>AutoTrade AI</title>
 
 <style>
+
 /* =========================================================
    RESET
 ========================================================= */
@@ -26,7 +31,8 @@ body{
 
 body{
     background:#020817;
-    color:#fff;
+    color:#ffffff;
+
     font-family:
         Tahoma,
         Arial,
@@ -36,10 +42,18 @@ body{
     overflow-x:hidden;
 }
 
-button{
+button,
+input{
     font-family:inherit;
+}
+
+button{
     border:0;
     outline:none;
+}
+
+a{
+    color:inherit;
 }
 
 
@@ -48,6 +62,7 @@ button{
 ========================================================= */
 
 :root{
+
     --bg:#020817;
     --bg2:#07162f;
 
@@ -125,13 +140,16 @@ button{
 
     position:sticky;
     top:0;
+
     z-index:100;
 }
 
 .brand{
     font-size:22px;
     font-weight:900;
-    color:#fff;
+
+    color:#ffffff;
+
     letter-spacing:-.5px;
 }
 
@@ -160,7 +178,7 @@ button{
 
     border:1px solid rgba(92,139,224,.55);
 
-    color:#fff;
+    color:#ffffff;
 
     font-size:23px;
 
@@ -168,6 +186,12 @@ button{
 
     box-shadow:
         inset 0 1px 0 rgba(255,255,255,.06);
+
+    transition:.2s ease;
+}
+
+.top-btn:active{
+    transform:scale(.95);
 }
 
 .notification{
@@ -284,7 +308,6 @@ button{
     stroke-width:1.5;
 
     stroke-linecap:round;
-
     stroke-linejoin:round;
 }
 
@@ -296,11 +319,12 @@ button{
 .welcome-title{
     font-size:19px;
     line-height:1.8;
+
     white-space:nowrap;
 }
 
 .welcome-title .hello{
-    color:#fff;
+    color:#ffffff;
 }
 
 .welcome-title .name{
@@ -338,7 +362,7 @@ button{
 
     line-height:1.5;
 
-    color:#fff;
+    color:#ffffff;
 }
 
 .hero-description{
@@ -451,7 +475,7 @@ button{
 .balance-value{
     margin-top:10px;
 
-    color:#fff;
+    color:#ffffff;
 
     font-size:43px;
 
@@ -474,7 +498,7 @@ button{
 
 
 /* =========================================================
-   WALLET ICON
+   WALLET VISUAL
 ========================================================= */
 
 .wallet-visual{
@@ -574,7 +598,7 @@ button{
 
     border:1px solid rgba(190,159,255,.7);
 
-    color:#fff;
+    color:#ffffff;
 
     font-size:12px;
 }
@@ -674,7 +698,7 @@ button{
     background:
         rgba(10,33,71,.85);
 
-    color:#fff;
+    color:#ffffff;
 
     font-size:13px;
 
@@ -814,10 +838,13 @@ button{
     stroke-width:2;
 
     stroke-linecap:round;
-
     stroke-linejoin:round;
 }
 
+
+/* =========================================================
+   END OF PART 1
+========================================================= */
 
 /* =========================================================
    AI CARD
@@ -918,7 +945,7 @@ button{
 }
 
 .info-item strong{
-    color:#fff;
+    color:#ffffff;
 }
 
 
@@ -964,7 +991,7 @@ button{
 
     position:relative;
 
-    color:#fff;
+    color:#ffffff;
 
     font-size:22px;
 
@@ -996,6 +1023,7 @@ button{
 
 .confidence-value{
     position:relative;
+
     z-index:2;
 }
 
@@ -1013,7 +1041,7 @@ button{
 
 
 /* =========================================================
-   AI START
+   AI START BUTTON
 ========================================================= */
 
 .ai-start{
@@ -1037,7 +1065,7 @@ button{
             #315eff
         );
 
-    color:#fff;
+    color:#ffffff;
 
     font-size:13px;
 
@@ -1047,6 +1075,12 @@ button{
 
     box-shadow:
         0 8px 20px rgba(82,69,255,.18);
+
+    transition:.2s ease;
+}
+
+.ai-start:active{
+    transform:scale(.98);
 }
 
 
@@ -1085,6 +1119,7 @@ button{
     display:flex;
 
     align-items:center;
+
     justify-content:space-between;
 
     font-size:13px;
@@ -1094,6 +1129,7 @@ button{
 
 .data-icon{
     color:#9b65ff;
+
     font-size:18px;
 }
 
@@ -1121,7 +1157,7 @@ button{
 
 
 /* =========================================================
-   BOTTOM NAV
+   BOTTOM NAVIGATION
 ========================================================= */
 
 .bottom-nav{
@@ -1197,6 +1233,7 @@ button{
     height:25px;
 
     display:flex;
+
     align-items:center;
     justify-content:center;
 }
@@ -1221,7 +1258,7 @@ button{
 }
 
 .nav-item.active{
-    color:#fff;
+    color:#ffffff;
 
     background:
         linear-gradient(
@@ -1249,11 +1286,13 @@ button{
     display:none;
 
     align-items:flex-end;
+
     justify-content:center;
 
     background:rgba(0,0,0,.65);
 
     backdrop-filter:blur(6px);
+    -webkit-backdrop-filter:blur(6px);
 
     z-index:3000;
 }
@@ -1264,6 +1303,7 @@ button{
 
 .modal-box{
     width:100%;
+
     max-width:520px;
 
     padding:22px 20px 25px;
@@ -1285,6 +1325,7 @@ button{
 
 .modal-title{
     font-size:18px;
+
     font-weight:900;
 }
 
@@ -1313,7 +1354,7 @@ button{
 
     background:#061733;
 
-    color:#fff;
+    color:#ffffff;
 
     font-family:inherit;
 
@@ -1322,6 +1363,17 @@ button{
     outline:none;
 
     text-align:right;
+}
+
+.modal-input::placeholder{
+    color:#6f82a9;
+}
+
+.modal-input:focus{
+    border-color:#4d80ff;
+
+    box-shadow:
+        0 0 0 3px rgba(62,112,255,.10);
 }
 
 .modal-actions{
@@ -1341,11 +1393,17 @@ button{
 
     background:#102e61;
 
-    color:#fff;
+    color:#ffffff;
 
     border:1px solid rgba(91,139,226,.55);
 
     cursor:pointer;
+
+    transition:.2s ease;
+}
+
+.modal-btn:active{
+    transform:scale(.97);
 }
 
 .modal-btn.primary{
@@ -1383,6 +1441,11 @@ button{
     .balance-card{
         min-height:270px;
     }
+
+    .data-grid{
+        grid-template-columns:
+            repeat(2,1fr);
+    }
 }
 
 
@@ -1397,12 +1460,41 @@ button{
         padding-right:12px;
     }
 
+    .topbar{
+        padding-left:12px;
+        padding-right:12px;
+    }
+
+    .brand{
+        font-size:19px;
+    }
+
+    .top-btn{
+        width:40px;
+        height:40px;
+
+        font-size:20px;
+    }
+
+    .welcome-title{
+        font-size:17px;
+    }
+
+    .welcome-subtitle{
+        font-size:11px;
+    }
+
     .hero-title{
         font-size:25px;
     }
 
+    .hero-description{
+        font-size:12px;
+    }
+
     .balance-card{
         min-height:245px;
+
         padding:20px;
     }
 
@@ -1412,7 +1504,9 @@ button{
 
     .wallet-visual{
         left:5px;
+
         transform:scale(.82);
+
         transform-origin:left top;
     }
 
@@ -1427,451 +1521,110 @@ button{
 
     .stat-card{
         min-height:112px;
+
         padding:12px 8px;
     }
 
-    .stat-number{
-        font-siz:19px;
-
-
-           font-size:18px;
+    .stat-title{
+        font-size:10px;
     }
 
-    .stat-title{
-        font-size:9px;
+    .stat-number{
+        font-size:18px;
     }
 
     .stat-percent{
         font-size:11px;
     }
 
+    .ai-card{
+        padding:17px;
+
+        min-height:225px;
+    }
+
+    .ai-title{
+        font-size:16px;
+    }
+
+    .ai-confidence{
+        left:15px;
+        top:58px;
+
+        transform:scale(.88);
+
+        transform-origin:top left;
+    }
+
+    .ai-start{
+        right:17px;
+        left:17px;
+
+        width:calc(100% - 34px);
+    }
+
     .data-card{
-        padding:14px 10px;
+        min-height:118px;
+
+        padding:13px 11px;
     }
 
     .data-head{
-        font-size:12px;
+        font-size:11px;
+    }
+
+    .data-empty{
+        font-size:10px;
+    }
+
+    .bottom-nav{
+        height:72px;
+
+        bottom:5px;
+
+        width:calc(100% - 10px);
     }
 
     .nav-label{
         font-size:8px;
     }
 
+    .nav-icon{
+        width:23px;
+        height:23px;
+    }
+
     .nav-icon svg{
         width:22px;
         height:22px;
     }
-
 }
 
 
 /* =========================================================
-   HOVER / TOUCH
+   TOUCH / MOBILE OPTIMIZATION
 ========================================================= */
 
-.main-btn,
-.top-btn,
-.nav-item,
-.ai-start,
-.modal-btn{
-    -webkit-user-select:none;
-    user-select:none;
-}
-
-@media(hover:hover){
-
-    .main-btn:hover{
-        transform:translateY(-1px);
-        border-color:rgba(120,160,240,.9);
-    }
-
-    .main-btn.primary:hover,
-    .ai-start:hover{
-        filter:brightness(1.08);
-    }
-
-    .top-btn:hover{
-        background:
-            linear-gradient(
-                145deg,
-                rgba(35,72,140,.95),
-                rgba(12,34,75,.95)
-            );
-    }
-
-    .nav-item:not(.active):hover{
-        background:rgba(54,84,145,.18);
-        color:#fff;
-    }
-
-}
-
-
-/* =========================================================
-   SCROLLBAR
-========================================================= */
-
-::-webkit-scrollbar{
-    width:5px;
-}
-
-::-webkit-scrollbar-track{
-    background:#020817;
-}
-
-::-webkit-scrollbar-thumb{
-    background:#243f79;
-    border-radius:10px;
-}
-
-
-/* =========================================================
-   NOTIFICATION PANEL
-========================================================= */
-
-.notification-panel{
-    position:fixed;
-
-    top:70px;
-    right:14px;
-
-    width:290px;
-    max-width:calc(100% - 28px);
-
-    padding:16px;
-
-    border-radius:20px;
-
-    background:
-        linear-gradient(
-            145deg,
-            rgba(17,47,99,.98),
-            rgba(5,21,49,.98)
-        );
-
-    border:1px solid rgba(91,139,226,.65);
-
-    box-shadow:
-        0 15px 40px rgba(0,0,0,.35);
-
-    backdrop-filter:blur(18px);
-    -webkit-backdrop-filter:blur(18px);
-
-    z-index:2500;
-
-    display:none;
-}
-
-.notification-panel.show{
-    display:block;
-}
-
-.notification-head{
-    display:flex;
-
-    align-items:center;
-    justify-content:space-between;
-
-    font-size:14px;
-    font-weight:900;
-}
-
-.notification-close{
-    width:30px;
-    height:30px;
-
-    border-radius:10px;
-
-    background:rgba(255,255,255,.06);
-
-    color:#fff;
-
-    cursor:pointer;
-}
-
-.notification-item{
-    margin-top:12px;
-
-    padding:12px;
-
-    border-radius:14px;
-
-    background:rgba(255,255,255,.045);
-
-    border:1px solid rgba(255,255,255,.05);
-
-    color:#b7c5df;
-
-    font-size:11px;
-
-    line-height:1.8;
-}
-
-.notification-item strong{
-    color:#fff;
-}
-
-
-/* =========================================================
-   MENU PANEL
-========================================================= */
-
-.menu-panel{
-    position:fixed;
-
-    top:70px;
-    left:14px;
-
-    width:220px;
-
-    padding:10px;
-
-    border-radius:20px;
-
-    background:
-        linear-gradient(
-            145deg,
-            rgba(17,47,99,.98),
-            rgba(5,21,49,.98)
-        );
-
-    border:1px solid rgba(91,139,226,.65);
-
-    box-shadow:
-        0 15px 40px rgba(0,0,0,.35);
-
-    backdrop-filter:blur(18px);
-    -webkit-backdrop-filter:blur(18px);
-
-    z-index:2500;
-
-    display:none;
-}
-
-.menu-panel.show{
-    display:block;
-}
-
-.menu-item{
-    width:100%;
-
-    min-height:45px;
-
-    padding:0 13px;
-
-    display:flex;
-
-    align-items:center;
-
-    justify-content:flex-start;
-
-    gap:10px;
-
-    border-radius:13px;
-
-    background:transparent;
-
-    color:#dce5f8;
-
-    font-size:12px;
-
-    cursor:pointer;
-
-    text-align:right;
-}
-
-.menu-item:hover{
-    background:rgba(77,113,190,.16);
-}
-
-.menu-item.danger{
-    color:#ff7180;
-}
-
-
-/* =========================================================
-   TOAST
-========================================================= */
-
-.toast{
-    position:fixed;
-
-    left:50%;
-
-    bottom:94px;
-
-    transform:
-        translateX(-50%)
-        translateY(20px);
-
-    min-width:230px;
-    max-width:calc(100% - 30px);
-
-    padding:12px 16px;
-
-    border-radius:14px;
-
-    background:
-        rgba(12,31,66,.96);
-
-    border:1px solid rgba(91,139,226,.55);
-
-    color:#fff;
-
-    text-align:center;
-
-    font-size:12px;
-
-    opacity:0;
-
-    pointer-events:none;
-
-    transition:.25s ease;
-
-    z-index:5000;
-
-    box-shadow:
-        0 10px 30px rgba(0,0,0,.30);
-}
-
-.toast.show{
-    opacity:1;
-
-    transform:
-        translateX(-50%)
-        translateY(0);
-}
-
-.toast.success{
-    border-color:rgba(27,213,164,.6);
-}
-
-.toast.error{
-    border-color:rgba(255,93,112,.6);
-}
-
-
-/* =========================================================
-   LOADING
-========================================================= */
-
-.loading{
-    position:fixed;
-
-    inset:0;
-
-    display:none;
-
-    align-items:center;
-    justify-content:center;
-
-    background:rgba(2,8,23,.72);
-
-    backdrop-filter:blur(5px);
-
-    z-index:6000;
-}
-
-.loading.show{
-    display:flex;
-}
-
-.loading-box{
-    width:120px;
-    padding:20px 15px;
-
-    border-radius:20px;
-
-    background:#0b2555;
-
-    border:1px solid rgba(91,139,226,.6);
-
-    text-align:center;
-}
-
-.spinner{
-    width:35px;
-    height:35px;
-
-    margin:0 auto 10px;
-
-    border-radius:50%;
-
-    border:3px solid rgba(255,255,255,.15);
-
-    border-top-color:#7145ff;
-
-    border-right-color:#315eff;
-
-    animation:spin .8s linear infinite;
-}
-
-.loading-text{
-    color:#b7c5df;
-
-    font-size:11px;
-}
-
-@keyframes spin{
-    to{
-        transform:rotate(360deg);
+@media(hover:none){
+
+    .main-btn,
+    .ai-start,
+    .top-btn,
+    .nav-item,
+    .modal-btn{
+        -webkit-user-select:none;
+        user-select:none;
     }
 }
 
 
 /* =========================================================
-   PAGE HIDDEN
+   END OF PART 2
 ========================================================= */
+<!-- =========================================================
+     PART 3 — HTML
+========================================================= -->
 
-.page{
-    display:none;
-}
-
-.page.active{
-    display:block;
-}
-
-
-/* =========================================================
-   SIMPLE PAGE CONTENT
-========================================================= */
-
-.page-title{
-    font-size:22px;
-
-    font-weight:900;
-
-    margin-bottom:15px;
-}
-
-.simple-card{
-    padding:20px;
-
-    border-radius:22px;
-
-    background:
-        linear-gradient(
-            145deg,
-            rgba(18,47,98,.76),
-            rgba(7,26,60,.86)
-        );
-
-    border:1px solid rgba(89,137,222,.58);
-}
-
-.simple-card p{
-    color:#aebbd3;
-
-    font-size:13px;
-
-    line-height:2;
-}
-
-
-/* =========================================================
-   HTML
-========================================================= */
-</style>
 </head>
 
 <body>
@@ -1880,7 +1633,7 @@ button{
 
     <!-- =====================================================
          TOP BAR
-    ====================================================== -->
+    ===================================================== -->
 
     <header class="topbar">
 
@@ -1891,27 +1644,25 @@ button{
         <div class="top-actions">
 
             <button
-                class="top-btn"
-                id="menuBtn"
-                aria-label="منو"
-            >
-                ☰
-            </button>
-
-            <button
                 class="top-btn notification"
-                id="notificationBtn"
+                type="button"
+                onclick="openNotifications()"
                 aria-label="اعلان‌ها"
             >
                 🔔
-
                 <span
                     class="notification-badge"
                     id="notificationCount"
-                >
-                    3
-                </span>
+                >0</span>
+            </button>
 
+            <button
+                class="top-btn"
+                type="button"
+                onclick="openProfile()"
+                aria-label="پروفایل"
+            >
+                👤
             </button>
 
         </div>
@@ -1920,509 +1671,84 @@ button{
 
 
     <!-- =====================================================
-         MAIN CONTAINER
-    ====================================================== -->
+         MAIN
+    ===================================================== -->
 
     <main class="container">
 
 
         <!-- =================================================
-             HOME PAGE
-        ================================================== -->
+             WELCOME
+        ================================================= -->
 
-        <section
-            class="page active"
-            id="homePage"
-        >
+        <section class="welcome">
 
+            <div class="bot-avatar">
 
-            <!-- WELCOME -->
+                <svg
+                    viewBox="0 0 64 64"
+                    aria-hidden="true"
+                >
+                    <rect
+                        x="14"
+                        y="18"
+                        width="36"
+                        height="29"
+                        rx="9"
+                    />
 
-            <div class="welcome">
+                    <path d="M32 18V11" />
 
-                <div class="bot-avatar">
+                    <circle
+                        cx="32"
+                        cy="8"
+                        r="3"
+                    />
 
-                    <svg viewBox="0 0 64 64">
+                    <circle
+                        cx="25"
+                        cy="31"
+                        r="3"
+                    />
 
-                        <rect
-                            x="14"
-                            y="18"
-                            width="36"
-                            height="30"
-                            rx="9"
-                        />
+                    <circle
+                        cx="39"
+                        cy="31"
+                        r="3"
+                    />
 
-                        <circle
-                            cx="25"
-                            cy="31"
-                            r="3"
-                        />
+                    <path d="M24 40C28 43 36 43 40 40" />
 
-                        <circle
-                            cx="39"
-                            cy="31"
-                            r="3"
-                        />
+                    <path d="M14 29H9" />
 
-                        <path
-                            d="M24 40 Q32 45 40 40"
-                        />
-
-                        <path
-                            d="M32 18 V11"
-                        />
-
-                        <circle
-                            cx="32"
-                            cy="8"
-                            r="3"
-                        />
-
-                    </svg>
-
-                </div>
-
-
-                <div class="welcome-text">
-
-                    <div class="welcome-title">
-
-                        <span class="hello">
-                            سلام
-                        </span>
-
-                        <span>
-                            👋
-                        </span>
-
-                        <span
-                            class="name"
-                            id="userName"
-                        >
-                            کاربر
-                        </span>
-
-                    </div>
-
-                    <div class="welcome-subtitle">
-
-                        خوش آمدید به
-                        <span>
-                            AutoTrade AI
-                        </span>
-
-                    </div>
-
-                </div>
+                    <path d="M50 29H55" />
+                </svg>
 
             </div>
 
 
-            <!-- HERO -->
+            <div class="welcome-text">
 
-            <div class="hero">
+                <div class="welcome-title">
 
-                <h1 class="hero-title">
-                    ربات معامله‌گر خودکار
-                </h1>
-
-                <p class="hero-description">
-                    هوش مصنوعی معاملات شما را مدیریت می‌کند
-                </p>
-
-            </div>
-
-
-            <!-- BALANCE -->
-
-            <div class="balance-card">
-
-                <div class="balance-content">
-
-                    <div class="balance-label">
-                        موجودی حساب
-                    </div>
-
-                    <div
-                        class="balance-value"
-                        id="balanceUsd"
-                    >
-                        $0.00
-                    </div>
-
-                    <div
-                        class="balance-toman"
-                        id="balanceToman"
-                    >
-                        ≈ ۰ تومان
-                    </div>
-
-                </div>
-
-
-                <!-- WALLET -->
-
-                <div class="wallet-visual">
-
-                    <div class="wallet-shadow"></div>
-
-                    <div class="wallet-coins">
-
-                        <div class="coin bitcoin">
-                            ₿
-                        </div>
-
-                        <div class="coin ethereum">
-                            Ξ
-                        </div>
-
-                    </div>
-
-                    <div class="wallet-body">
-
-                        <div class="wallet-clasp"></div>
-
-                        <div class="wallet-button">
-                            $
-                        </div>
-
-                    </div>
-
-                </div>
-
-
-                <!-- BUTTONS -->
-
-                <div class="balance-buttons">
-
-                    <button
-                        class="main-btn primary"
-                        id="depositBtn"
-                    >
-                        ＋ افزایش موجودی
-                    </button>
-
-                    <button
-                        class="main-btn"
-                        id="withdrawBtn"
-                    >
-                        ⇧ برداشت
-                    </button>
-
-                </div>
-
-            </div>
-
-
-            <!-- STATS -->
-
-            <div class="stats">
-
-
-                <div class="stat-card">
-
-                    <div class="stat-title">
-                        سود کل
-                    </div>
-
-                    <div
-                        class="stat-number green"
-                        id="totalProfit"
-                    >
-                        $0.00
-                    </div>
-
-                    <div
-                        class="stat-percent green"
-                        id="profitPercent"
-                    >
-                        ۰٪
-                    </div>
-
-                    <div class="chart">
-
-                        <svg
-                            viewBox="0 0 100 30"
-                            preserveAspectRatio="none"
-                        >
-
-                            <polyline
-                                points="0,23 10,24 20,21 30,24 40,17 50,21 60,14 70,17 80,10 90,14 100,6"
-                                stroke="#1bd7a5"
-                            />
-
-                        </svg>
-
-                    </div>
-
-                </div>
-
-
-                <div class="stat-card">
-
-                    <div class="stat-title">
-                        معاملات
-                    </div>
-
-                    <div
-                        class="stat-number blue"
-                        id="tradeCount"
-                    >
-                        0
-                    </div>
-
-                    <div class="stat-percent blue">
-                        معامله
-                    </div>
-
-                    <div class="chart">
-
-                        <svg
-                            viewBox="0 0 100 30"
-                            preserveAspectRatio="none"
-                        >
-
-                            <polyline
-                                points="0,25 12,19 24,23 36,14 48,18 60,10 72,15 84,8 100,11"
-                                stroke="#299bff"
-                            />
-
-                        </svg>
-
-                    </div>
-
-                </div>
-
-
-                <div class="stat-card">
-
-                    <div class="stat-title">
-                        معاملات موفق
-                    </div>
-
-                    <div
-                        class="stat-number purple"
-                        id="successfulTrades"
-                    >
-                        0
-                    </div>
-
-                    <div
-                        class="stat-percent purple"
-                        id="successPercent"
-                    >
-                        ۰٪
-                    </div>
-
-                    <div class="chart">
-
-                        <svg
-                            viewBox="0 0 100 30"
-                            preserveAspectRatio="none"
-                        >
-
-                            <polyline
-                                points="0,25 12,22 25,24 38,17 50,20 62,12 75,16 88,9 100,12"
-                                stroke="#a463ff"
-                            />
-
-                        </svg>
-
-                    </div>
-
-                </div>
-
-
-                <div class="stat-card">
-
-                    <div class="stat-title">
-                        سود امروز
-                    </div>
-
-                    <div
-                        class="stat-number orange"
-                        id="todayProfit"
-                    >
-                        $0.00
-                    </div>
-
-                    <div
-                        class="stat-percent orange"
-                        id="todayPercent"
-                    >
-                        ۰٪
-                    </div>
-
-                    <div class="chart">
-
-                        <svg
-                            viewBox="0 0 100 30"
-                            preserveAspectRatio="none"
-                        >
-
-                            <polyline
-                                points="0,24 12,20 24,22 36,16 48,18 60,11 72,14 84,8 100,10"
-                                stroke="#ff9d32"
-                            />
-
-                        </svg>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <!-- AI ENGINE -->
-
-            <div class="ai-card">
-
-                <div class="ai-header">
-
-                    <div class="ai-title">
-                        موتور هوش مصنوعی
-                    </div>
-
-                    <div class="ai-brain">
-                        🤖
-                    </div>
-
-                </div>
-
-
-                <div class="ai-status">
-
-                    <span class="status-dot"></span>
-
-                    <span id="aiStatusText">
-                        متوقف
+                    <span class="hello">
+                        سلام،
                     </span>
 
-                </div>
-
-
-                <div class="ai-info">
-
-                    <div class="info-item">
-                        وضعیت:
-                        <strong id="botState">
-                            آماده
-                        </strong>
-                    </div>
-
-                    <div class="info-item">
-                        استراتژی:
-                        <strong>
-                            AutoTrade AI
-                        </strong>
-                    </div>
-
-                    <div class="info-item">
-                        ریسک:
-                        <strong>
-                            متوسط
-                        </strong>
-                    </div>
-
-                    <div class="info-item">
-                        بازار:
-                        <strong>
-                            Crypto
-                        </strong>
-                    </div>
-
-                </div>
-
-
-                <div class="ai-confidence">
-
-                    <div class="confidence-circle">
-
-                        <span
-                            class="confidence-value"
-                            id="confidenceValue"
-                        >
-                            0%
-                        </span>
-
-                    </div>
-
-                    <div class="confidence-text">
-                        میزان اطمینان AI
-                    </div>
-
-                </div>
-
-
-                <button
-                    class="ai-start"
-                    id="startBotBtn"
-                >
-                    شروع ربات
-                </button>
-
-            </div>
-
-
-            <!-- LAST DATA -->
-
-            <div class="data-grid">
-
-                <div class="data-card">
-
-                    <div class="data-head">
-
-                        <span>
-                            آخرین معامله
-                        </span>
-
-                        <span class="data-icon">
-                            ◈
-                        </span>
-
-                    </div>
-
-                    <div
-                        class="data-empty"
-                        id="lastTrade"
+                    <span
+                        class="name"
+                        id="userName"
                     >
-                        هنوز معامله‌ای ثبت نشده است
-                    </div>
+                        کاربر
+                    </span>
+
+                    👋
 
                 </div>
 
-
-                <div class="data-card">
-
-                    <div class="data-head">
-
-                        <span>
-                            وضعیت حساب
-                        </span>
-
-                        <span class="data-icon">
-                            ◉
-                        </span>
-
-                    </div>
-
-                    <div class="data-empty">
-
-                        <span id="accountStatus">
-                            حساب آماده است
-                        </span>
-
-                        <a
-                            href="#"
-                            class="data-link"
-                            id="accountLink"
-                        >
-                            مشاهده جزئیات
-                        </a>
-
-                    </div>
-
+                <div class="welcome-subtitle">
+                    <span>AutoTrade AI</span>
+                    همراه هوشمند معاملات شما
                 </div>
 
             </div>
@@ -2431,14 +1757,1436 @@ button{
 
 
         <!-- =================================================
-             WALLET PAGE
-        ================================================== -->
+             HERO
+        ================================================= -->
 
-        <section
-            class="page"
-            id="walletPage"
+        <section class="hero">
+
+            <h1 class="hero-title">
+                هوشمند معامله کن
+            </h1>
+
+            <p class="hero-description">
+                سرمایه‌گذاری و مدیریت معاملات با کمک هوش مصنوعی
+            </p>
+
+        </section>
+
+
+        <!-- =================================================
+             BALANCE CARD
+        ================================================= -->
+
+        <section class="balance-card">
+
+            <div class="balance-content">
+
+                <div class="balance-label">
+                    موجودی حساب
+                </div>
+
+                <div
+                    class="balance-value"
+                    id="balanceValue"
+                >
+                    0
+                </div>
+
+                <div class="balance-toman">
+                    تومان
+                </div>
+
+            </div>
+
+
+            <!-- Wallet Illustration -->
+
+            <div
+                class="wallet-visual"
+                aria-hidden="true"
+            >
+
+                <div class="wallet-shadow"></div>
+
+                <div class="wallet-coins">
+
+                    <div class="coin bitcoin">
+                        ₿
+                    </div>
+
+                    <div class="coin ethereum">
+                        ◆
+                    </div>
+
+                </div>
+
+                <div class="wallet-body">
+
+                    <div class="wallet-clasp"></div>
+
+                    <div class="wallet-button">
+                        $
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Balance Buttons -->
+
+            <div class="balance-buttons">
+
+                <button
+                    class="main-btn primary"
+                    type="button"
+                    onclick="openDeposit()"
+                >
+                    افزایش موجودی
+                </button>
+
+                <button
+                    class="main-btn"
+                    type="button"
+                    onclick="openWithdraw()"
+                >
+                    برداشت
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             STATS
+        ================================================= -->
+
+        <section class="stats">
+
+
+            <!-- Profit -->
+
+            <article class="stat-card">
+
+                <div class="stat-title">
+                    سود امروز
+                </div>
+
+                <div
+                    class="stat-number green"
+                    id="todayProfit"
+                >
+                    0
+                </div>
+
+                <div class="stat-percent green">
+                    0%
+                </div>
+
+                <div class="chart">
+
+                    <svg
+                        viewBox="0 0 150 35"
+                        preserveAspectRatio="none"
+                    >
+                        <polyline
+                            points="0,30 15,27 30,29 45,20 60,23 75,16 90,19 105,9 120,13 135,5 150,8"
+                            stroke="#18d6a5"
+                        />
+                    </svg>
+
+                </div>
+
+            </article>
+
+
+            <!-- Trades -->
+
+            <article class="stat-card">
+
+                <div class="stat-title">
+                    معاملات
+                </div>
+
+                <div
+                    class="stat-number blue"
+                    id="tradeCount"
+                >
+                    0
+                </div>
+
+                <div class="stat-percent blue">
+                    معامله
+                </div>
+
+                <div class="chart">
+
+                    <svg
+                        viewBox="0 0 150 35"
+                        preserveAspectRatio="none"
+                    >
+                        <polyline
+                            points="0,28 15,23 30,25 45,15 60,19 75,12 90,17 105,10 120,14 135,6 150,10"
+                            stroke="#299bff"
+                        />
+                    </svg>
+
+                </div>
+
+            </article>
+
+
+            <!-- Total Profit -->
+
+            <article class="stat-card">
+
+                <div class="stat-title">
+                    سود کل
+                </div>
+
+                <div
+                    class="stat-number purple"
+                    id="totalProfit"
+                >
+                    0
+                </div>
+
+                <div class="stat-percent purple">
+                    تومان
+                </div>
+
+                <div class="chart">
+
+                    <svg
+                        viewBox="0 0 150 35"
+                        preserveAspectRatio="none"
+                    >
+                        <polyline
+                            points="0,31 15,28 30,27 45,22 60,24 75,18 90,20 105,14 120,16 135,9 150,11"
+                            stroke="#a463ff"
+                        />
+                    </svg>
+
+                </div>
+
+            </article>
+
+
+            <!-- Success -->
+
+            <article class="stat-card">
+
+                <div class="stat-title">
+                    موفقیت
+                </div>
+
+                <div
+                    class="stat-number orange"
+                    id="successRate"
+                >
+                    0%
+                </div>
+
+                <div class="stat-percent orange">
+                    نرخ موفقیت
+                </div>
+
+                <div class="chart">
+
+                    <svg
+                        viewBox="0 0 150 35"
+                        preserveAspectRatio="none"
+                    >
+                        <polyline
+                            points="0,27 15,25 30,26 45,19 60,21 75,15 90,17 105,11 120,13 135,7 150,9"
+                            stroke="#ff9d32"
+                        />
+                    </svg>
+
+                </div>
+
+            </article>
+
+        </section>
+
+
+        <!-- =================================================
+             AI CARD
+        ================================================= -->
+
+        <section class="ai-card">
+
+            <div class="ai-header">
+
+                <div class="ai-title">
+                    🤖 هوش مصنوعی
+                </div>
+
+                <div class="ai-brain">
+                    🧠
+                </div>
+
+            </div>
+
+
+            <div class="ai-status">
+
+                <span class="status-dot"></span>
+
+                <span id="aiStatus">
+                    غیرفعال
+                </span>
+
+            </div>
+
+
+            <div class="ai-info">
+
+                <div class="info-item">
+                    وضعیت:
+                    <strong id="aiStateText">
+                        آماده شروع
+                    </strong>
+                </div>
+
+                <div class="info-item">
+                    معاملات فعال:
+                    <strong id="activeTrades">
+                        0
+                    </strong>
+                </div>
+
+                <div class="info-item">
+                    سود امروز:
+                    <strong id="aiProfit">
+                        0 تومان
+                    </strong>
+                </div>
+
+                <div class="info-item">
+                    آخرین فعالیت:
+                    <strong id="lastActivity">
+                        هنوز فعالیتی ثبت نشده
+                    </strong>
+                </div>
+
+            </div>
+
+
+            <!-- Confidence -->
+
+            <div class="ai-confidence">
+
+                <div class="confidence-circle">
+
+                    <span
+                        class="confidence-value"
+                        id="confidenceValue"
+                    >
+                        0%
+                    </span>
+
+                </div>
+
+                <div class="confidence-text">
+                    میزان اطمینان AI
+                </div>
+
+            </div>
+
+
+            <!-- Start -->
+
+            <button
+                class="ai-start"
+                id="aiStartButton"
+                type="button"
+                onclick="toggleAI()"
+            >
+                شروع فعالیت AI
+            </button>
+
+        </section>
+
+
+        <!-- =================================================
+             DATA GRID
+        ================================================= -->
+
+        <section class="data-grid">
+
+
+            <!-- Recent Trades -->
+
+            <article class="data-card">
+
+                <div class="data-head">
+
+                    <span>
+                        معاملات اخیر
+                    </span>
+
+                    <span class="data-icon">
+                        ⇄
+                    </span>
+
+                </div>
+
+                <div
+                    class="data-empty"
+                    id="recentTrades"
+                >
+                    هنوز معامله‌ای ثبت نشده است.
+
+                    <a
+                        href="#"
+                        class="data-link"
+                        onclick="showMessage('هنوز معامله‌ای وجود ندارد'); return false;"
+                    >
+                        مشاهده معاملات
+                    </a>
+
+                </div>
+
+            </article>
+
+
+            <!-- Notifications -->
+
+            <article class="data-card">
+
+                <div class="data-head">
+
+                    <span>
+                        اعلان‌ها
+                    </span>
+
+                    <span class="data-icon">
+                        🔔
+                    </span>
+
+                </div>
+
+                <div
+                    class="data-empty"
+                    id="notificationText"
+                >
+                    اعلان جدیدی ندارید.
+
+                    <a
+                        href="#"
+                        class="data-link"
+                        onclick="openNotifications(); return false;"
+                    >
+                        مشاهده اعلان‌ها
+                    </a>
+
+                </div>
+
+            </article>
+
+
+            <!-- AI Signals -->
+
+            <article class="data-card">
+
+                <div class="data-head">
+
+                    <span>
+                        سیگنال‌های AI
+                    </span>
+
+                    <span class="data-icon">
+                        ✦
+                    </span>
+
+                </div>
+
+                <div
+                    class="data-empty"
+                    id="signalText"
+                >
+                    هنوز سیگنالی دریافت نشده است.
+
+                    <a
+                        href="#"
+                        class="data-link"
+                        onclick="showMessage('سیگنال جدیدی وجود ندارد'); return false;"
+                    >
+                        مشاهده سیگنال‌ها
+                    </a>
+
+                </div>
+
+            </article>
+
+
+            <!-- Account -->
+
+            <article class="data-card">
+
+                <div class="data-head">
+
+                    <span>
+                        وضعیت حساب
+                    </span>
+
+                    <span class="data-icon">
+                        ◉
+                    </span>
+
+                </div>
+
+                <div
+                    class="data-empty"
+                    id="accountStatus"
+                >
+                    حساب آماده استفاده است.
+
+                    <a
+                        href="#"
+                        class="data-link"
+                        onclick="openProfile(); return false;"
+                    >
+                        پروفایل من
+                    </a>
+
+                </div>
+
+            </article>
+
+        </section>
+
+    </main>
+
+
+    <!-- =====================================================
+         BOTTOM NAVIGATION
+    ===================================================== -->
+
+    <nav class="bottom-nav">
+
+
+        <button
+            class="nav-item active"
+            type="button"
+            onclick="navigateTo('home', this)"
         >
 
-            <h2 class="page-title">
+            <span class="nav-icon">
+
+                <svg viewBox="0 0 24 24">
+                    <path d="M3 10.5L12 3l9 7.5"></path>
+                    <path d="M5 9.5V21h14V9.5"></path>
+                    <path d="M9 21v-7h6v7"></path>
+                </svg>
+
+            </span>
+
+            <span class="nav-label">
+                خانه
+            </span>
+
+        </button>
+
+
+        <button
+            class="nav-item"
+            type="button"
+            onclick="navigateTo('trades', this)"
+        >
+
+            <span class="nav-icon">
+
+                <svg viewBox="0 0 24 24">
+                    <path d="M4 17l5-5 4 3 7-8"></path>
+                    <path d="M16 7h4v4"></path>
+                </svg>
+
+            </span>
+
+            <span class="nav-label">
+                معاملات
+            </span>
+
+        </button>
+
+
+        <button
+            class="nav-item"
+            type="button"
+            onclick="navigateTo('wallet', this)"
+        >
+
+            <span class="nav-icon">
+
+                <svg viewBox="0 0 24 24">
+                    <rect
+                        x="3"
+                        y="6"
+                        width="18"
+                        height="14"
+                        rx="3"
+                    ></rect>
+                    <path d="M3 9h15"></path>
+                    <path d="M16 14h3"></path>
+                </svg>
+
+            </span>
+
+            <span class="nav-label">
                 کیف پول
-            </
+            </span>
+
+        </button>
+
+
+        <button
+            class="nav-item"
+            type="button"
+            onclick="navigateTo('ai', this)"
+        >
+
+            <span class="nav-icon">
+
+                <svg viewBox="0 0 24 24">
+                    <circle
+                        cx="12"
+                        cy="12"
+                        r="8"
+                    ></circle>
+                    <path d="M9 12h6"></path>
+                    <path d="M12 9v6"></path>
+                    <path d="M12 2v2"></path>
+                    <path d="M12 20v2"></path>
+                </svg>
+
+            </span>
+
+            <span class="nav-label">
+                هوش مصنوعی
+            </span>
+
+        </button>
+
+
+        <button
+            class="nav-item"
+            type="button"
+            onclick="navigateTo('profile', this)"
+        >
+
+            <span class="nav-icon">
+
+                <svg viewBox="0 0 24 24">
+                    <circle
+                        cx="12"
+                        cy="8"
+                        r="4"
+                    ></circle>
+                    <path d="M4 21c1.5-5 14.5-5 16 0"></path>
+                </svg>
+
+            </span>
+
+            <span class="nav-label">
+                پروفایل
+            </span>
+
+        </button>
+
+    </nav>
+
+</div>
+
+
+<!-- =========================================================
+     MODAL
+========================================================= -->
+
+<div
+    class="modal"
+    id="appModal"
+    onclick="closeModalOutside(event)"
+>
+
+    <div
+        class="modal-box"
+        onclick="event.stopPropagation()"
+    >
+
+        <div
+            class="modal-title"
+            id="modalTitle"
+        >
+            پیام
+        </div>
+
+        <div
+            class="modal-text"
+            id="modalText"
+        >
+            -
+        </div>
+
+        <input
+            class="modal-input"
+            id="modalInput"
+            type="number"
+            inputmode="numeric"
+            placeholder="مبلغ را وارد کنید"
+            style="display:none"
+        >
+
+        <div class="modal-actions">
+
+            <button
+                class="modal-btn"
+                type="button"
+                onclick="closeModal()"
+            >
+                بستن
+            </button>
+
+            <button
+                class="modal-btn primary"
+                id="modalPrimary"
+                type="button"
+                onclick="modalPrimaryAction()"
+            >
+                تأیید
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     PART 3 — JAVASCRIPT
+========================================================= -->
+
+<script>
+
+"use strict";
+
+
+/* =========================================================
+   APP STATE
+========================================================= */
+
+const appState = {
+
+    user: {
+        name: "کاربر"
+    },
+
+    balance: 0,
+
+    todayProfit: 0,
+
+    totalProfit: 0,
+
+    tradeCount: 0,
+
+    successRate: 0,
+
+    activeTrades: 0,
+
+    confidence: 0,
+
+    aiActive: false,
+
+    notifications: 0,
+
+    lastActivity: "هنوز فعالیتی ثبت نشده",
+
+    modalAction: null
+
+};
+
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
+function formatNumber(value) {
+    return Number(value || 0).toLocaleString("en-US");
+}
+
+function formatPercent(value) {
+    return `${Number(value || 0).toFixed(2)}%`;
+}
+
+function getElement(id) {
+    return document.getElementById(id);
+}
+
+function setText(id, value) {
+    const element = getElement(id);
+
+    if (element) {
+        element.textContent = value;
+    }
+}
+
+function showModal() {
+    const modal = getElement("modal");
+
+    if (modal) {
+        modal.classList.add("show");
+    }
+}
+
+function hideModal() {
+    const modal = getElement("modal");
+
+    if (modal) {
+        modal.classList.remove("show");
+    }
+
+    state.modalAction = null;
+}
+
+function updateNotificationBadge() {
+    const badge = getElement("notificationBadge");
+
+    if (!badge) return;
+
+    if (state.notifications > 0) {
+        badge.textContent = state.notifications > 99
+            ? "99+"
+            : state.notifications;
+
+        badge.style.display = "flex";
+    } else {
+        badge.style.display = "none";
+    }
+}
+
+
+/* =========================================================
+   UI UPDATE
+========================================================= */
+
+function updateDashboard() {
+
+    /* -------------------------
+       USER
+    ------------------------- */
+
+    setText(
+        "userName",
+        state.userName || "کاربر"
+    );
+
+
+    /* -------------------------
+       BALANCE
+    ------------------------- */
+
+    setText(
+        "balanceValue",
+        formatNumber(state.balance)
+    );
+
+
+    setText(
+        "balanceToman",
+        `${formatNumber(state.balance)} تومان`
+    );
+
+
+    /* -------------------------
+       STATS
+    ------------------------- */
+
+    setText(
+        "totalProfit",
+        formatNumber(state.totalProfit)
+    );
+
+    setText(
+        "dailyProfit",
+        formatNumber(state.dailyProfit)
+    );
+
+    setText(
+        "profitPercent",
+        formatPercent(state.profitPercent)
+    );
+
+    setText(
+        "tradeCount",
+        formatNumber(state.tradeCount)
+    );
+
+
+    /* -------------------------
+       AI STATUS
+    ------------------------- */
+
+    const aiStatus = getElement("aiStatus");
+    const statusDot = getElement("statusDot");
+    const aiStart = getElement("aiStart");
+
+    if (state.aiActive) {
+
+        if (aiStatus) {
+            aiStatus.innerHTML =
+                '<span class="status-dot" id="statusDot"></span> فعال';
+        }
+
+        if (aiStart) {
+            aiStart.textContent = "توقف معاملات هوشمند";
+        }
+
+        if (statusDot) {
+            statusDot.style.background = "#18d6a5";
+        }
+
+    } else {
+
+        if (aiStatus) {
+            aiStatus.innerHTML =
+                '<span class="status-dot" id="statusDot"></span> غیرفعال';
+        }
+
+        if (aiStart) {
+            aiStart.textContent = "شروع معاملات هوشمند";
+        }
+
+        if (statusDot) {
+            statusDot.style.background = "#ff5067";
+        }
+    }
+
+
+    /* -------------------------
+       LAST ACTIVITY
+    ------------------------- */
+
+    setText(
+        "lastActivity",
+        state.lastActivity
+    );
+
+
+    /* -------------------------
+       NOTIFICATIONS
+    ------------------------- */
+
+    updateNotificationBadge();
+}
+
+
+/* =========================================================
+   AI TOGGLE
+========================================================= */
+
+function toggleAI() {
+
+    state.aiActive = !state.aiActive;
+
+    if (state.aiActive) {
+
+        state.lastActivity =
+            "ربات معاملات هوشمند را آغاز کرد";
+
+        state.notifications += 1;
+
+    } else {
+
+        state.lastActivity =
+            "معاملات هوشمند متوقف شد";
+    }
+
+    updateDashboard();
+}
+
+
+/* =========================================================
+   NOTIFICATION
+========================================================= */
+
+function openNotifications() {
+
+    if (state.notifications === 0) {
+
+        state.modalAction = null;
+
+        setText(
+            "modalTitle",
+            "اعلان‌ها"
+        );
+
+        setText(
+            "modalText",
+            "در حال حاضر اعلان جدیدی وجود ندارد."
+        );
+
+        const input = getElement("modalInput");
+
+        if (input) {
+            input.style.display = "none";
+        }
+
+        const confirmButton = getElement("modalConfirm");
+
+        if (confirmButton) {
+            confirmButton.style.display = "none";
+        }
+
+        showModal();
+
+        return;
+    }
+
+
+    state.notifications = 0;
+
+    updateDashboard();
+
+    setText(
+        "modalTitle",
+        "اعلان‌ها"
+    );
+
+    setText(
+        "modalText",
+        "همه اعلان‌های جدید مشاهده شدند."
+    );
+
+    const input = getElement("modalInput");
+
+    if (input) {
+        input.style.display = "none";
+    }
+
+    const confirmButton = getElement("modalConfirm");
+
+    if (confirmButton) {
+        confirmButton.style.display = "none";
+    }
+
+    showModal();
+}
+
+
+/* =========================================================
+   DEPOSIT
+========================================================= */
+
+function openDeposit() {
+
+    state.modalAction = "deposit";
+
+    setText(
+        "modalTitle",
+        "افزایش موجودی"
+    );
+
+    setText(
+        "modalText",
+        "مبلغ موردنظر خود را وارد کنید."
+    );
+
+    const input = getElement("modalInput");
+
+    if (input) {
+
+        input.style.display = "block";
+
+        input.value = "";
+
+        input.placeholder =
+            "مثلاً 500000";
+
+        input.type = "number";
+
+        input.min = "1000";
+    }
+
+    const confirmButton =
+        getElement("modalConfirm");
+
+    if (confirmButton) {
+
+        confirmButton.style.display =
+            "block";
+
+        confirmButton.textContent =
+            "ادامه";
+    }
+
+    showModal();
+}
+
+
+/* =========================================================
+   WITHDRAW
+========================================================= */
+
+function openWithdraw() {
+
+    state.modalAction = "withdraw";
+
+    setText(
+        "modalTitle",
+        "برداشت موجودی"
+    );
+
+    setText(
+        "modalText",
+        `موجودی فعلی شما ${formatNumber(state.balance)} تومان است.`
+    );
+
+    const input = getElement("modalInput");
+
+    if (input) {
+
+        input.style.display = "block";
+
+        input.value = "";
+
+        input.placeholder =
+            "مبلغ برداشت";
+
+        input.type = "number";
+
+        input.min = "1000";
+
+        input.max = state.balance;
+    }
+
+    const confirmButton =
+        getElement("modalConfirm");
+
+    if (confirmButton) {
+
+        confirmButton.style.display =
+            "block";
+
+        confirmButton.textContent =
+            "ثبت درخواست";
+    }
+
+    showModal();
+}
+
+
+/* =========================================================
+   MODAL CONFIRM
+========================================================= */
+
+function confirmModalAction() {
+
+    const input = getElement("modalInput");
+
+    if (!input) return;
+
+    const amount =
+        Number(input.value || 0);
+
+
+    /* -------------------------
+       DEPOSIT
+    ------------------------- */
+
+    if (state.modalAction === "deposit") {
+
+        if (amount < 1000) {
+
+            setText(
+                "modalText",
+                "حداقل مبلغ افزایش موجودی ۱٬۰۰۰ تومان است."
+            );
+
+            return;
+        }
+
+        /*
+         * فعلاً فقط رابط کاربری است.
+         * اتصال واقعی زرین‌پال را بعداً به Backend
+         * متصل می‌کنیم.
+         */
+
+        setText(
+            "modalText",
+            `درخواست افزایش موجودی به مبلغ ${formatNumber(amount)} تومان ثبت شد.`
+        );
+
+        state.lastActivity =
+            `درخواست افزایش موجودی ${formatNumber(amount)} تومان`;
+
+        updateDashboard();
+
+        return;
+    }
+
+
+    /* -------------------------
+       WITHDRAW
+    ------------------------- */
+
+    if (state.modalAction === "withdraw") {
+
+        if (amount < 1000) {
+
+            setText(
+                "modalText",
+                "حداقل مبلغ برداشت ۱٬۰۰۰ تومان است."
+            );
+
+            return;
+        }
+
+        if (amount > state.balance) {
+
+            setText(
+                "modalText",
+                "موجودی شما برای این برداشت کافی نیست."
+            );
+
+            return;
+        }
+
+
+        state.lastActivity =
+            `درخواست برداشت ${formatNumber(amount)} تومان ثبت شد`;
+
+        state.notifications += 1;
+
+        setText(
+            "modalText",
+            `درخواست برداشت ${formatNumber(amount)} تومان ثبت شد.`
+        );
+
+        updateDashboard();
+
+        return;
+    }
+}
+
+
+/* =========================================================
+   CLOSE MODAL
+========================================================= */
+
+function closeModal() {
+
+    hideModal();
+
+    const input =
+        getElement("modalInput");
+
+    const confirmButton =
+        getElement("modalConfirm");
+
+    if (input) {
+        input.value = "";
+        input.style.display = "block";
+    }
+
+    if (confirmButton) {
+        confirmButton.style.display = "block";
+    }
+}
+
+
+/* =========================================================
+   NAVIGATION
+========================================================= */
+
+function changeTab(button, tabName) {
+
+    document
+        .querySelectorAll(".nav-item")
+        .forEach(item => {
+
+            item.classList.remove("active");
+
+        });
+
+
+    if (button) {
+        button.classList.add("active");
+    }
+
+
+    state.lastActivity =
+        `بخش ${tabName} انتخاب شد`;
+
+    updateDashboard();
+}
+
+
+/* =========================================================
+   AI START BUTTON
+========================================================= */
+
+function handleAIStart() {
+
+    toggleAI();
+}
+
+
+/* =========================================================
+   EVENT LISTENERS
+========================================================= */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        updateDashboard();
+
+
+        /* -------------------------
+           NOTIFICATION BUTTON
+        ------------------------- */
+
+        const notificationButton =
+            getElement("notificationButton");
+
+        if (notificationButton) {
+
+            notificationButton.addEventListener(
+                "click",
+                openNotifications
+            );
+        }
+
+
+        /* -------------------------
+           DEPOSIT BUTTON
+        ------------------------- */
+
+        const depositButton =
+            getElement("depositButton");
+
+        if (depositButton) {
+
+            depositButton.addEventListener(
+                "click",
+                openDeposit
+            );
+        }
+
+
+        /* -------------------------
+           WITHDRAW BUTTON
+        ------------------------- */
+
+        const withdrawButton =
+            getElement("withdrawButton");
+
+        if (withdrawButton) {
+
+            withdrawButton.addEventListener(
+                "click",
+                openWithdraw
+            );
+        }
+
+
+        /* -------------------------
+           AI BUTTON
+        ------------------------- */
+
+        const aiStart =
+            getElement("aiStart");
+
+        if (aiStart) {
+
+            aiStart.addEventListener(
+                "click",
+                handleAIStart
+            );
+        }
+
+
+        /* -------------------------
+           MODAL CONFIRM
+        ------------------------- */
+
+        const modalConfirm =
+            getElement("modalConfirm");
+
+        if (modalConfirm) {
+
+            modalConfirm.addEventListener(
+                "click",
+                confirmModalAction
+            );
+        }
+
+
+        /* -------------------------
+           MODAL CLOSE
+        ------------------------- */
+
+        const modalClose =
+            getElement("modalClose");
+
+        if (modalClose) {
+
+            modalClose.addEventListener(
+                "click",
+                closeModal
+            );
+        }
+
+
+        /* -------------------------
+           CLICK OUTSIDE MODAL
+        ------------------------- */
+
+        const modal =
+            getElement("modal");
+
+        if (modal) {
+
+            modal.addEventListener(
+                "click",
+                function (event) {
+
+                    if (event.target === modal) {
+                        closeModal();
+                    }
+
+                }
+            );
+        }
+
+
+        /* -------------------------
+           ESC KEY
+        ------------------------- */
+
+        document.addEventListener(
+            "keydown",
+            function (event) {
+
+                if (event.key === "Escape") {
+                    closeModal();
+                }
+
+            }
+        );
+    }
+);
+
+
+/* =========================================================
+   INITIAL STATE
+========================================================= */
+
+updateDashboard();
+
+</script>
+</body>
+</html>
