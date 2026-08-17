@@ -1,1 +1,159 @@
+* {
+    box-sizing: border-box;
+}
 
+html,
+body {
+    width: 100%;
+    min-height: 100%;
+}
+
+body {
+    margin: 0;
+
+    min-height: 100vh;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background:
+        radial-gradient(
+            circle at top right,
+            rgba(45, 112, 255, 0.18),
+            transparent 35%
+        ),
+        linear-gradient(
+            180deg,
+            #06132c 0%,
+            #020817 100%
+        );
+
+    color: #ffffff;
+
+    font-family:
+        Tahoma,
+        Arial,
+        "Segoe UI",
+        sans-serif;
+
+    direction: rtl;
+}
+
+.test-box {
+    width: calc(100% - 32px);
+    max-width: 400px;
+
+    padding: 30px 24px;
+
+    text-align: center;
+
+    border-radius: 24px;
+
+    background:
+        rgba(11, 37, 85, 0.72);
+
+    border: 1px solid
+        rgba(75, 130, 255, 0.65);
+
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+
+    box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0
+        rgba(255, 255, 255, 0.08);
+}
+
+.test-box h1 {
+    margin: 0 0 15px;
+
+    color: #ffffff;
+
+    font-size: 28px;
+
+    font-weight: 900;
+}
+
+.test-box p {
+    margin: 0;
+
+    color: #aebbd4;
+
+    font-size: 14px;
+
+    line-height: 2;
+}
+
+.test-box button {
+    width: 100%;
+
+    height: 50px;
+
+    margin-top: 20px;
+
+    border: 0;
+    border-radius: 15px;
+
+    background:
+        linear-gradient(
+            100deg,
+            #2869f4,
+            #7144ff
+        );
+
+    color: #ffffff;
+
+    font-family: inherit;
+
+    font-size: 14px;
+
+    font-weight: 900;
+
+    cursor: pointer;
+
+    transition: 0.2s ease;
+
+    box-shadow:
+        0 8px 25px
+        rgba(45, 112, 255, 0.22);
+}
+
+.test-box button:hover {
+    filter: brightness(1.08);
+
+    transform: translateY(-1px);
+}
+
+.test-box button:active {
+    transform: scale(0.97);
+}
+
+#result {
+    min-height: 24px;
+
+    margin-top: 15px;
+
+    color: #18d6a5;
+
+    font-size: 13px;
+
+    font-weight: 900;
+}
+
+
+/* موبایل‌های خیلی کوچک */
+
+@media (max-width: 360px) {
+
+    .test-box {
+        width: calc(100% - 24px);
+
+        padding: 25px 18px;
+    }
+
+    .test-box h1 {
+        font-size: 24px;
+    }
+
+}
