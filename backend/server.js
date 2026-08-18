@@ -1,74 +1,153 @@
-// =====================================
-// AutoTrade AI
-// Backend Server:: M
-// سرور اصلی بک‌اند
-// File: backend/server.js
-// =====================================
+// ..M server.js
 
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 
-import { connectDatabase } from "./database.js";
+import connectDatabase from "./database.js";
 
-import userRoutes from "./routes/User.js";
-import walletRoutes from "./routes/Wallet.js";
-import tradeRoutes from "./routes/Trade.js";
-import botRoutes from "./routes/Bot.js";
-import withdrawRoutes from "./routes/withdraw.js";
-import depositRoutes from "./routes/Deposit.js";
-import currencyRoutes from "./routes/Currency.js";
-import paymentRoutes from "./routes/Payment.js";
-
-
-// =====================================
-// Environment:: M
-// تنظیمات محیط
-// =====================================
+import userRoutes from "./routes/userRoutes.js";
+import walletRoutes from "./routes/walletRoutes.js";
+import tradeRoutes from "./routes/tradeRoutes.js";
+import botRoutes from "./routes/botRoutes.js";
 
 dotenv.config();
 
+const app = express();
 
-// =====================================
-// App:: M
-// =====================================
-
-const app =
-    express();
+const PORT =
+    process.env.PORT || 3000;
 
 
-// =====================================
-// Middleware:: M
-// =====================================
+/* =========================================================
+   CORS
+========================================================= */
 
 app.use(
-    cors()
-);
-
-app.use(
-    express.json()
+    cors({
+        origin: true,
+        credentials: true
+    })
 );
 
 
-// =====================================
-// Health Check:: M
-// بررسی آنلاین بودن سرور
-// =====================================
+/* =========================================================
+   BODY
+========================================================= */
+
+app.use(
+    express.json({
+        limit: "1mb"
+    })
+);
+
+
+/* =========================================================
+   DATABASE
+========================================================= */
+
+await connectDatabase();
+
+
+/* =========================================================
+   HEALTH CHECK
+========================================================= */
 
 app.get(
     "/",
     (req, res) => {
 
         res.json({
+            status: "online",
+            message: "AutoTrade AI Backend Running",
+            realData: true,
+            fakeData: false
+        });
 
-            success:
-                true,
+    }
+);
 
-            status:
-                "online",
 
-            message:
-                "AutoTrade AI Backend Running 🚀"
+/* =========================================================
+   HEALTH
+========================================================= */
+
+app.get(
+    "/health",
+    (req, res) => {
+
+        res.json({
+            status: "online",
+            database:
+                "connected",
+            timestamp:
+                new Date().toISOString()
+        });
+
+    }
+);
+
+
+/* =========================================================
+   EXCHANGE RATE
+========================================================= */
+
+/*
+   نرخ دلار را از ENV می‌خوانیم.
+
+   مثال Render:
+
+   USD_TOMAN_RATE=95000
+
+   اگر این مقدار تنظیم نشده باشد،
+   هیچ نرخ ساختگی نمایش داده نمی‌شود.
+*/
+
+app.get(
+    "/exchange-rate",
+    (req, res) => {
+
+        const rawRate =
+            process.env.USD_TOMAN_RATE;
+
+
+        if (
+            !rawRate ||
+            Number.isNaN(
+                Number(rawRate)
+            )
+        ) {
+
+            return res.status(503).json({
+
+                success: false,
+
+                message:
+                    "Exchange rate is not configured.",
+
+                usd_toman:
+                    null
+
+            });
+
+        }
+
+
+        return res.json({
+
+            success: true,
+
+            usd_toman:
+                Number(rawRate),
+
+            currency:
+                "IRR",
+
+            unit:
+                "toman",
+
+            source:
+                "server-config"
 
         });
 
@@ -76,94 +155,50 @@ app.get(
 );
 
 
-// =====================================
-// API Routes:: M
-// مسیرهای API
-// =====================================
+/* =========================================================
+   ROUTES
+========================================================= */
 
 app.use(
-    "/api/users",
+    "/user",
     userRoutes
 );
 
 
 app.use(
-    "/api/wallet",
+    "/wallet",
     walletRoutes
 );
 
 
 app.use(
-    "/api/trades",
+    "/trades",
     tradeRoutes
 );
 
 
 app.use(
-    "/api/bot",
+    "/bot",
     botRoutes
 );
 
 
-// =====================================
-// Withdraw Routes:: M
-// مسیرهای برداشت
-// =====================================
-
-app.use(
-    "/api/withdraw",
-    withdrawRoutes
-);
-
-
-// =====================================
-// Deposit Routes:: M
-// مسیرهای واریز
-// =====================================
-
-app.use(
-    "/api/deposit",
-    depositRoutes
-);
-
-
-// =====================================
-// Currency Routes:: M
-// مسیرهای نرخ دلار و تومان
-// =====================================
-
-app.use(
-    "/api/currency",
-    currencyRoutes
-);
-
-
-// =====================================
-// Payment Routes:: M
-// مسیرهای پرداخت
-// =====================================
-
-app.use(
-    "/api/payment",
-    paymentRoutes
-);
-
-
-// =====================================
-// 404:: M
-// مسیر پیدا نشد
-// =====================================
+/* =========================================================
+   404
+========================================================= */
 
 app.use(
     (req, res) => {
 
         res.status(404).json({
 
-            success:
-                false,
+            success: false,
 
             message:
-                "API endpoint not found"
+                "API endpoint not found.",
+
+            path:
+                req.originalUrl
 
         });
 
@@ -171,10 +206,9 @@ app.use(
 );
 
 
-// =====================================
-// Error Handler:: M
-// مدیریت خطا
-// =====================================
+/* =========================================================
+   ERROR HANDLER
+========================================================= */
 
 app.use(
     (
@@ -185,18 +219,31 @@ app.use(
     ) => {
 
         console.error(
-            "Server Error:",
+            "SERVER ERROR:",
             error
         );
 
 
-        res.status(500).json({
+        if (
+            res.headersSent
+        ) {
 
-            success:
-                false,
+            return next(
+                error
+            );
+
+        }
+
+
+        res.status(
+            error.status || 500
+        ).json({
+
+            success: false,
 
             message:
-                "Internal server error"
+                error.message ||
+                "Internal server error."
 
         });
 
@@ -204,64 +251,18 @@ app.use(
 );
 
 
-// =====================================
-// Server:: M
-// راه‌اندازی سرور
-// =====================================
+/* =========================================================
+   START SERVER
+========================================================= */
 
-const PORT =
-    process.env.PORT ||
-    3000;
+app.listen(
+    PORT,
+    "0.0.0.0",
+    () => {
 
-
-// =====================================
-// Start Server:: M
-// شروع سرور
-// =====================================
-
-async function startServer() {
-
-    try {
-
-        // =====================================
-        // اتصال دیتابیس:: M
-        // =====================================
-
-        await connectDatabase();
-
-
-        // =====================================
-        // اجرای سرور:: M
-        // =====================================
-
-        app.listen(
-            PORT,
-            () => {
-
-                console.log(
-                    `AutoTrade AI Backend running on port ${PORT}`
-                );
-
-            }
+        console.log(
+            `AutoTrade AI Backend running on port ${PORT}`
         );
 
     }
-
-    catch (error) {
-
-        console.error(
-            "Server Start Error:",
-            error.message
-        );
-
-
-        process.exit(
-            1
-        );
-
-    }
-
-}
-
-
-startServer();
+);
