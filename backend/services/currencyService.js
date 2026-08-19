@@ -16,9 +16,13 @@ export const getUsdToIrrRate = () => {
 // ..M USD TO IRR
 // =========================================================
 
-export const usdToIrr = (usd, rate = getUsdToIrrRate()) => {
+export const usdToIrr = (
+  usd,
+  rate = getUsdToIrrRate()
+) => {
   const value = Number(usd) || 0;
-  const exchangeRate = Number(rate) || DEFAULT_USD_TO_IRR;
+  const exchangeRate =
+    Number(rate) || DEFAULT_USD_TO_IRR;
 
   return value * exchangeRate;
 };
@@ -27,15 +31,61 @@ export const usdToIrr = (usd, rate = getUsdToIrrRate()) => {
 // ..M IRR TO USD
 // =========================================================
 
-export const irrToUsd = (irr, rate = getUsdToIrrRate()) => {
+export const irrToUsd = (
+  irr,
+  rate = getUsdToIrrRate()
+) => {
   const value = Number(irr) || 0;
-  const exchangeRate = Number(rate) || DEFAULT_USD_TO_IRR;
+  const exchangeRate =
+    Number(rate) || DEFAULT_USD_TO_IRR;
 
   if (exchangeRate <= 0) {
     return 0;
   }
 
   return value / exchangeRate;
+};
+
+// =========================================================
+// ..M TOMAN TO USD
+// =========================================================
+
+export const convertTomanToUsd = (
+  toman,
+  rate = getUsdToIrrRate()
+) => {
+  const tomanValue = Number(toman) || 0;
+
+  const exchangeRate =
+    Number(rate) || DEFAULT_USD_TO_IRR;
+
+  if (exchangeRate <= 0) {
+    return 0;
+  }
+
+  // 1 تومان = 10 ریال
+  const irrValue = tomanValue * 10;
+
+  return irrValue / exchangeRate;
+};
+
+// =========================================================
+// ..M USD TO TOMAN
+// =========================================================
+
+export const convertUsdToToman = (
+  usd,
+  rate = getUsdToIrrRate()
+) => {
+  const usdValue = Number(usd) || 0;
+
+  const irrValue = usdToIrr(
+    usdValue,
+    rate
+  );
+
+  // 1 تومان = 10 ریال
+  return Math.round(irrValue / 10);
 };
 
 // =========================================================
@@ -49,20 +99,32 @@ export const formatUsd = (value) => {
     style: "currency",
     currency: "USD",
     minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    maximumFractionDigits: 2
   }).format(amount);
+};
+
+// =========================================================
+// ..M FORMAT IRR
+// =========================================================
+
+export const formatIrr = (value) => {
+  const amount = Number(value) || 0;
+
+  return `${new Intl.NumberFormat("fa-IR").format(
+    Math.round(amount)
+  )} ریال`;
 };
 
 // =========================================================
 // ..M FORMAT TOMAN
 // =========================================================
 
-export const formatToman = (irr) => {
-  const amount = Number(irr) || 0;
+export const formatToman = (value) => {
+  const amount = Number(value) || 0;
 
-  const toman = Math.round(amount / 10);
-
-  return `${new Intl.NumberFormat("fa-IR").format(toman)} تومان`;
+  return `${new Intl.NumberFormat("fa-IR").format(
+    Math.round(amount)
+  )} تومان`;
 };
 
 // =========================================================
@@ -71,35 +133,41 @@ export const formatToman = (irr) => {
 
 export const getWalletDisplayValues = ({
   usd = 0,
-  rate = getUsdToIrrRate(),
+  rate = getUsdToIrrRate()
 } = {}) => {
   const usdValue = Number(usd) || 0;
-  const exchangeRate = Number(rate) || DEFAULT_USD_TO_IRR;
+
+  const exchangeRate =
+    Number(rate) || DEFAULT_USD_TO_IRR;
 
   const irrValue = usdToIrr(
     usdValue,
     exchangeRate
   );
 
-  const tomanValue = Math.round(
-    irrValue / 10
-  );
+  const tomanValue =
+    Math.round(irrValue / 10);
 
   return {
     usd: usdValue,
 
-    usdFormatted: formatUsd(
-      usdValue
-    ),
+    usdFormatted:
+      formatUsd(usdValue),
 
     irr: irrValue,
+
+    irrFormatted:
+      formatIrr(irrValue),
 
     toman: tomanValue,
 
     tomanFormatted:
-      formatToman(irrValue),
+      formatToman(tomanValue),
 
     exchangeRate,
+
+    tomanPerUsd:
+      exchangeRate / 10
   };
 };
 
@@ -112,9 +180,16 @@ export const getCurrencyInfo = () => {
 
   return {
     baseCurrency: "USD",
+
     displayCurrency: "IRR",
+
     tomanEnabled: true,
+
     usdToIrrRate: rate,
+
     tomanPerUsd: rate / 10,
+
+    description:
+      "USD to IRR and Toman conversion"
   };
 };
