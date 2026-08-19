@@ -1,7 +1,7 @@
 // ..M currencyService.js
 
 // =========================================================
-// ..M DEFAULT CONFIG
+// ..M CONFIG
 // =========================================================
 
 const DEFAULT_USD_TO_IRR = Number(
@@ -14,6 +14,29 @@ const DEFAULT_USD_TO_IRR = Number(
 
 export const getUsdToIrrRate = () => {
   return DEFAULT_USD_TO_IRR;
+};
+
+// =========================================================
+// ..M GET USD TO TOMAN RATE
+// =========================================================
+
+export const getUsdToTomanRate = () => {
+  // 1 Toman = 10 IRR
+  return getUsdToIrrRate() / 10;
+};
+
+// =========================================================
+// ..M GET TOMAN TO USD RATE
+// =========================================================
+
+export const getTomanToUsdRate = () => {
+  const rate = getUsdToTomanRate();
+
+  if (rate <= 0) {
+    return 0;
+  }
+
+  return 1 / rate;
 };
 
 // =========================================================
@@ -53,45 +76,41 @@ export const irrToUsd = (
 };
 
 // =========================================================
-// ..M TOMAN TO USD
-// =========================================================
-
-export const convertTomanToUsd = (
-  toman,
-  rate = getUsdToIrrRate()
-) => {
-  const tomanValue = Number(toman) || 0;
-
-  const exchangeRate =
-    Number(rate) || DEFAULT_USD_TO_IRR;
-
-  if (exchangeRate <= 0) {
-    return 0;
-  }
-
-  // 1 Toman = 10 IRR
-  const irrValue = tomanValue * 10;
-
-  return irrValue / exchangeRate;
-};
-
-// =========================================================
 // ..M USD TO TOMAN
 // =========================================================
 
 export const convertUsdToToman = (
   usd,
-  rate = getUsdToIrrRate()
+  rate = getUsdToTomanRate()
 ) => {
-  const usdValue = Number(usd) || 0;
+  const value = Number(usd) || 0;
 
-  const irrValue = usdToIrr(
-    usdValue,
-    rate
+  const tomanRate =
+    Number(rate) || getUsdToTomanRate();
+
+  return Math.round(
+    value * tomanRate
   );
+};
 
-  // 1 Toman = 10 IRR
-  return Math.round(irrValue / 10);
+// =========================================================
+// ..M TOMAN TO USD
+// =========================================================
+
+export const convertTomanToUsd = (
+  toman,
+  rate = getUsdToTomanRate()
+) => {
+  const value = Number(toman) || 0;
+
+  const tomanRate =
+    Number(rate) || getUsdToTomanRate();
+
+  if (tomanRate <= 0) {
+    return 0;
+  }
+
+  return value / tomanRate;
 };
 
 // =========================================================
@@ -155,20 +174,21 @@ export const formatToman = (value) => {
 
 export const getWalletDisplayValues = ({
   usd = 0,
-  rate = getUsdToIrrRate()
+  rate = getUsdToTomanRate()
 } = {}) => {
   const usdValue = Number(usd) || 0;
 
-  const exchangeRate =
-    Number(rate) || DEFAULT_USD_TO_IRR;
-
-  const irrValue = usdToIrr(
-    usdValue,
-    exchangeRate
-  );
+  const tomanRate =
+    Number(rate) || getUsdToTomanRate();
 
   const tomanValue =
-    Math.round(irrValue / 10);
+    convertUsdToToman(
+      usdValue,
+      tomanRate
+    );
+
+  const irrValue =
+    tomanValue * 10;
 
   return {
     usd: usdValue,
@@ -186,10 +206,11 @@ export const getWalletDisplayValues = ({
     tomanFormatted:
       formatToman(tomanValue),
 
-    exchangeRate,
+    exchangeRate:
+      getUsdToIrrRate(),
 
     tomanPerUsd:
-      exchangeRate / 10
+      tomanRate
   };
 };
 
@@ -198,21 +219,25 @@ export const getWalletDisplayValues = ({
 // =========================================================
 
 export const getCurrencyInfo = () => {
-  const rate = getUsdToIrrRate();
+  const usdToIrrRate =
+    getUsdToIrrRate();
+
+  const usdToTomanRate =
+    getUsdToTomanRate();
 
   return {
     baseCurrency: "USD",
 
-    displayCurrency: "IRR",
+    displayCurrency: "TOMAN",
 
-    tomanEnabled: true,
+    usdToIrrRate,
 
-    usdToIrrRate: rate,
+    usdToTomanRate,
 
-    tomanPerUsd: rate / 10,
+    tomanPerUsd:
+      usdToTomanRate,
 
-    description:
-      "USD to IRR and Toman conversion"
+    tomanEnabled: true
   };
 };
 
@@ -222,15 +247,23 @@ export const getCurrencyInfo = () => {
 
 export default {
   getUsdToIrrRate,
+  getUsdToTomanRate,
+  getTomanToUsdRate,
+
   usdToIrr,
   irrToUsd,
-  convertTomanToUsd,
+
   convertUsdToToman,
+  convertTomanToUsd,
+
   formatUsd,
   formatUSD,
+
   formatIrr,
   formatIRR,
+
   formatToman,
+
   getWalletDisplayValues,
   getCurrencyInfo
 };
