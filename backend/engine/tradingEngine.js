@@ -13,9 +13,11 @@ import Wallet from "../models/Wallet.js";
 import User from "../models/User.js";
 import Bot from "../models/Bot.js";
 
+
 import {
-    calculatePositionSize
-} from "../services/riskManager.js";
+  checkTradePermission,
+  calculatePositionSize
+} from "./riskManager.js";
 
 
 // =====================================
