@@ -10,6 +10,10 @@ import userRoutes from "./routes/User.js";
 import walletRoutes from "./routes/Wallet.js";
 import tradeRoutes from "./routes/Trade.js";
 import botRoutes from "./routes/Bot.js";
+import currencyRoutes from "./routes/Currency.js";
+import depositRoutes from "./routes/Deposit.js";
+import paymentRoutes from "./routes/Payment.js";
+import withdrawRoutes from "./routes/withdraw.js";
 
 dotenv.config();
 
@@ -18,105 +22,64 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // =========================================================
-// ..M CORS
+// ..M MIDDLEWARE
 // =========================================================
 
 app.use(
   cors({
-    origin: true,
-    credentials: true
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
-// =========================================================
-// ..M BODY
-// =========================================================
-
-app.use(
-  express.json({
-    limit: "1mb"
-  })
-);
-
-// =========================================================
-// ..M DATABASE
-// =========================================================
-
-await connectDatabase();
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // =========================================================
 // ..M HEALTH CHECK
 // =========================================================
 
 app.get("/", (req, res) => {
-  res.json({
+  res.status(200).json({
+    success: true,
     status: "online",
-    message: "AutoTrade AI Backend Running",
-    realData: true,
-    fakeData: false
+    message: "AutoTrade AI Backend Running 🚀",
+    version: "1.0.0",
+    timestamp: new Date().toISOString(),
   });
 });
-
-// =========================================================
-// ..M HEALTH
-// =========================================================
 
 app.get("/health", (req, res) => {
-  res.json({
-    status: "online",
-    database: "connected",
-    timestamp: new Date().toISOString()
-  });
-});
-
-// =========================================================
-// ..M EXCHANGE RATE
-// =========================================================
-
-app.get("/exchange-rate", (req, res) => {
-  const rawRate = process.env.USD_TOMAN_RATE;
-
-  if (
-    !rawRate ||
-    Number.isNaN(Number(rawRate))
-  ) {
-    return res.status(503).json({
-      success: false,
-      message: "Exchange rate is not configured.",
-      usd_toman: null
-    });
-  }
-
-  return res.json({
+  res.status(200).json({
     success: true,
-    usd_toman: Number(rawRate),
-    currency: "IRR",
-    unit: "toman",
-    source: "server-config"
+    status: "healthy",
+    timestamp: new Date().toISOString(),
   });
 });
 
 // =========================================================
-// ..M ROUTES
+// ..M API ROUTES
 // =========================================================
 
 app.use("/user", userRoutes);
-
 app.use("/wallet", walletRoutes);
-
-app.use("/trades", tradeRoutes);
-
+app.use("/trade", tradeRoutes);
 app.use("/bot", botRoutes);
+app.use("/currency", currencyRoutes);
+app.use("/deposit", depositRoutes);
+app.use("/payment", paymentRoutes);
+app.use("/withdraw", withdrawRoutes);
 
 // =========================================================
-// ..M 404
+// ..M 404 HANDLER
 // =========================================================
 
 app.use((req, res) => {
   res.status(404).json({
     success: false,
-    message: "API endpoint not found.",
-    path: req.originalUrl
+    message: "API route not found",
+    path: req.originalUrl,
   });
 });
 
@@ -124,36 +87,36 @@ app.use((req, res) => {
 // ..M ERROR HANDLER
 // =========================================================
 
-app.use(
-  (error, req, res, next) => {
-    console.error(
-      "SERVER ERROR:",
-      error
-    );
+app.use((err, req, res, next) => {
+  console.error("❌ Server Error:", err);
 
-    if (res.headersSent) {
-      return next(error);
-    }
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || "Internal server error",
+  });
+});
 
-    res.status(error.status || 500).json({
-      success: false,
-      message:
-        error.message ||
-        "Internal server error."
+// =========================================================
+// ..M DATABASE + START SERVER
+// =========================================================
+
+const startServer = async () => {
+  try {
+    await connectDatabase();
+
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log("========================================");
+      console.log("🚀 AutoTrade AI Backend");
+      console.log(`🌐 Server running on port ${PORT}`);
+      console.log(`📡 Environment: ${process.env.NODE_ENV || "production"}`);
+      console.log("========================================");
     });
-  }
-);
+  } catch (error) {
+    console.error("❌ Failed to start server:");
+    console.error(error);
 
-// =========================================================
-// ..M START SERVER
-// =========================================================
-
-app.listen(
-  PORT,
-  "0.0.0.0",
-  () => {
-    console.log(
-      `AutoTrade AI Backend running on port ${PORT}`
-    );
+    process.exit(1);
   }
-);
+};
+
+startServer();
