@@ -1,5 +1,9 @@
 // ..M currencyService.js
 
+// =========================================================
+// ..M DEFAULT CONFIG
+// =========================================================
+
 const DEFAULT_USD_TO_IRR = Number(
   process.env.USD_TO_IRR || 100000
 );
@@ -21,6 +25,7 @@ export const usdToIrr = (
   rate = getUsdToIrrRate()
 ) => {
   const value = Number(usd) || 0;
+
   const exchangeRate =
     Number(rate) || DEFAULT_USD_TO_IRR;
 
@@ -36,6 +41,7 @@ export const irrToUsd = (
   rate = getUsdToIrrRate()
 ) => {
   const value = Number(irr) || 0;
+
   const exchangeRate =
     Number(rate) || DEFAULT_USD_TO_IRR;
 
@@ -63,7 +69,7 @@ export const convertTomanToUsd = (
     return 0;
   }
 
-  // 1 تومان = 10 ریال
+  // 1 Toman = 10 IRR
   const irrValue = tomanValue * 10;
 
   return irrValue / exchangeRate;
@@ -84,7 +90,7 @@ export const convertUsdToToman = (
     rate
   );
 
-  // 1 تومان = 10 ریال
+  // 1 Toman = 10 IRR
   return Math.round(irrValue / 10);
 };
 
@@ -104,6 +110,14 @@ export const formatUsd = (value) => {
 };
 
 // =========================================================
+// ..M FORMAT USD - COMPATIBILITY
+// =========================================================
+
+export const formatUSD = (value) => {
+  return formatUsd(value);
+};
+
+// =========================================================
 // ..M FORMAT IRR
 // =========================================================
 
@@ -113,6 +127,14 @@ export const formatIrr = (value) => {
   return `${new Intl.NumberFormat("fa-IR").format(
     Math.round(amount)
   )} ریال`;
+};
+
+// =========================================================
+// ..M FORMAT IRR - COMPATIBILITY
+// =========================================================
+
+export const formatIRR = (value) => {
+  return formatIrr(value);
 };
 
 // =========================================================
@@ -152,7 +174,7 @@ export const getWalletDisplayValues = ({
     usd: usdValue,
 
     usdFormatted:
-      formatUsd(usdValue),
+      formatUSD(usdValue),
 
     irr: irrValue,
 
@@ -192,4 +214,23 @@ export const getCurrencyInfo = () => {
     description:
       "USD to IRR and Toman conversion"
   };
+};
+
+// =========================================================
+// ..M DEFAULT EXPORT
+// =========================================================
+
+export default {
+  getUsdToIrrRate,
+  usdToIrr,
+  irrToUsd,
+  convertTomanToUsd,
+  convertUsdToToman,
+  formatUsd,
+  formatUSD,
+  formatIrr,
+  formatIRR,
+  formatToman,
+  getWalletDisplayValues,
+  getCurrencyInfo
 };
