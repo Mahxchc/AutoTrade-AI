@@ -1,31 +1,66 @@
-// =====================================
-// AutoTrade AI
-// database.js
-// MongoDB Connection
-// =====================================
+// ..M database.js
 
 import mongoose from "mongoose";
-import config from "./config/databaseConfig.js";
 
+// =========================================================
+// ..M DATABASE CONFIG
+// =========================================================
 
-export async function connectDatabase(){
+const MONGO_URI = process.env.MONGO_URI;
 
-    try{
+// =========================================================
+// ..M CONNECT DATABASE
+// =========================================================
 
-        console.log("Connecting MongoDB...");
+async function connectDatabase() {
+  try {
+    if (!MONGO_URI) {
+      console.error(
+        "❌ MONGO_URI is not configured."
+      );
 
-        await mongoose.connect(config.mongoURI);
-
-        console.log("Database Connected ✅");
-
+      return false;
     }
-    catch(error){
 
- console.log(
-   "Database Error:",
-   error
- );
+    await mongoose.connect(MONGO_URI, {
+      serverSelectionTimeoutMS: 10000,
+    });
 
-    } 
+    console.log(
+      "✅ MongoDB connected successfully."
+    );
 
+    return true;
+  } catch (error) {
+    console.error(
+      "❌ MongoDB connection failed:",
+      error.message
+    );
+
+    return false;
+  }
 }
+
+// =========================================================
+// ..M DATABASE STATUS
+// =========================================================
+
+function getDatabaseStatus() {
+  return {
+    connected:
+      mongoose.connection.readyState === 1,
+    state:
+      mongoose.connection.readyState,
+  };
+}
+
+// =========================================================
+// ..M EXPORTS
+// =========================================================
+
+export {
+  connectDatabase,
+  getDatabaseStatus,
+};
+
+export default connectDatabase;
