@@ -1,9 +1,6 @@
-// =====================================
-// Bot Routes:: M
+// ..M Bot.js
 // AutoTrade AI
 // مسیرهای کنترل ربات
-// File: backend/routes/bot.js
-// =====================================
 
 import express from "express";
 import mongoose from "mongoose";
@@ -15,220 +12,56 @@ import {
     reactivateBot
 } from "../engine/tradingEngine.js";
 
-
 const router = express.Router();
 
 
-// =====================================
-// GET BOT STATUS:: M
-// دریافت وضعیت ربات
-// GET /api/bot/:userId
-// =====================================
+// =========================================================
+// ..M FIND USER
+// پیدا کردن کاربر با MongoDB ID یا Telegram ID
+// =========================================================
 
-router.get("/:userId", async (req, res) => {
+async function findUser(identifier) {
 
-    try {
-
-        const { userId } =
-            req.params;
-
-
-        // =====================================
-        // بررسی شناسه کاربر:: M
-        // =====================================
-
-        if (
-            !mongoose.Types.ObjectId.isValid(
-                userId
-            )
-        ) {
-
-            return res.status(400).json({
-
-                success: false,
-
-                message:
-                    "Invalid user ID"
-
-            });
-
-        }
-
-
-        // =====================================
-        // پیدا کردن کاربر:: M
-        // =====================================
-
-        const user =
-            await User.findById(
-                userId
-            );
-
-
-        if (!user) {
-
-            return res.status(404).json({
-
-                success: false,
-
-                message:
-                    "User not found"
-
-            });
-
-        }
-
-
-        // =====================================
-        // پیدا کردن ربات:: M
-        // =====================================
-
-        const bot =
-            await Bot.findOne({
-
-                userId
-
-            });
-
-
-        // =====================================
-        // اگر ربات وجود نداشت:: M
-        // =====================================
-
-        if (!bot) {
-
-            return res.status(200).json({
-
-                success: true,
-
-                bot: {
-
-                    status:
-                        "STOPPED",
-
-                    enabled:
-                        false,
-
-                    strategy:
-                        "AI Scalping",
-
-                    market:
-                        "crypto",
-
-                    riskLevel:
-                        "LOW",
-
-                    riskPercent:
-                        1,
-
-                    maxOpenTrades:
-                        1,
-
-                    openTrades:
-                        0,
-
-                    maxConsecutiveLosses:
-                        2,
-
-                    consecutiveLosses:
-                        0,
-
-                    lastSignal:
-                        "WAIT",
-
-                    accuracy:
-                        0,
-
-                    confidence:
-                        0,
-
-                    stopReason:
-                        ""
-
-                }
-
-            });
-
-        }
-
-
-        return res.status(200).json({
-
-            success: true,
-
-            bot
-
-        });
-
-
-    } catch (error) {
-
-        console.error(
-            "Get Bot Status Error:",
-            error
-        );
-
-
-        return res.status(500).json({
-
-            success: false,
-
-            message:
-                "Failed to get bot status"
-
-        });
-
+    if (!identifier) {
+        return null;
     }
 
-});
+    // اگر MongoDB ObjectId باشد
+    if (
+        mongoose.Types.ObjectId.isValid(identifier) &&
+        String(new mongoose.Types.ObjectId(identifier)) ===
+        String(identifier)
+    ) {
+
+        return await User.findById(identifier);
+    }
+
+    // در غیر این صورت Telegram ID
+    return await User.findOne({
+        telegramId: String(identifier)
+    });
+}
 
 
-// =====================================
-// START BOT:: M
-// شروع ربات
-// POST /api/bot/start/:userId
-// =====================================
+// =========================================================
+// ..M GET BOT STATUS
+// دریافت وضعیت ربات
+// GET /bot/:userId
+// =========================================================
 
-router.post(
-    "/start/:userId",
+router.get(
+    "/:userId",
     async (req, res) => {
 
         try {
 
-            const { userId } =
-                req.params;
+            const {
+                userId
+            } = req.params;
 
-
-            // =====================================
-            // بررسی شناسه کاربر:: M
-            // =====================================
-
-            if (
-                !mongoose.Types.ObjectId.isValid(
-                    userId
-                )
-            ) {
-
-                return res.status(400).json({
-
-                    success: false,
-
-                    message:
-                        "Invalid user ID"
-
-                });
-
-            }
-
-
-            // =====================================
-            // پیدا کردن کاربر:: M
-            // =====================================
 
             const user =
-                await User.findById(
-                    userId
-                );
+                await findUser(userId);
 
 
             if (!user) {
@@ -245,9 +78,140 @@ router.post(
             }
 
 
-            // =====================================
-            // بررسی دسترسی کاربر:: M
-            // =====================================
+            const bot =
+                await Bot.findOne({
+                    userId: user._id
+                });
+
+
+            // اگر ربات هنوز ساخته نشده
+            if (!bot) {
+
+                return res.status(200).json({
+
+                    success: true,
+
+                    bot: {
+
+                        status:
+                            "STOPPED",
+
+                        enabled:
+                            false,
+
+                        strategy:
+                            "AI Scalping",
+
+                        market:
+                            "crypto",
+
+                        riskLevel:
+                            "LOW",
+
+                        riskPercent:
+                            1,
+
+                        maxOpenTrades:
+                            1,
+
+                        openTrades:
+                            0,
+
+                        maxConsecutiveLosses:
+                            2,
+
+                        consecutiveLosses:
+                            0,
+
+                        lastSignal:
+                            "WAIT",
+
+                        accuracy:
+                            0,
+
+                        confidence:
+                            0,
+
+                        stopReason:
+                            ""
+
+                    }
+
+                });
+
+            }
+
+
+            return res.status(200).json({
+
+                success: true,
+
+                bot
+
+            });
+
+
+        } catch (error) {
+
+            console.error(
+                "Get Bot Status Error:",
+                error
+            );
+
+
+            return res.status(500).json({
+
+                success: false,
+
+                message:
+                    "Failed to get bot status"
+
+            });
+
+        }
+
+    }
+);
+
+
+// =========================================================
+// ..M START BOT
+// شروع ربات
+// POST /bot/start/:userId
+// =========================================================
+
+router.post(
+    "/start/:userId",
+    async (req, res) => {
+
+        try {
+
+            const {
+                userId
+            } = req.params;
+
+
+            const user =
+                await findUser(userId);
+
+
+            if (!user) {
+
+                return res.status(404).json({
+
+                    success: false,
+
+                    message:
+                        "User not found"
+
+                });
+
+            }
+
+
+            // =====================================================
+            // ..M ACCESS CHECK
+            // =====================================================
 
             if (
 
@@ -277,28 +241,27 @@ router.post(
             }
 
 
-            // =====================================
-            // پیدا کردن ربات:: M
-            // =====================================
+            // =====================================================
+            // ..M FIND BOT
+            // =====================================================
 
             let bot =
                 await Bot.findOne({
-
-                    userId
-
+                    userId: user._id
                 });
 
 
-            // =====================================
-            // ساخت ربات در صورت نبودن:: M
-            // =====================================
+            // =====================================================
+            // ..M CREATE BOT
+            // =====================================================
 
             if (!bot) {
 
                 bot =
                     await Bot.create({
 
-                        userId,
+                        userId:
+                            user._id,
 
                         status:
                             "ACTIVE",
@@ -333,6 +296,12 @@ router.post(
                         lastSignal:
                             "WAIT",
 
+                        accuracy:
+                            0,
+
+                        confidence:
+                            0,
+
                         lastRun:
                             new Date(),
 
@@ -347,9 +316,9 @@ router.post(
             }
 
 
-            // =====================================
-            // جلوگیری از شروع مجدد بعد از ۲ ضرر:: M
-            // =====================================
+            // =====================================================
+            // ..M LOSS PROTECTION
+            // =====================================================
 
             if (
 
@@ -390,9 +359,9 @@ router.post(
             }
 
 
-            // =====================================
-            // اگر از قبل فعال است:: M
-            // =====================================
+            // =====================================================
+            // ..M ALREADY ACTIVE
+            // =====================================================
 
             if (
 
@@ -418,29 +387,24 @@ router.post(
             }
 
 
-            // =====================================
-            // فعال کردن ربات:: M
-            // =====================================
+            // =====================================================
+            // ..M ACTIVATE BOT
+            // =====================================================
 
             bot.status =
                 "ACTIVE";
 
-
             bot.enabled =
                 true;
-
 
             bot.stopReason =
                 "";
 
-
             bot.lastError =
                 "";
 
-
             bot.lastRun =
                 new Date();
-
 
             bot.lastHeartbeat =
                 new Date();
@@ -449,13 +413,12 @@ router.post(
             await bot.save();
 
 
-            // =====================================
-            // همگام‌سازی User:: M
-            // =====================================
+            // =====================================================
+            // ..M SYNC USER
+            // =====================================================
 
             user.botActive =
                 true;
-
 
             await user.save();
 
@@ -485,6 +448,7 @@ router.post(
                 success: false,
 
                 message:
+                    error.message ||
                     "Failed to start bot"
 
             });
@@ -495,11 +459,11 @@ router.post(
 );
 
 
-// =====================================
-// STOP BOT:: M
-// توقف دستی ربات
-// POST /api/bot/stop/:userId
-// =====================================
+// =========================================================
+// ..M STOP BOT
+// توقف ربات
+// POST /bot/stop/:userId
+// =========================================================
 
 router.post(
     "/stop/:userId",
@@ -507,40 +471,13 @@ router.post(
 
         try {
 
-            const { userId } =
-                req.params;
+            const {
+                userId
+            } = req.params;
 
-
-            // =====================================
-            // بررسی شناسه کاربر:: M
-            // =====================================
-
-            if (
-                !mongoose.Types.ObjectId.isValid(
-                    userId
-                )
-            ) {
-
-                return res.status(400).json({
-
-                    success: false,
-
-                    message:
-                        "Invalid user ID"
-
-                });
-
-            }
-
-
-            // =====================================
-            // پیدا کردن کاربر:: M
-            // =====================================
 
             const user =
-                await User.findById(
-                    userId
-                );
+                await findUser(userId);
 
 
             if (!user) {
@@ -557,15 +494,9 @@ router.post(
             }
 
 
-            // =====================================
-            // پیدا کردن ربات:: M
-            // =====================================
-
             const bot =
                 await Bot.findOne({
-
-                    userId
-
+                    userId: user._id
                 });
 
 
@@ -592,21 +523,14 @@ router.post(
             }
 
 
-            // =====================================
-            // توقف دستی:: M
-            // =====================================
-
             bot.status =
                 "STOPPED";
-
 
             bot.enabled =
                 false;
 
-
             bot.stopReason =
                 "Stopped by user";
-
 
             bot.lastHeartbeat =
                 new Date();
@@ -615,13 +539,8 @@ router.post(
             await bot.save();
 
 
-            // =====================================
-            // همگام‌سازی User:: M
-            // =====================================
-
             user.botActive =
                 false;
-
 
             await user.save();
 
@@ -651,6 +570,7 @@ router.post(
                 success: false,
 
                 message:
+                    error.message ||
                     "Failed to stop bot"
 
             });
@@ -661,11 +581,11 @@ router.post(
 );
 
 
-// =====================================
-// REACTIVATE BOT:: M
-// فعال‌سازی مجدد بعد از توقف خودکار
-// POST /api/bot/reactivate/:userId
-// =====================================
+// =========================================================
+// ..M REACTIVATE BOT
+// فعال‌سازی مجدد
+// POST /bot/reactivate/:userId
+// =========================================================
 
 router.post(
     "/reactivate/:userId",
@@ -673,40 +593,13 @@ router.post(
 
         try {
 
-            const { userId } =
-                req.params;
+            const {
+                userId
+            } = req.params;
 
-
-            // =====================================
-            // بررسی شناسه کاربر:: M
-            // =====================================
-
-            if (
-                !mongoose.Types.ObjectId.isValid(
-                    userId
-                )
-            ) {
-
-                return res.status(400).json({
-
-                    success: false,
-
-                    message:
-                        "Invalid user ID"
-
-                });
-
-            }
-
-
-            // =====================================
-            // پیدا کردن کاربر:: M
-            // =====================================
 
             const user =
-                await User.findById(
-                    userId
-                );
+                await findUser(userId);
 
 
             if (!user) {
@@ -722,10 +615,6 @@ router.post(
 
             }
 
-
-            // =====================================
-            // بررسی دسترسی کاربر:: M
-            // =====================================
 
             if (
 
@@ -755,25 +644,17 @@ router.post(
             }
 
 
-            // =====================================
-            // فعال‌سازی مجدد از Trading Engine:: M
-            // =====================================
-
             const bot =
                 await reactivateBot({
 
-                    userId
+                    userId:
+                        user._id
 
                 });
 
 
-            // =====================================
-            // همگام‌سازی User:: M
-            // =====================================
-
             user.botActive =
                 true;
-
 
             await user.save();
 
@@ -803,6 +684,7 @@ router.post(
                 success: false,
 
                 message:
+                    error.message ||
                     "Failed to reactivate bot"
 
             });
@@ -813,9 +695,8 @@ router.post(
 );
 
 
-// =====================================
-// EXPORT ROUTER:: M
-// خروجی مسیرهای ربات
-// =====================================
+// =========================================================
+// ..M EXPORT
+// =========================================================
 
 export default router;
