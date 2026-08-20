@@ -1,25 +1,25 @@
-/* =========================================================
-   AutoTrade AI
-   Main Application
-   Real-data ready / No fake trading data
-   ========================================================= */
+// ..M app.js
+// AutoTrade AI
+// Main Application
+// Real-data ready / No fake trading data
 
 "use strict";
 
 
-/* =========================================================
-   CONFIG
-========================================================= */
+// =========================================================
+// ..M CONFIG
+// =========================================================
 
 const BACKEND_URL =
     "https://autotrade-backend-02cc.onrender.com";
 
-const API_TIMEOUT = 15000;
+const API_TIMEOUT =
+    15000;
 
 
-/* =========================================================
-   TELEGRAM
-========================================================= */
+// =========================================================
+// ..M TELEGRAM
+// =========================================================
 
 const tg =
     window.Telegram &&
@@ -35,21 +35,30 @@ if (tg) {
     tg.expand();
 
     try {
-        tg.setHeaderColor("#020817");
-        tg.setBackgroundColor("#020817");
+
+        tg.setHeaderColor(
+            "#020817"
+        );
+
+        tg.setBackgroundColor(
+            "#020817"
+        );
+
     } catch (error) {
+
         console.warn(
             "Telegram UI settings unavailable:",
             error
         );
+
     }
 
 }
 
 
-/* =========================================================
-   USER
-========================================================= */
+// =========================================================
+// ..M TELEGRAM USER
+// =========================================================
 
 const telegramUser =
     tg &&
@@ -62,7 +71,9 @@ const telegramUser =
 const telegramId =
     telegramUser &&
     telegramUser.id
-        ? String(telegramUser.id)
+        ? String(
+            telegramUser.id
+        )
         : null;
 
 
@@ -80,139 +91,216 @@ const userUsername =
         : "";
 
 
-/* =========================================================
-   APPLICATION STATE
-========================================================= */
+// =========================================================
+// ..M STATE
+// =========================================================
 
 const state = {
 
-    currentPage: "dashboard",
+    currentPage:
+        "dashboard",
 
-    user: null,
+    user:
+        null,
 
-    wallet: null,
+    wallet:
+        null,
 
-    bot: null,
+    bot:
+        null,
 
-    trades: [],
+    trades:
+        [],
 
-    notifications: [],
+    notifications:
+        [],
 
-    exchangeRate: null,
+    exchangeRate:
+        null,
 
-    loading: true,
+    loading:
+        true,
 
-    lastUpdated: null,
+    lastUpdated:
+        null,
 
-    aiStarting: false
+    aiStarting:
+        false
 
 };
 
 
-/* =========================================================
-   DOM HELPERS
-========================================================= */
+// =========================================================
+// ..M DOM
+// =========================================================
 
-function $(selector) {
+function $(
+    selector
+) {
 
-    return document.querySelector(selector);
-
-}
-
-
-function $all(selector) {
-
-    return document.querySelectorAll(selector);
+    return document.querySelector(
+        selector
+    );
 
 }
 
 
-/* =========================================================
-   TEXT HELPERS
-========================================================= */
+function $all(
+    selector
+) {
 
-function safeText(value) {
+    return document.querySelectorAll(
+        selector
+    );
+
+}
+
+
+// =========================================================
+// ..M TEXT
+// =========================================================
+
+function safeText(
+    value
+) {
 
     if (
+
         value === null ||
         value === undefined ||
         value === ""
+
     ) {
+
         return "—";
+
     }
 
-    return String(value);
+
+    return String(
+        value
+    );
 
 }
 
 
-function formatUSD(value) {
+// =========================================================
+// ..M USD FORMAT
+// =========================================================
+
+function formatUSD(
+    value
+) {
 
     if (
+
         value === null ||
         value === undefined ||
         value === "" ||
-        Number.isNaN(Number(value))
+        Number.isNaN(
+            Number(value)
+        )
+
     ) {
+
         return "—";
+
     }
 
-    return Number(value).toLocaleString(
+
+    return Number(
+        value
+    ).toLocaleString(
         "en-US",
         {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
+            minimumFractionDigits:
+                2,
+
+            maximumFractionDigits:
+                2
         }
     );
 
 }
 
 
-function formatNumber(value) {
+// =========================================================
+// ..M NUMBER FORMAT
+// =========================================================
+
+function formatNumber(
+    value
+) {
 
     if (
+
         value === null ||
         value === undefined ||
         value === "" ||
-        Number.isNaN(Number(value))
+        Number.isNaN(
+            Number(value)
+        )
+
     ) {
+
         return "—";
+
     }
 
-    return Number(value).toLocaleString(
+
+    return Number(
+        value
+    ).toLocaleString(
         "fa-IR"
     );
 
 }
 
 
-/* =========================================================
-   USD → TOMAN
-========================================================= */
+// =========================================================
+// ..M USD TO TOMAN
+// =========================================================
 
 function usdToToman(
     usd
 ) {
 
     if (
-        state.exchangeRate === null ||
-        state.exchangeRate === undefined ||
-        usd === null ||
-        usd === undefined
+
+        state.exchangeRate ===
+            null ||
+
+        state.exchangeRate ===
+            undefined ||
+
+        usd ===
+            null ||
+
+        usd ===
+            undefined
+
     ) {
+
         return null;
+
     }
 
 
     const result =
         Number(usd) *
-        Number(state.exchangeRate);
+        Number(
+            state.exchangeRate
+        );
 
 
     if (
-        Number.isNaN(result)
+        Number.isNaN(
+            result
+        )
     ) {
+
         return null;
+
     }
 
 
@@ -221,15 +309,23 @@ function usdToToman(
 }
 
 
+// =========================================================
+// ..M TOMAN FORMAT
+// =========================================================
+
 function formatToman(
     usd
 ) {
 
     const toman =
-        usdToToman(usd);
+        usdToToman(
+            usd
+        );
 
 
-    if (toman === null) {
+    if (
+        toman === null
+    ) {
 
         return "معادل تومان: —";
 
@@ -238,18 +334,22 @@ function formatToman(
 
     return (
         "معادل تومان: " +
-        Number(toman).toLocaleString(
+
+        Number(
+            toman
+        ).toLocaleString(
             "fa-IR"
         ) +
+
         " تومان"
     );
 
 }
 
 
-/* =========================================================
-   USD DISPLAY
-========================================================= */
+// =========================================================
+// ..M MONEY
+// =========================================================
 
 function setMoney(
     element,
@@ -262,12 +362,15 @@ function setMoney(
 
 
     if (
+
         value === null ||
         value === undefined ||
         value === ""
+
     ) {
 
-        element.textContent = "—";
+        element.textContent =
+            "—";
 
         return;
 
@@ -275,16 +378,19 @@ function setMoney(
 
 
     element.textContent =
-        formatUSD(value);
+        formatUSD(
+            value
+        );
 
 }
 
 
-/* =========================================================
-   TOAST
-========================================================= */
+// =========================================================
+// ..M TOAST
+// =========================================================
 
-let toastTimer = null;
+let toastTimer =
+    null;
 
 
 function showToast(
@@ -298,13 +404,20 @@ function showToast(
         $("#toast-message");
 
 
-    if (!toast || !toastMessage) {
+    if (
+        !toast ||
+        !toastMessage
+    ) {
+
         return;
+
     }
 
 
     toastMessage.textContent =
-        safeText(message);
+        safeText(
+            message
+        );
 
 
     toast.classList.add(
@@ -332,9 +445,9 @@ function showToast(
 }
 
 
-/* =========================================================
-   API REQUEST
-========================================================= */
+// =========================================================
+// ..M API REQUEST
+// =========================================================
 
 async function apiRequest(
     path,
@@ -348,7 +461,9 @@ async function apiRequest(
     const timeout =
         setTimeout(
             () => {
+
                 controller.abort();
+
             },
             API_TIMEOUT
         );
@@ -371,14 +486,16 @@ async function apiRequest(
 
             headers[
                 "X-Telegram-Init-Data"
-            ] = tg.initData;
+            ] =
+                tg.initData;
 
         }
 
 
         const response =
             await fetch(
-                BACKEND_URL + path,
+                BACKEND_URL +
+                path,
                 {
 
                     method:
@@ -386,8 +503,12 @@ async function apiRequest(
                         "GET",
 
                     headers: {
+
                         ...headers,
-                        ...(options.headers || {})
+
+                        ...(options.headers ||
+                            {})
+
                     },
 
                     body:
@@ -404,7 +525,8 @@ async function apiRequest(
             );
 
 
-        let data = null;
+        let data =
+            null;
 
 
         try {
@@ -414,18 +536,25 @@ async function apiRequest(
 
         } catch {
 
-            data = null;
+            data =
+                null;
 
         }
 
 
-        if (!response.ok) {
+        if (
+            !response.ok
+        ) {
 
             throw new Error(
+
                 data &&
                 data.message
+
                     ? data.message
+
                     : `HTTP ${response.status}`
+
             );
 
         }
@@ -444,16 +573,16 @@ async function apiRequest(
 }
 
 
-/* =========================================================
-   USER API
-========================================================= */
+// =========================================================
+// ..M USER API
+// =========================================================
 
 async function loadUser() {
 
     if (!telegramId) {
 
         console.warn(
-            "Telegram user ID is unavailable."
+            "Telegram user ID unavailable."
         );
 
         return null;
@@ -465,17 +594,23 @@ async function loadUser() {
 
         const data =
             await apiRequest(
+
                 `/user/${encodeURIComponent(
                     telegramId
                 )}`
+
             );
 
 
         return (
+
             data &&
             data.user
+
                 ? data.user
+
                 : data
+
         );
 
     } catch (error) {
@@ -492,9 +627,9 @@ async function loadUser() {
 }
 
 
-/* =========================================================
-   WALLET API
-========================================================= */
+// =========================================================
+// ..M WALLET API
+// =========================================================
 
 async function loadWallet() {
 
@@ -507,17 +642,23 @@ async function loadWallet() {
 
         const data =
             await apiRequest(
+
                 `/wallet/${encodeURIComponent(
                     telegramId
                 )}`
+
             );
 
 
         return (
+
             data &&
             data.wallet
+
                 ? data.wallet
+
                 : data
+
         );
 
     } catch (error) {
@@ -534,9 +675,9 @@ async function loadWallet() {
 }
 
 
-/* =========================================================
-   BOT API
-========================================================= */
+// =========================================================
+// ..M BOT API
+// =========================================================
 
 async function loadBot() {
 
@@ -549,17 +690,23 @@ async function loadBot() {
 
         const data =
             await apiRequest(
+
                 `/bot/${encodeURIComponent(
                     telegramId
                 )}`
+
             );
 
 
         return (
+
             data &&
             data.bot
+
                 ? data.bot
+
                 : data
+
         );
 
     } catch (error) {
@@ -576,9 +723,10 @@ async function loadBot() {
 }
 
 
-/* =========================================================
-   TRADES API
-========================================================= */
+// =========================================================
+// ..M TRADES API
+// مسیر صحیح: /trade
+// =========================================================
 
 async function loadTrades() {
 
@@ -591,14 +739,18 @@ async function loadTrades() {
 
         const data =
             await apiRequest(
-                `/trades/${encodeURIComponent(
+
+                `/trade/${encodeURIComponent(
                     telegramId
                 )}`
+
             );
 
 
         if (
-            Array.isArray(data)
+            Array.isArray(
+                data
+            )
         ) {
 
             return data;
@@ -607,10 +759,12 @@ async function loadTrades() {
 
 
         if (
+
             data &&
             Array.isArray(
                 data.trades
             )
+
         ) {
 
             return data.trades;
@@ -634,9 +788,10 @@ async function loadTrades() {
 }
 
 
-/* =========================================================
-   EXCHANGE RATE
-========================================================= */
+// =========================================================
+// ..M CURRENCY API
+// مسیر صحیح: /currency
+// =========================================================
 
 async function loadExchangeRate() {
 
@@ -644,25 +799,29 @@ async function loadExchangeRate() {
 
         const data =
             await apiRequest(
-                "/exchange-rate"
+                "/currency"
             );
 
 
         const rate =
             data &&
             (
+
                 data.usd_toman ??
                 data.usd_irr ??
                 data.rate
+
             );
 
 
         if (
+
             rate !== null &&
             rate !== undefined &&
             !Number.isNaN(
                 Number(rate)
             )
+
         ) {
 
             state.exchangeRate =
@@ -691,24 +850,31 @@ async function loadExchangeRate() {
 }
 
 
-/* =========================================================
-   LOAD ALL DATA
-========================================================= */
+// =========================================================
+// ..M LOAD ALL DATA
+// =========================================================
 
 async function loadApplicationData() {
 
-    state.loading = true;
+    state.loading =
+        true;
 
 
     try {
 
         const results =
             await Promise.all([
+
                 loadUser(),
+
                 loadWallet(),
+
                 loadBot(),
+
                 loadTrades(),
+
                 loadExchangeRate()
+
             ]);
 
 
@@ -738,13 +904,15 @@ async function loadApplicationData() {
             error
         );
 
+
         showToast(
             "دریافت اطلاعات از سرور انجام نشد."
         );
 
     } finally {
 
-        state.loading = false;
+        state.loading =
+            false;
 
         hideLoading();
 
@@ -753,9 +921,9 @@ async function loadApplicationData() {
 }
 
 
-/* =========================================================
-   RENDER ALL
-========================================================= */
+// =========================================================
+// ..M RENDER ALL
+// =========================================================
 
 function renderAll() {
 
@@ -773,12 +941,14 @@ function renderAll() {
 
     renderAI();
 
+    renderNotifications();
+
 }
 
 
-/* =========================================================
-   HEADER
-========================================================= */
+// =========================================================
+// ..M HEADER
+// =========================================================
 
 function renderHeader() {
 
@@ -826,9 +996,9 @@ function renderHeader() {
 }
 
 
-/* =========================================================
-   DASHBOARD
-========================================================= */
+// =========================================================
+// ..M DASHBOARD
+// =========================================================
 
 function renderDashboard() {
 
@@ -836,54 +1006,35 @@ function renderDashboard() {
         state.wallet;
 
 
-    if (!wallet) {
-
-        setMoney(
-            $("#dashboard-balance-usd"),
-            null
+    const balance =
+        getWalletBalance(
+            wallet
         );
 
-        const balanceIR =
-            $("#dashboard-balance-irr");
 
-        if (balanceIR) {
-            balanceIR.textContent =
-                "معادل تومان: —";
-        }
+    setMoney(
+        $("#dashboard-balance-usd"),
+        balance
+    );
 
-    } else {
 
-        const balance =
-            getWalletBalance(
-                wallet
+    const balanceIR =
+        $("#dashboard-balance-irr");
+
+
+    if (balanceIR) {
+
+        balanceIR.textContent =
+            formatToman(
+                balance
             );
-
-
-        setMoney(
-            $("#dashboard-balance-usd"),
-            balance
-        );
-
-
-        const balanceIR =
-            $("#dashboard-balance-irr");
-
-
-        if (balanceIR) {
-
-            balanceIR.textContent =
-                formatToman(
-                    balance
-                );
-
-        }
 
     }
 
 
     const todayProfit =
         getValue(
-            state.wallet,
+            wallet,
             [
                 "todayProfit",
                 "profitToday"
@@ -913,7 +1064,7 @@ function renderDashboard() {
 
     const totalProfit =
         getValue(
-            state.wallet,
+            wallet,
             [
                 "totalProfit",
                 "profit"
@@ -943,7 +1094,7 @@ function renderDashboard() {
 
     const totalTrades =
         getValue(
-            state.wallet,
+            wallet,
             [
                 "totalTrades"
             ]
@@ -997,9 +1148,9 @@ function renderDashboard() {
 }
 
 
-/* =========================================================
-   DASHBOARD TRADES
-========================================================= */
+// =========================================================
+// ..M DASHBOARD TRADES
+// =========================================================
 
 function renderDashboardTrades() {
 
@@ -1013,10 +1164,14 @@ function renderDashboardTrades() {
 
 
     if (
+
         !Array.isArray(
             state.trades
         ) ||
-        state.trades.length === 0
+
+        state.trades.length ===
+            0
+
     ) {
 
         container.innerHTML = `
@@ -1037,8 +1192,10 @@ function renderDashboardTrades() {
 
 
     const recent =
-        state.trades
-            .slice(0, 3);
+        state.trades.slice(
+            0,
+            3
+        );
 
 
     container.className =
@@ -1055,9 +1212,9 @@ function renderDashboardTrades() {
 }
 
 
-/* =========================================================
-   WALLET
-========================================================= */
+// =========================================================
+// ..M WALLET
+// =========================================================
 
 function renderWallet() {
 
@@ -1148,9 +1305,9 @@ function renderWallet() {
 }
 
 
-/* =========================================================
-   WITHDRAW
-========================================================= */
+// =========================================================
+// ..M WITHDRAW
+// =========================================================
 
 function renderWithdraw() {
 
@@ -1187,9 +1344,9 @@ function renderWithdraw() {
 }
 
 
-/* =========================================================
-   AI
-========================================================= */
+// =========================================================
+// ..M AI
+// =========================================================
 
 function renderAI() {
 
@@ -1200,12 +1357,17 @@ function renderAI() {
     const status =
         bot
             ? (
+
                 bot.status ||
+
                 (
+
                     bot.isActive
                         ? "ACTIVE"
                         : "STOPPED"
+
                 )
+
             )
             : null;
 
@@ -1249,7 +1411,6 @@ function renderAI() {
                 "شروع معاملات AI";
 
         }
-
 
     } else {
 
@@ -1349,9 +1510,9 @@ function renderAI() {
 }
 
 
-/* =========================================================
-   TRADES
-========================================================= */
+// =========================================================
+// ..M TRADES
+// =========================================================
 
 function renderTrades() {
 
@@ -1365,8 +1526,11 @@ function renderTrades() {
 
 
     if (
+
         !state.trades ||
-        state.trades.length === 0
+        state.trades.length ===
+            0
+
     ) {
 
         container.innerHTML = `
@@ -1400,9 +1564,9 @@ function renderTrades() {
 }
 
 
-/* =========================================================
-   TRADE HTML
-========================================================= */
+// =========================================================
+// ..M TRADE HTML
+// =========================================================
 
 function createTradeHTML(
     trade
@@ -1434,11 +1598,19 @@ function createTradeHTML(
             <div class="trade-top">
 
                 <div class="trade-symbol">
-                    ${escapeHTML(symbol)}
+
+                    ${escapeHTML(
+                        symbol
+                    )}
+
                 </div>
 
                 <div class="trade-type">
-                    ${escapeHTML(type)}
+
+                    ${escapeHTML(
+                        type
+                    )}
+
                 </div>
 
             </div>
@@ -1453,9 +1625,11 @@ function createTradeHTML(
                     </span>
 
                     <strong>
+
                         ${escapeHTML(
                             status
                         )}
+
                     </strong>
 
                 </div>
@@ -1468,15 +1642,19 @@ function createTradeHTML(
                     </span>
 
                     <strong>
+
                         ${
                             profit === null ||
                             profit === undefined
+
                                 ? "—"
+
                                 : "$" +
                                   formatUSD(
                                       profit
                                   )
                         }
+
                     </strong>
 
                 </div>
@@ -1490,9 +1668,9 @@ function createTradeHTML(
 }
 
 
-/* =========================================================
-   PROFILE
-========================================================= */
+// =========================================================
+// ..M PROFILE
+// =========================================================
 
 function renderProfile() {
 
@@ -1503,24 +1681,30 @@ function renderProfile() {
     const name =
         user &&
         (
+
             user.firstName ||
             user.first_name ||
             user.name
+
         )
+
             ? (
+
                 user.firstName ||
                 user.first_name ||
                 user.name
+
             )
+
             : userFirstName;
 
 
     const username =
         user &&
-        (
-            user.username
-        )
+        user.username
+
             ? user.username
+
             : userUsername;
 
 
@@ -1546,7 +1730,9 @@ function renderProfile() {
 
         usernameElement.textContent =
             username
+
                 ? `@${username}`
+
                 : "حساب تلگرام";
 
     }
@@ -1576,14 +1762,30 @@ function renderProfile() {
 
     if (profileStatus) {
 
-        const accountStatus =
-            user &&
-            (
-                user.status ||
-                user.accessEnabled
-                    ? "فعال"
-                    : null
-            );
+        let accountStatus =
+            null;
+
+
+        if (user) {
+
+            if (
+                user.status
+            ) {
+
+                accountStatus =
+                    user.status;
+
+            } else if (
+                user.accessEnabled ===
+                true
+            ) {
+
+                accountStatus =
+                    "فعال";
+
+            }
+
+        }
 
 
         profileStatus.textContent =
@@ -1595,9 +1797,9 @@ function renderProfile() {
 }
 
 
-/* =========================================================
-   PAGE NAVIGATION
-========================================================= */
+// =========================================================
+// ..M NAVIGATION
+// =========================================================
 
 function navigateToPage(
     page
@@ -1609,16 +1811,21 @@ function navigateToPage(
 
 
     const pages =
-        $all(".page");
+        $all(
+            ".page"
+        );
 
 
     pages.forEach(
         element => {
 
             element.classList.toggle(
+
                 "active",
+
                 element.dataset.page ===
                 page
+
             );
 
         }
@@ -1626,16 +1833,21 @@ function navigateToPage(
 
 
     const navItems =
-        $all(".nav-item");
+        $all(
+            ".nav-item"
+        );
 
 
     navItems.forEach(
         item => {
 
             item.classList.toggle(
+
                 "active",
+
                 item.dataset.page ===
                 page
+
             );
 
         }
@@ -1649,24 +1861,31 @@ function navigateToPage(
     renderHeader();
 
 
-    window.scrollTo(
-        {
-            top: 0,
-            behavior: "smooth"
-        }
-    );
+    window.scrollTo({
+
+        top:
+            0,
+
+        behavior:
+            "smooth"
+
+    });
 
 }
 
 
-/* =========================================================
-   START / STOP AI
-========================================================= */
+// =========================================================
+// ..M START / STOP AI
+// =========================================================
 
 async function toggleAITrading() {
 
-    if (state.aiStarting) {
+    if (
+        state.aiStarting
+    ) {
+
         return;
+
     }
 
 
@@ -1703,9 +1922,11 @@ async function toggleAITrading() {
     const currentStatus =
         state.bot &&
         state.bot.status
+
             ? String(
                 state.bot.status
             ).toUpperCase()
+
             : "STOPPED";
 
 
@@ -1717,33 +1938,45 @@ async function toggleAITrading() {
         ) {
 
             await apiRequest(
+
                 `/bot/stop/${encodeURIComponent(
                     telegramId
                 )}`,
+
                 {
-                    method: "POST"
+
+                    method:
+                        "POST"
+
                 }
+
             );
 
 
             showToast(
-                "درخواست توقف ربات ارسال شد."
+                "ربات متوقف شد."
             );
 
         } else {
 
             await apiRequest(
+
                 `/bot/start/${encodeURIComponent(
                     telegramId
                 )}`,
+
                 {
-                    method: "POST"
+
+                    method:
+                        "POST"
+
                 }
+
             );
 
 
             showToast(
-                "درخواست شروع ربات ارسال شد."
+                "ربات فعال شد."
             );
 
         }
@@ -1760,13 +1993,21 @@ async function toggleAITrading() {
 
 
         showToast(
-            "عملیات انجام نشد. وضعیت سرور را بررسی کنید."
+
+            error &&
+            error.message
+
+                ? error.message
+
+                : "عملیات انجام نشد."
+
         );
 
     } finally {
 
         state.aiStarting =
             false;
+
 
         if (button) {
 
@@ -1780,9 +2021,10 @@ async function toggleAITrading() {
 }
 
 
-/* =========================================================
-   WITHDRAW FORM
-========================================================= */
+// =========================================================
+// ..M WITHDRAW FORM
+// مسیر صحیح: /withdraw
+// =========================================================
 
 function setupWithdrawForm() {
 
@@ -1796,7 +2038,9 @@ function setupWithdrawForm() {
 
 
     form.addEventListener(
+
         "submit",
+
         async event => {
 
             event.preventDefault();
@@ -1832,8 +2076,10 @@ function setupWithdrawForm() {
 
 
             if (
+
                 !amount ||
                 amount <= 0
+
             ) {
 
                 showToast(
@@ -1870,9 +2116,13 @@ function setupWithdrawForm() {
             try {
 
                 await apiRequest(
-                    "/wallet/withdraw",
+
+                    "/withdraw",
+
                     {
-                        method: "POST",
+
+                        method:
+                            "POST",
 
                         body: {
 
@@ -1891,11 +2141,12 @@ function setupWithdrawForm() {
                         }
 
                     }
+
                 );
 
 
                 showToast(
-                    "درخواست برداشت با موفقیت برای بررسی سرور ارسال شد."
+                    "درخواست برداشت برای بررسی سرور ارسال شد."
                 );
 
 
@@ -1913,20 +2164,28 @@ function setupWithdrawForm() {
 
 
                 showToast(
-                    "درخواست برداشت ارسال نشد."
+
+                    error &&
+                    error.message
+
+                        ? error.message
+
+                        : "درخواست برداشت ارسال نشد."
+
                 );
 
             }
 
         }
+
     );
 
 }
 
 
-/* =========================================================
-   WITHDRAW PREVIEW
-========================================================= */
+// =========================================================
+// ..M WITHDRAW PREVIEW
+// =========================================================
 
 function setupWithdrawPreview() {
 
@@ -1940,7 +2199,9 @@ function setupWithdrawPreview() {
 
 
     amountInput.addEventListener(
+
         "input",
+
         () => {
 
             const amount =
@@ -1961,19 +2222,16 @@ function setupWithdrawPreview() {
                 $("#withdraw-fee");
 
 
-            /*
-             * هیچ کارمزد ساختگی محاسبه نمی‌کنیم.
-             * تا زمانی که سرور کارمزد واقعی را ندهد،
-             * مقدار آن نامشخص است.
-             */
-
             if (receive) {
 
                 receive.textContent =
+
                     amount > 0
+
                         ? `${formatUSD(
                             amount
                         )} USDT`
+
                         : "0.00 USDT";
 
             }
@@ -1990,42 +2248,47 @@ function setupWithdrawPreview() {
             if (total) {
 
                 total.textContent =
+
                     amount > 0
+
                         ? `${formatUSD(
                             amount
                         )} USDT`
+
                         : "0.00 USDT";
 
             }
 
         }
+
     );
 
 }
 
 
-/* =========================================================
-   NAVIGATION EVENTS
-========================================================= */
+// =========================================================
+// ..M NAVIGATION EVENTS
+// =========================================================
 
 function setupNavigation() {
 
     $all(
         "[data-page]"
     ).forEach(
+
         element => {
 
             element.addEventListener(
+
                 "click",
+
                 () => {
 
                     const page =
                         element.dataset.page;
 
 
-                    if (
-                        page
-                    ) {
+                    if (page) {
 
                         navigateToPage(
                             page
@@ -2034,27 +2297,32 @@ function setupNavigation() {
                     }
 
                 }
+
             );
 
         }
+
     );
 
 }
 
 
-/* =========================================================
-   ACTION BUTTONS
-========================================================= */
+// =========================================================
+// ..M ACTIONS
+// =========================================================
 
 function setupActions() {
 
     $all(
         "[data-action]"
     ).forEach(
+
         button => {
 
             button.addEventListener(
+
                 "click",
+
                 () => {
 
                     const action =
@@ -2101,9 +2369,11 @@ function setupActions() {
                     }
 
                 }
+
             );
 
         }
+
     );
 
 
@@ -2128,14 +2398,17 @@ function setupActions() {
     if (logoutButton) {
 
         logoutButton.addEventListener(
+
             "click",
+
             () => {
 
                 showToast(
-                    "خروج از حساب باید توسط سیستم احراز هویت انجام شود."
+                    "خروج از حساب توسط سیستم احراز هویت انجام می‌شود."
                 );
 
             }
+
         );
 
     }
@@ -2143,19 +2416,22 @@ function setupActions() {
 }
 
 
-/* =========================================================
-   PROFILE ACTIONS
-========================================================= */
+// =========================================================
+// ..M PROFILE ACTIONS
+// =========================================================
 
 function setupProfileActions() {
 
     $all(
         "[data-profile-action]"
     ).forEach(
+
         button => {
 
             button.addEventListener(
+
                 "click",
+
                 () => {
 
                     const action =
@@ -2183,37 +2459,45 @@ function setupProfileActions() {
 
 
                     showToast(
+
                         messages[action] ||
                         "این بخش هنوز تنظیم نشده است."
+
                     );
 
                 }
+
             );
 
         }
+
     );
 
 }
 
 
-/* =========================================================
-   TRADES TABS
-========================================================= */
+// =========================================================
+// ..M TRADE TABS
+// =========================================================
 
 function setupTradeTabs() {
 
     $all(
         ".tab"
     ).forEach(
+
         tab => {
 
             tab.addEventListener(
+
                 "click",
+
                 () => {
 
                     $all(
                         ".tab"
                     ).forEach(
+
                         item => {
 
                             item.classList.remove(
@@ -2221,6 +2505,7 @@ function setupTradeTabs() {
                             );
 
                         }
+
                     );
 
 
@@ -2238,13 +2523,19 @@ function setupTradeTabs() {
                     );
 
                 }
+
             );
 
         }
+
     );
 
 }
 
+
+// =========================================================
+// ..M FILTER TRADES
+// =========================================================
 
 function filterTrades(
     status
@@ -2261,6 +2552,7 @@ function filterTrades(
 
     const filtered =
         state.trades.filter(
+
             trade => {
 
                 if (
@@ -2269,8 +2561,10 @@ function filterTrades(
                 ) {
 
                     return String(
+
                         trade.status ||
                         ""
+
                     ).toUpperCase() ===
                     "OPEN";
 
@@ -2283,8 +2577,10 @@ function filterTrades(
                 ) {
 
                     return String(
+
                         trade.status ||
                         ""
+
                     ).toUpperCase() ===
                     "CLOSED";
 
@@ -2294,11 +2590,13 @@ function filterTrades(
                 return true;
 
             }
+
         );
 
 
     if (
-        filtered.length === 0
+        filtered.length ===
+        0
     ) {
 
         container.innerHTML = `
@@ -2332,9 +2630,9 @@ function filterTrades(
 }
 
 
-/* =========================================================
-   NOTIFICATIONS
-========================================================= */
+// =========================================================
+// ..M NOTIFICATIONS
+// =========================================================
 
 function setupNotifications() {
 
@@ -2345,7 +2643,9 @@ function setupNotifications() {
     if (button) {
 
         button.addEventListener(
+
             "click",
+
             () => {
 
                 navigateToPage(
@@ -2353,6 +2653,7 @@ function setupNotifications() {
                 );
 
             }
+
         );
 
     }
@@ -2365,31 +2666,45 @@ function setupNotifications() {
     if (markButton) {
 
         markButton.addEventListener(
+
             "click",
+
             () => {
 
                 state.notifications =
                     state.notifications.map(
+
                         item => ({
+
                             ...item,
-                            read: true
+
+                            read:
+                                true
+
                         })
+
                     );
 
 
                 renderNotifications();
+
 
                 showToast(
                     "اعلان‌ها خوانده شدند."
                 );
 
             }
+
         );
 
     }
 
 }
 
+
+// =========================================================
+// ..M RENDER NOTIFICATIONS
+// =========================================================
 
 function renderNotifications() {
 
@@ -2403,7 +2718,8 @@ function renderNotifications() {
 
 
     if (
-        state.notifications.length === 0
+        state.notifications.length ===
+        0
     ) {
 
         container.innerHTML = `
@@ -2430,13 +2746,16 @@ function renderNotifications() {
     container.innerHTML =
         state.notifications
             .map(
+
                 notification => `
 
                     <div class="
                         notification-item
-                        ${notification.read
-                            ? ""
-                            : "unread"}
+                        ${
+                            notification.read
+                                ? ""
+                                : "unread"
+                        }
                     ">
 
                         <strong>
@@ -2456,15 +2775,16 @@ function renderNotifications() {
                     </div>
 
                 `
+
             )
             .join("");
 
 }
 
 
-/* =========================================================
-   LOADING
-========================================================= */
+// =========================================================
+// ..M LOADING
+// =========================================================
 
 function hideLoading() {
 
@@ -2486,21 +2806,24 @@ function hideLoading() {
 
 
     setTimeout(
+
         () => {
 
             screen.style.display =
                 "none";
 
         },
+
         250
+
     );
 
 }
 
 
-/* =========================================================
-   UTILITY
-========================================================= */
+// =========================================================
+// ..M GET VALUE
+// =========================================================
 
 function getValue(
     object,
@@ -2517,11 +2840,16 @@ function getValue(
     ) {
 
         if (
+
             object[key] !==
                 null &&
+
             object[key] !==
                 undefined &&
-            object[key] !== ""
+
+            object[key] !==
+                ""
+
         ) {
 
             return object[key];
@@ -2536,20 +2864,31 @@ function getValue(
 }
 
 
+// =========================================================
+// ..M WALLET BALANCE
+// =========================================================
+
 function getWalletBalance(
     wallet
 ) {
 
     return getValue(
+
         wallet,
+
         [
             "balance",
             "totalBalance"
         ]
+
     );
 
 }
 
+
+// =========================================================
+// ..M ESCAPE HTML
+// =========================================================
 
 function escapeHTML(
     value
@@ -2559,22 +2898,27 @@ function escapeHTML(
         value ??
         ""
     )
+
         .replace(
             /&/g,
             "&amp;"
         )
+
         .replace(
             /</g,
             "&lt;"
         )
+
         .replace(
             />/g,
             "&gt;"
         )
+
         .replace(
             /"/g,
             "&quot;"
         )
+
         .replace(
             /'/g,
             "&#039;"
@@ -2583,9 +2927,9 @@ function escapeHTML(
 }
 
 
-/* =========================================================
-   INITIALIZATION
-========================================================= */
+// =========================================================
+// ..M INITIALIZATION
+// =========================================================
 
 async function initializeApp() {
 
@@ -2612,16 +2956,19 @@ async function initializeApp() {
 }
 
 
-/* =========================================================
-   AUTO REFRESH
-========================================================= */
+// =========================================================
+// ..M AUTO REFRESH
+// =========================================================
 
 setInterval(
+
     async () => {
 
         if (
+
             document.visibilityState ===
             "visible"
+
         ) {
 
             await loadApplicationData();
@@ -2629,15 +2976,20 @@ setInterval(
         }
 
     },
+
     30000
+
 );
 
 
-/* =========================================================
-   START
-========================================================= */
+// =========================================================
+// ..M START
+// =========================================================
 
 document.addEventListener(
+
     "DOMContentLoaded",
+
     initializeApp
+
 );
