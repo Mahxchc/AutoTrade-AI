@@ -12,6 +12,7 @@ import {
     reactivateBot
 } from "../engine/tradingEngine.js";
 
+
 const router = express.Router();
 
 
@@ -26,26 +27,41 @@ async function findUser(identifier) {
         return null;
     }
 
-    // اگر MongoDB ObjectId باشد
+
+    // =====================================================
+    // ..M MONGODB OBJECT ID
+    // =====================================================
+
     if (
         mongoose.Types.ObjectId.isValid(identifier) &&
-        String(new mongoose.Types.ObjectId(identifier)) ===
-        String(identifier)
+        String(
+            new mongoose.Types.ObjectId(identifier)
+        ) === String(identifier)
     ) {
 
-        return await User.findById(identifier);
+        return await User.findById(
+            identifier
+        );
+
     }
 
-    // در غیر این صورت Telegram ID
+
+    // =====================================================
+    // ..M TELEGRAM ID
+    // =====================================================
+
     return await User.findOne({
-        telegramId: String(identifier)
+
+        telegramId:
+            String(identifier)
+
     });
+
 }
 
 
 // =========================================================
 // ..M GET BOT STATUS
-// دریافت وضعیت ربات
 // GET /bot/:userId
 // =========================================================
 
@@ -61,7 +77,9 @@ router.get(
 
 
             const user =
-                await findUser(userId);
+                await findUser(
+                    userId
+                );
 
 
             if (!user) {
@@ -80,11 +98,17 @@ router.get(
 
             const bot =
                 await Bot.findOne({
-                    userId: user._id
+
+                    userId:
+                        user._id
+
                 });
 
 
-            // اگر ربات هنوز ساخته نشده
+            // =================================================
+            // ..M BOT DOES NOT EXIST
+            // =================================================
+
             if (!bot) {
 
                 return res.status(200).json({
@@ -92,6 +116,9 @@ router.get(
                     success: true,
 
                     bot: {
+
+                        userId:
+                            user._id,
 
                         status:
                             "STOPPED",
@@ -164,6 +191,7 @@ router.get(
                 success: false,
 
                 message:
+                    error.message ||
                     "Failed to get bot status"
 
             });
@@ -176,7 +204,6 @@ router.get(
 
 // =========================================================
 // ..M START BOT
-// شروع ربات
 // POST /bot/start/:userId
 // =========================================================
 
@@ -192,7 +219,9 @@ router.post(
 
 
             const user =
-                await findUser(userId);
+                await findUser(
+                    userId
+                );
 
 
             if (!user) {
@@ -209,9 +238,9 @@ router.post(
             }
 
 
-            // =====================================================
+            // =================================================
             // ..M ACCESS CHECK
-            // =====================================================
+            // =================================================
 
             if (
 
@@ -241,19 +270,22 @@ router.post(
             }
 
 
-            // =====================================================
+            // =================================================
             // ..M FIND BOT
-            // =====================================================
+            // =================================================
 
             let bot =
                 await Bot.findOne({
-                    userId: user._id
+
+                    userId:
+                        user._id
+
                 });
 
 
-            // =====================================================
+            // =================================================
             // ..M CREATE BOT
-            // =====================================================
+            // =================================================
 
             if (!bot) {
 
@@ -316,9 +348,9 @@ router.post(
             }
 
 
-            // =====================================================
-            // ..M LOSS PROTECTION
-            // =====================================================
+            // =================================================
+            // ..M MAX LOSS PROTECTION
+            // =================================================
 
             if (
 
@@ -336,11 +368,13 @@ router.post(
                 bot.stopReason =
                     "Maximum consecutive losses reached";
 
+
                 await bot.save();
 
 
                 user.botActive =
                     false;
+
 
                 await user.save();
 
@@ -359,9 +393,9 @@ router.post(
             }
 
 
-            // =====================================================
+            // =================================================
             // ..M ALREADY ACTIVE
-            // =====================================================
+            // =================================================
 
             if (
 
@@ -387,9 +421,9 @@ router.post(
             }
 
 
-            // =====================================================
+            // =================================================
             // ..M ACTIVATE BOT
-            // =====================================================
+            // =================================================
 
             bot.status =
                 "ACTIVE";
@@ -413,12 +447,13 @@ router.post(
             await bot.save();
 
 
-            // =====================================================
+            // =================================================
             // ..M SYNC USER
-            // =====================================================
+            // =================================================
 
             user.botActive =
                 true;
+
 
             await user.save();
 
@@ -461,7 +496,6 @@ router.post(
 
 // =========================================================
 // ..M STOP BOT
-// توقف ربات
 // POST /bot/stop/:userId
 // =========================================================
 
@@ -477,7 +511,9 @@ router.post(
 
 
             const user =
-                await findUser(userId);
+                await findUser(
+                    userId
+                );
 
 
             if (!user) {
@@ -496,7 +532,10 @@ router.post(
 
             const bot =
                 await Bot.findOne({
-                    userId: user._id
+
+                    userId:
+                        user._id
+
                 });
 
 
@@ -504,6 +543,7 @@ router.post(
 
                 user.botActive =
                     false;
+
 
                 await user.save();
 
@@ -523,6 +563,10 @@ router.post(
             }
 
 
+            // =================================================
+            // ..M STOP
+            // =================================================
+
             bot.status =
                 "STOPPED";
 
@@ -539,8 +583,13 @@ router.post(
             await bot.save();
 
 
+            // =================================================
+            // ..M SYNC USER
+            // =================================================
+
             user.botActive =
                 false;
+
 
             await user.save();
 
@@ -583,7 +632,6 @@ router.post(
 
 // =========================================================
 // ..M REACTIVATE BOT
-// فعال‌سازی مجدد
 // POST /bot/reactivate/:userId
 // =========================================================
 
@@ -599,7 +647,9 @@ router.post(
 
 
             const user =
-                await findUser(userId);
+                await findUser(
+                    userId
+                );
 
 
             if (!user) {
@@ -615,6 +665,10 @@ router.post(
 
             }
 
+
+            // =================================================
+            // ..M ACCESS CHECK
+            // =================================================
 
             if (
 
@@ -655,6 +709,7 @@ router.post(
 
             user.botActive =
                 true;
+
 
             await user.save();
 
