@@ -1,9 +1,7 @@
-// =====================================
-// User Routes:: M
+// ..M User Routes
 // AutoTrade AI
 // User Registration & Approval API
 // File: backend/routes/User.js
-// =====================================
 
 import express from "express";
 
@@ -15,94 +13,200 @@ import {
 } from "../middleware/auth.js";
 
 
-const router = express.Router();
+const router =
+    express.Router();
 
 
-// =====================================
-// CREATE USER / APPLICATION
-// POST /api/users
-// =====================================
+// =========================================================
+// ..M CREATE OR UPDATE USER
+// POST /user
+// =========================================================
 
-router.post("/", async (req, res, next) => {
+router.post(
+    "/",
+    async (
+        req,
+        res,
+        next
+    ) => {
 
-    try {
+        try {
 
-        const {
+            const {
 
-            telegramId,
-            username,
-            firstName,
-            lastName,
-            phoneNumber
+                telegramId,
+                username,
+                firstName,
+                lastName,
+                phoneNumber
 
-        } = req.body;
-
-
-        // =====================================
-        // Validate Required Data
-        // =====================================
-
-        if (
-            !telegramId ||
-            !firstName ||
-            !lastName ||
-            !phoneNumber
-        ) {
-
-            return res.status(400).json({
-
-                success: false,
-
-                message:
-                    "Telegram ID, first name, last name and phone number are required"
-
-            });
-
-        }
+            } = req.body;
 
 
-        // =====================================
-        // Find Existing User
-        // =====================================
+            // -------------------------------------------------
+            // ..M VALIDATE TELEGRAM ID
+            // -------------------------------------------------
 
-        let user = await User.findOne({
+            if (!telegramId) {
 
-            telegramId
+                return res.status(400).json({
 
-        });
+                    success: false,
 
+                    message:
+                        "Telegram ID is required"
 
-        // =====================================
-        // Existing User
-        // =====================================
+                });
 
-        if (user) {
-
-            user.username =
-                username || user.username;
-
-            user.firstName =
-                firstName;
-
-            user.lastName =
-                lastName;
-
-            user.phoneNumber =
-                phoneNumber;
-
-            user.lastLogin =
-                new Date();
+            }
 
 
-            await user.save();
+            const normalizedTelegramId =
+                String(
+                    telegramId
+                ).trim();
 
 
-            return res.status(200).json({
+            // -------------------------------------------------
+            // ..M FIND EXISTING USER
+            // -------------------------------------------------
+
+            let user =
+                await User.findOne({
+
+                    telegramId:
+                        normalizedTelegramId
+
+                });
+
+
+            // -------------------------------------------------
+            // ..M UPDATE EXISTING USER
+            // -------------------------------------------------
+
+            if (user) {
+
+                if (username !== undefined) {
+
+                    user.username =
+                        String(
+                            username || ""
+                        ).trim();
+
+                }
+
+
+                if (firstName !== undefined) {
+
+                    user.firstName =
+                        String(
+                            firstName || ""
+                        ).trim();
+
+                }
+
+
+                if (lastName !== undefined) {
+
+                    user.lastName =
+                        String(
+                            lastName || ""
+                        ).trim();
+
+                }
+
+
+                if (phoneNumber !== undefined) {
+
+                    user.phoneNumber =
+                        String(
+                            phoneNumber || ""
+                        ).trim();
+
+                }
+
+
+                user.lastLogin =
+                    new Date();
+
+
+                await user.save();
+
+
+                return res.status(200).json({
+
+                    success: true,
+
+                    message:
+                        "User information updated",
+
+                    user
+
+                });
+
+            }
+
+
+            // -------------------------------------------------
+            // ..M CREATE NEW USER
+            // -------------------------------------------------
+
+            user =
+                await User.create({
+
+                    telegramId:
+                        normalizedTelegramId,
+
+                    username:
+                        String(
+                            username || ""
+                        ).trim(),
+
+                    firstName:
+                        String(
+                            firstName || ""
+                        ).trim(),
+
+                    lastName:
+                        String(
+                            lastName || ""
+                        ).trim(),
+
+                    phoneNumber:
+                        String(
+                            phoneNumber || ""
+                        ).trim(),
+
+                    accessEnabled:
+                        false,
+
+                    approvalStatus:
+                        "PENDING",
+
+                    isAdmin:
+                        false,
+
+                    botAccess:
+                        false,
+
+                    botActive:
+                        false,
+
+                    status:
+                        "PENDING",
+
+                    lastLogin:
+                        new Date()
+
+                });
+
+
+            return res.status(201).json({
 
                 success: true,
 
                 message:
-                    "User information updated",
+                    "User created successfully. Waiting for approval.",
 
                 user
 
@@ -110,102 +214,67 @@ router.post("/", async (req, res, next) => {
 
         }
 
+        catch (error) {
 
-        // =====================================
-        // New User
-        // =====================================
+            next(error);
 
-        user = await User.create({
-
-            telegramId,
-
-            username:
-                username || "",
-
-            firstName,
-
-            lastName,
-
-            phoneNumber,
-
-            accessEnabled: false,
-
-            approvalStatus:
-                "PENDING",
-
-            isAdmin: false,
-
-            botAccess: false,
-
-            botActive: false,
-
-            status:
-                "PENDING"
-
-        });
-
-
-        return res.status(201).json({
-
-            success: true,
-
-            message:
-                "Your approval request has been sent to the owner.",
-
-            user
-
-        });
+        }
 
     }
+);
 
-    catch (error) {
 
-        next(error);
+// =========================================================
+// ..M GET CURRENT USER
+// GET /user/me
+// =========================================================
+
+router.get(
+    "/me",
+    requireUser,
+    async (
+        req,
+        res,
+        next
+    ) => {
+
+        try {
+
+            return res.status(200).json({
+
+                success: true,
+
+                user:
+                    req.user
+
+            });
+
+        }
+
+        catch (error) {
+
+            next(error);
+
+        }
 
     }
-
-});
-
-
-// =====================================
-// GET CURRENT USER
-// GET /api/users/me
-// =====================================
-
-router.get("/me", requireUser, async (req, res, next) => {
-
-    try {
-
-        return res.status(200).json({
-
-            success: true,
-
-            user:
-                req.user
-
-        });
-
-    }
-
-    catch (error) {
-
-        next(error);
-
-    }
-
-});
+);
 
 
-// =====================================
-// APPROVE USER
-// POST /api/users/admin/:userId/approve
-// =====================================
+// =========================================================
+// ..M APPROVE USER
+// POST /user/admin/:userId/approve
+// =========================================================
 
 router.post(
     "/admin/:userId/approve",
     requireUser,
     requireAdmin,
-    async (req, res, next) => {
+    async (
+        req,
+        res,
+        next
+    ) => {
 
         try {
 
@@ -271,16 +340,20 @@ router.post(
 );
 
 
-// =====================================
-// REJECT USER
-// POST /api/users/admin/:userId/reject
-// =====================================
+// =========================================================
+// ..M REJECT USER
+// POST /user/admin/:userId/reject
+// =========================================================
 
 router.post(
     "/admin/:userId/reject",
     requireUser,
     requireAdmin,
-    async (req, res, next) => {
+    async (
+        req,
+        res,
+        next
+    ) => {
 
         try {
 
@@ -346,16 +419,20 @@ router.post(
 );
 
 
-// =====================================
-// GET PENDING USERS
-// GET /api/users/admin/pending
-// =====================================
+// =========================================================
+// ..M GET PENDING USERS
+// GET /user/admin/pending
+// =========================================================
 
 router.get(
     "/admin/pending",
     requireUser,
     requireAdmin,
-    async (req, res, next) => {
+    async (
+        req,
+        res,
+        next
+    ) => {
 
         try {
 
@@ -368,7 +445,8 @@ router.get(
                 })
                 .sort({
 
-                    createdAt: -1
+                    createdAt:
+                        -1
 
                 });
 
@@ -396,16 +474,20 @@ router.get(
 );
 
 
-// =====================================
-// GET ALL USERS
-// GET /api/users/admin/all
-// =====================================
+// =========================================================
+// ..M GET ALL USERS
+// GET /user/admin/all
+// =========================================================
 
 router.get(
     "/admin/all",
     requireUser,
     requireAdmin,
-    async (req, res, next) => {
+    async (
+        req,
+        res,
+        next
+    ) => {
 
         try {
 
@@ -413,7 +495,8 @@ router.get(
                 await User.find({})
                 .sort({
 
-                    createdAt: -1
+                    createdAt:
+                        -1
 
                 });
 
@@ -441,20 +524,39 @@ router.get(
 );
 
 
-// =====================================
-// GET USER BY TELEGRAM ID
-// GET /api/users/:telegramId
-// =====================================
+// =========================================================
+// ..M GET USER BY TELEGRAM ID
+// GET /user/:telegramId
+// =========================================================
+//
+// اگر کاربر وجود نداشته باشد:
+// به صورت خودکار یک حساب PENDING ساخته می‌شود.
+//
+// نکته امنیتی:
+// PENDING هیچ دسترسی معاملاتی ندارد.
+// برای معامله باید:
+//
+// approvalStatus = APPROVED
+// accessEnabled = true
+// botAccess = true
+// status = ACTIVE
+//
+// =========================================================
 
 router.get(
     "/:telegramId",
-    async (req, res, next) => {
+    async (
+        req,
+        res,
+        next
+    ) => {
 
         try {
 
-            const {
-                telegramId
-            } = req.params;
+            const telegramId =
+                String(
+                    req.params.telegramId || ""
+                ).trim();
 
 
             if (!telegramId) {
@@ -471,7 +573,11 @@ router.get(
             }
 
 
-            const user =
+            // -------------------------------------------------
+            // ..M FIND USER
+            // -------------------------------------------------
+
+            let user =
                 await User.findOne({
 
                     telegramId
@@ -479,29 +585,91 @@ router.get(
                 });
 
 
+            // -------------------------------------------------
+            // ..M CREATE USER AUTOMATICALLY
+            // -------------------------------------------------
+
             if (!user) {
 
-                return res.status(404).json({
+                user =
+                    await User.create({
 
-                    success: false,
+                        telegramId,
+
+                        username:
+                            "",
+
+                        firstName:
+                            "",
+
+                        lastName:
+                            "",
+
+                        phoneNumber:
+                            "",
+
+                        accessEnabled:
+                            false,
+
+                        approvalStatus:
+                            "PENDING",
+
+                        isAdmin:
+                            false,
+
+                        botAccess:
+                            false,
+
+                        botActive:
+                            false,
+
+                        status:
+                            "PENDING",
+
+                        lastLogin:
+                            new Date()
+
+                    });
+
+
+                return res.status(201).json({
+
+                    success: true,
+
+                    created:
+                        true,
 
                     message:
-                        "User not found"
+                        "User created and is waiting for approval.",
+
+                    user
 
                 });
 
             }
 
 
+            // -------------------------------------------------
+            // ..M UPDATE LAST LOGIN
+            // -------------------------------------------------
+
             user.lastLogin =
                 new Date();
+
 
             await user.save();
 
 
+            // -------------------------------------------------
+            // ..M RETURN USER
+            // -------------------------------------------------
+
             return res.status(200).json({
 
                 success: true,
+
+                created:
+                    false,
 
                 user
 
@@ -511,6 +679,58 @@ router.get(
 
         catch (error) {
 
+            // -------------------------------------------------
+            // ..M DUPLICATE TELEGRAM ID
+            // -------------------------------------------------
+
+            if (
+                error &&
+                error.code === 11000
+            ) {
+
+                try {
+
+                    const existingUser =
+                        await User.findOne({
+
+                            telegramId:
+                                String(
+                                    req.params.telegramId
+                                ).trim()
+
+                        });
+
+
+                    if (existingUser) {
+
+                        return res.status(200).json({
+
+                            success: true,
+
+                            created:
+                                false,
+
+                            user:
+                                existingUser
+
+                        });
+
+                    }
+
+                }
+
+                catch (findError) {
+
+                    console.error(
+                        "Duplicate User Recovery Error:",
+                        findError
+                    );
+
+                }
+
+            }
+
+
             next(error);
 
         }
@@ -518,5 +738,9 @@ router.get(
     }
 );
 
+
+// =========================================================
+// ..M EXPORT
+// =========================================================
 
 export default router;
