@@ -1,6 +1,7 @@
-// ..M Bot.js
+// ..M Bot Routes
 // AutoTrade AI
 // مسیرهای کنترل ربات
+// File: backend/routes/Bot.js
 
 import express from "express";
 import mongoose from "mongoose";
@@ -13,49 +14,120 @@ import {
 } from "../engine/tradingEngine.js";
 
 
-const router = express.Router();
+const router =
+    express.Router();
 
 
 // =========================================================
-// ..M FIND USER
-// پیدا کردن کاربر با MongoDB ID یا Telegram ID
+// ..M RESOLVE USER
+// پیدا کردن کاربر با Mongo ID یا Telegram ID
 // =========================================================
 
-async function findUser(identifier) {
+async function resolveUser(
+    identifier
+) {
 
     if (!identifier) {
         return null;
     }
 
 
-    // =====================================================
-    // ..M MONGODB OBJECT ID
-    // =====================================================
+    // -----------------------------------------------------
+    // Mongo ObjectId
+    // -----------------------------------------------------
 
     if (
-        mongoose.Types.ObjectId.isValid(identifier) &&
-        String(
-            new mongoose.Types.ObjectId(identifier)
-        ) === String(identifier)
+        mongoose.Types.ObjectId.isValid(
+            identifier
+        )
     ) {
 
-        return await User.findById(
-            identifier
-        );
+        const user =
+            await User.findById(
+                identifier
+            );
+
+        if (user) {
+            return user;
+        }
 
     }
 
 
-    // =====================================================
-    // ..M TELEGRAM ID
-    // =====================================================
+    // -----------------------------------------------------
+    // Telegram ID
+    // -----------------------------------------------------
 
-    return await User.findOne({
+    const telegramUser =
+        await User.findOne({
 
-        telegramId:
-            String(identifier)
+            telegramId:
+                String(identifier)
 
-    });
+        });
+
+
+    return telegramUser || null;
+
+}
+
+
+// =========================================================
+// ..M DEFAULT BOT
+// وضعیت پیش‌فرض ربات
+// =========================================================
+
+function defaultBot(
+    userId
+) {
+
+    return {
+
+        userId,
+
+        status:
+            "STOPPED",
+
+        enabled:
+            false,
+
+        strategy:
+            "AI Scalping",
+
+        market:
+            "crypto",
+
+        riskLevel:
+            "LOW",
+
+        riskPercent:
+            1,
+
+        maxOpenTrades:
+            1,
+
+        openTrades:
+            0,
+
+        maxConsecutiveLosses:
+            2,
+
+        consecutiveLosses:
+            0,
+
+        lastSignal:
+            "WAIT",
+
+        accuracy:
+            0,
+
+        confidence:
+            0,
+
+        stopReason:
+            ""
+
+    };
 
 }
 
@@ -67,18 +139,20 @@ async function findUser(identifier) {
 
 router.get(
     "/:userId",
-    async (req, res) => {
+    async (
+        req,
+        res
+    ) => {
 
         try {
 
-            const {
-                userId
-            } = req.params;
+            const identifier =
+                req.params.userId;
 
 
             const user =
-                await findUser(
-                    userId
+                await resolveUser(
+                    identifier
                 );
 
 
@@ -105,64 +179,16 @@ router.get(
                 });
 
 
-            // =================================================
-            // ..M BOT DOES NOT EXIST
-            // =================================================
-
             if (!bot) {
 
                 return res.status(200).json({
 
                     success: true,
 
-                    bot: {
-
-                        userId:
-                            user._id,
-
-                        status:
-                            "STOPPED",
-
-                        enabled:
-                            false,
-
-                        strategy:
-                            "AI Scalping",
-
-                        market:
-                            "crypto",
-
-                        riskLevel:
-                            "LOW",
-
-                        riskPercent:
-                            1,
-
-                        maxOpenTrades:
-                            1,
-
-                        openTrades:
-                            0,
-
-                        maxConsecutiveLosses:
-                            2,
-
-                        consecutiveLosses:
-                            0,
-
-                        lastSignal:
-                            "WAIT",
-
-                        accuracy:
-                            0,
-
-                        confidence:
-                            0,
-
-                        stopReason:
-                            ""
-
-                    }
+                    bot:
+                        defaultBot(
+                            user._id
+                        )
 
                 });
 
@@ -177,7 +203,6 @@ router.get(
 
             });
 
-
         } catch (error) {
 
             console.error(
@@ -191,7 +216,6 @@ router.get(
                 success: false,
 
                 message:
-                    error.message ||
                     "Failed to get bot status"
 
             });
@@ -209,18 +233,20 @@ router.get(
 
 router.post(
     "/start/:userId",
-    async (req, res) => {
+    async (
+        req,
+        res
+    ) => {
 
         try {
 
-            const {
-                userId
-            } = req.params;
+            const identifier =
+                req.params.userId;
 
 
             const user =
-                await findUser(
-                    userId
+                await resolveUser(
+                    identifier
                 );
 
 
@@ -238,9 +264,9 @@ router.post(
             }
 
 
-            // =================================================
-            // ..M ACCESS CHECK
-            // =================================================
+            // -------------------------------------------------
+            // ..M ACCESS CONTROL
+            // -------------------------------------------------
 
             if (
 
@@ -270,9 +296,9 @@ router.post(
             }
 
 
-            // =================================================
+            // -------------------------------------------------
             // ..M FIND BOT
-            // =================================================
+            // -------------------------------------------------
 
             let bot =
                 await Bot.findOne({
@@ -283,9 +309,9 @@ router.post(
                 });
 
 
-            // =================================================
+            // -------------------------------------------------
             // ..M CREATE BOT
-            // =================================================
+            // -------------------------------------------------
 
             if (!bot) {
 
@@ -328,12 +354,6 @@ router.post(
                         lastSignal:
                             "WAIT",
 
-                        accuracy:
-                            0,
-
-                        confidence:
-                            0,
-
                         lastRun:
                             new Date(),
 
@@ -341,6 +361,9 @@ router.post(
                             new Date(),
 
                         stopReason:
+                            "",
+
+                        lastError:
                             ""
 
                     });
@@ -348,14 +371,18 @@ router.post(
             }
 
 
-            // =================================================
-            // ..M MAX LOSS PROTECTION
-            // =================================================
+            // -------------------------------------------------
+            // ..M MAX LOSSES
+            // -------------------------------------------------
 
             if (
 
-                bot.consecutiveLosses >=
-                bot.maxConsecutiveLosses
+                Number(
+                    bot.consecutiveLosses || 0
+                ) >=
+                Number(
+                    bot.maxConsecutiveLosses || 2
+                )
 
             ) {
 
@@ -368,13 +395,11 @@ router.post(
                 bot.stopReason =
                     "Maximum consecutive losses reached";
 
-
                 await bot.save();
 
 
                 user.botActive =
                     false;
-
 
                 await user.save();
 
@@ -393,9 +418,9 @@ router.post(
             }
 
 
-            // =================================================
+            // -------------------------------------------------
             // ..M ALREADY ACTIVE
-            // =================================================
+            // -------------------------------------------------
 
             if (
 
@@ -421,9 +446,9 @@ router.post(
             }
 
 
-            // =================================================
-            // ..M ACTIVATE BOT
-            // =================================================
+            // -------------------------------------------------
+            // ..M ACTIVATE
+            // -------------------------------------------------
 
             bot.status =
                 "ACTIVE";
@@ -447,9 +472,9 @@ router.post(
             await bot.save();
 
 
-            // =================================================
+            // -------------------------------------------------
             // ..M SYNC USER
-            // =================================================
+            // -------------------------------------------------
 
             user.botActive =
                 true;
@@ -469,7 +494,6 @@ router.post(
 
             });
 
-
         } catch (error) {
 
             console.error(
@@ -483,7 +507,6 @@ router.post(
                 success: false,
 
                 message:
-                    error.message ||
                     "Failed to start bot"
 
             });
@@ -501,18 +524,20 @@ router.post(
 
 router.post(
     "/stop/:userId",
-    async (req, res) => {
+    async (
+        req,
+        res
+    ) => {
 
         try {
 
-            const {
-                userId
-            } = req.params;
+            const identifier =
+                req.params.userId;
 
 
             const user =
-                await findUser(
-                    userId
+                await resolveUser(
+                    identifier
                 );
 
 
@@ -544,7 +569,6 @@ router.post(
                 user.botActive =
                     false;
 
-
                 await user.save();
 
 
@@ -563,9 +587,9 @@ router.post(
             }
 
 
-            // =================================================
+            // -------------------------------------------------
             // ..M STOP
-            // =================================================
+            // -------------------------------------------------
 
             bot.status =
                 "STOPPED";
@@ -583,9 +607,9 @@ router.post(
             await bot.save();
 
 
-            // =================================================
+            // -------------------------------------------------
             // ..M SYNC USER
-            // =================================================
+            // -------------------------------------------------
 
             user.botActive =
                 false;
@@ -605,7 +629,6 @@ router.post(
 
             });
 
-
         } catch (error) {
 
             console.error(
@@ -619,7 +642,6 @@ router.post(
                 success: false,
 
                 message:
-                    error.message ||
                     "Failed to stop bot"
 
             });
@@ -637,18 +659,20 @@ router.post(
 
 router.post(
     "/reactivate/:userId",
-    async (req, res) => {
+    async (
+        req,
+        res
+    ) => {
 
         try {
 
-            const {
-                userId
-            } = req.params;
+            const identifier =
+                req.params.userId;
 
 
             const user =
-                await findUser(
-                    userId
+                await resolveUser(
+                    identifier
                 );
 
 
@@ -666,9 +690,9 @@ router.post(
             }
 
 
-            // =================================================
-            // ..M ACCESS CHECK
-            // =================================================
+            // -------------------------------------------------
+            // ..M ACCESS CONTROL
+            // -------------------------------------------------
 
             if (
 
@@ -698,6 +722,10 @@ router.post(
             }
 
 
+            // -------------------------------------------------
+            // ..M REACTIVATE
+            // -------------------------------------------------
+
             const bot =
                 await reactivateBot({
 
@@ -706,6 +734,10 @@ router.post(
 
                 });
 
+
+            // -------------------------------------------------
+            // ..M SYNC USER
+            // -------------------------------------------------
 
             user.botActive =
                 true;
@@ -725,7 +757,6 @@ router.post(
 
             });
 
-
         } catch (error) {
 
             console.error(
@@ -739,7 +770,6 @@ router.post(
                 success: false,
 
                 message:
-                    error.message ||
                     "Failed to reactivate bot"
 
             });
