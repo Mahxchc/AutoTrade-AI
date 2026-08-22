@@ -10,6 +10,23 @@ import {
 
 
 // =====================================
+// Get Telegram Init Data
+// =====================================
+
+function getTelegramInitData(req) {
+
+    return (
+        req.headers["x-telegram-init-data"] ||
+        req.headers["x-telegram-initdata"] ||
+        req.body?.initData ||
+        req.query?.initData ||
+        null
+    );
+
+}
+
+
+// =====================================
 // Require Telegram User
 // =====================================
 
@@ -22,10 +39,7 @@ export function requireTelegramUser(
     try {
 
         const initData =
-            req.headers["x-telegram-init-data"] ||
-            req.headers["x-telegram-initdata"] ||
-            req.body?.initData ||
-            req.query?.initData;
+            getTelegramInitData(req);
 
 
         if (!initData) {
@@ -45,10 +59,12 @@ export function requireTelegramUser(
 
 
         const result =
-            validateTelegramInitData(initData);
+            validateTelegramInitData(
+                initData
+            );
 
 
-        if (!result.valid) {
+        if (!result || !result.valid) {
 
             return res.status(401).json({
 
@@ -57,7 +73,7 @@ export function requireTelegramUser(
                 authenticated: false,
 
                 message:
-                    result.message ||
+                    result?.message ||
                     "Invalid Telegram authentication"
 
             });
@@ -84,6 +100,10 @@ export function requireTelegramUser(
         }
 
 
+        // =================================
+        // Attach Telegram User
+        // =================================
+
         req.telegramUser =
             result.user;
 
@@ -92,14 +112,18 @@ export function requireTelegramUser(
             String(result.user.id);
 
 
-        next();
+        // =================================
+        // Continue
+        // =================================
+
+        return next();
 
     }
 
     catch (error) {
 
         console.error(
-            "[TELEGRAM AUTH MIDDLEWARE ERROR]",
+            "[TELEGRAM AUTH ERROR]",
             error
         );
 
@@ -121,10 +145,21 @@ export function requireTelegramUser(
 
 
 // =====================================
-// Optional Telegram User
+// Required Telegram User
+// =====================================
+//
+// Compatibility alias
 // =====================================
 
-export function optionalTelegramUser(
+export const requiredTelegramUser =
+    requireTelegramUser;
+
+
+// =====================================
+// Require Admin
+// =====================================
+
+export function requireAdmin(
     req,
     res,
     next
@@ -132,74 +167,17 @@ export function optionalTelegramUser(
 
     try {
 
-        const initData =
-            req.headers["x-telegram-init-data"] ||
-            req.headers["x-telegram-initdata"] ||
-            req.body?.initData ||
-            req.query?.initData;
-
-
-        if (!initData) {
-
-            return next();
-
-        }
-
-
-        const result =
-            validateTelegramInitData(initData);
-
-
-        if (
-            result.valid &&
-            result.user &&
-            result.user.id
-        ) {
-
-            req.telegramUser =
-                result.user;
-
-            req.telegramId =
-                String(result.user.id);
-
-        }
-
-
-        next();
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "[OPTIONAL TELEGRAM AUTH ERROR]",
-            error
-        );
-
-        next();
-
-    }
-
-}
-
-
-// =====================================
-// Required Admin
-// =====================================
-
-export function requiredAdmin(
-    req,
-    res,
-    next
-) {
-
-    try {
+        // ---------------------------------
+        // Telegram authentication required
+        // ---------------------------------
 
         if (!req.telegramUser) {
 
             return res.status(401).json({
 
                 success: false,
+
+                authenticated: false,
 
                 message:
                     "Telegram authentication required"
@@ -209,11 +187,20 @@ export function requiredAdmin(
         }
 
 
+        // ---------------------------------
+        // Admin Telegram ID
+        // ---------------------------------
+
         const adminTelegramId =
             process.env.ADMIN_TELEGRAM_ID;
 
 
         if (!adminTelegramId) {
+
+            console.error(
+                "[ADMIN AUTH] ADMIN_TELEGRAM_ID is missing"
+            );
+
 
             return res.status(500).json({
 
@@ -227,6 +214,10 @@ export function requiredAdmin(
         }
 
 
+        // ---------------------------------
+        // Compare Telegram IDs
+        // ---------------------------------
+
         if (
             String(req.telegramUser.id) !==
             String(adminTelegramId)
@@ -236,6 +227,8 @@ export function requiredAdmin(
 
                 success: false,
 
+                authenticated: true,
+
                 message:
                     "Admin access required"
 
@@ -244,7 +237,14 @@ export function requiredAdmin(
         }
 
 
-        next();
+        // ---------------------------------
+        // Admin confirmed
+        // ---------------------------------
+
+        req.isAdmin = true;
+
+
+        return next();
 
     }
 
@@ -271,13 +271,104 @@ export function requiredAdmin(
 
 
 // =====================================
-// Compatibility Alias
+// Required Admin
 // =====================================
 //
-// Supports files that use:
-// requiredTelegramUser
-//
+// Compatibility alias
 // =====================================
 
-export const requiredTelegramUser =
-    requireTelegramUser;
+export const requiredAdmin =
+    requireAdmin;
+
+
+// =====================================
+// Optional Telegram User
+// =====================================
+
+export function optionalTelegramUser(
+    req,
+    res,
+    next
+) {
+
+    try {
+
+        const initData =
+            getTelegramInitData(req);
+
+
+        // ---------------------------------
+        // No authentication data
+        // ---------------------------------
+
+        if (!initData) {
+
+            return next();
+
+        }
+
+
+        // ---------------------------------
+        // Validate Telegram data
+        // ---------------------------------
+
+        const result =
+            validateTelegramInitData(
+                initData
+            );
+
+
+        // ---------------------------------
+        // Valid Telegram user
+        // ---------------------------------
+
+        if (
+            result &&
+            result.valid &&
+            result.user &&
+            result.user.id
+        ) {
+
+            req.telegramUser =
+                result.user;
+
+
+            req.telegramId =
+                String(result.user.id);
+
+        }
+
+
+        return next();
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "[OPTIONAL TELEGRAM AUTH ERROR]",
+            error
+        );
+
+
+        // Optional authentication
+        // must not block the request
+
+        return next();
+
+    }
+
+}
+
+
+// =====================================
+// Default Export
+// =====================================
+
+export default {
+    requireTelegramUser,
+    requiredTelegramUser,
+    requireAdmin,
+    requiredAdmin,
+    optionalTelegramUser
+};
