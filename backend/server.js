@@ -1,6 +1,9 @@
-// ..M server.js
-// AutoTrade AI Backend
-// Main Server
+// =====================================
+// Server:: M
+// AutoTrade AI
+// Main Backend Server
+// File: backend/server.js
+// =====================================
 
 import express from "express";
 import cors from "cors";
@@ -8,28 +11,45 @@ import dotenv from "dotenv";
 
 import connectDatabase from "./database.js";
 
-import userRoutes from "./routes/User.js";
-import walletRoutes from "./routes/Wallet.js";
-import tradeRoutes from "./routes/Trade.js";
-import botRoutes from "./routes/Bot.js";
-import currencyRoutes from "./routes/Currency.js";
-import depositRoutes from "./routes/Deposit.js";
-import paymentRoutes from "./routes/Payment.js";
-import withdrawRoutes from "./routes/withdraw.js";
+import userRoutes from "./routes/user.js";
+import walletRoutes from "./routes/wallet.js";
+import tradeRoutes from "./routes/trade.js";
+import botRoutes from "./routes/bot.js";
+
+
+// =====================================
+// Load Environment Variables
+// =====================================
 
 dotenv.config();
 
+
+// =====================================
+// Create Express Application
+// =====================================
+
 const app = express();
 
-const PORT = process.env.PORT || 3000;
 
-// =========================================================
-// ..M CORS
-// =========================================================
+// =====================================
+// Configuration
+// =====================================
+
+const PORT =
+    process.env.PORT || 3000;
+
+const NODE_ENV =
+    process.env.NODE_ENV || "production";
+
+
+// =====================================
+// CORS
+// =====================================
 
 app.use(
     cors({
-        origin: "*",
+        origin: true,
+        credentials: true,
         methods: [
             "GET",
             "POST",
@@ -41,235 +61,275 @@ app.use(
         allowedHeaders: [
             "Content-Type",
             "Authorization",
-            "X-Telegram-Init-Data"
+            "X-Telegram-Init-Data",
+            "X-User-Id"
         ]
     })
 );
 
-// =========================================================
-// ..M BODY PARSER
-// =========================================================
 
-app.use(express.json());
+// =====================================
+// Body Parsers
+// =====================================
+
 app.use(
-    express.urlencoded({
-        extended: true
+    express.json({
+        limit: "1mb"
     })
 );
 
-// =========================================================
-// ..M REQUEST LOGGER
-// =========================================================
-
-app.use((req, res, next) => {
-
-    console.log(
-        `[API] ${req.method} ${req.originalUrl}`
-    );
-
-    next();
-
-});
-
-// =========================================================
-// ..M HEALTH
-// =========================================================
-
-app.get("/", (req, res) => {
-
-    res.status(200).json({
-
-        success: true,
-
-        status: "online",
-
-        message:
-            "AutoTrade AI Backend Running 🚀",
-
-        version: "1.0.0",
-
-        timestamp:
-            new Date().toISOString()
-
-    });
-
-});
-
-
-app.get("/health", (req, res) => {
-
-    res.status(200).json({
-
-        success: true,
-
-        status: "healthy",
-
-        database:
-            "connected",
-
-        timestamp:
-            new Date().toISOString()
-
-    });
-
-});
-
-// =========================================================
-// ..M USER
-// =========================================================
-
 app.use(
-    "/user",
-    userRoutes
+    express.urlencoded({
+        extended: true,
+        limit: "1mb"
+    })
 );
 
-// =========================================================
-// ..M WALLET
-// =========================================================
+
+// =====================================
+// Basic Security Headers
+// =====================================
+
+app.disable("x-powered-by");
+
+
+// =====================================
+// Request Logger
+// =====================================
 
 app.use(
-    "/wallet",
-    walletRoutes
-);
+    (req, res, next) => {
 
-// =========================================================
-// ..M TRADES
-// =========================================================
+        const startedAt =
+            Date.now();
 
-// مسیر اصلی
-app.use(
-    "/trade",
-    tradeRoutes
-);
+        res.on(
+            "finish",
+            () => {
 
-// مسیر سازگار با Mini App
-app.use(
-    "/trades",
-    tradeRoutes
-);
+                const duration =
+                    Date.now() -
+                    startedAt;
 
-// =========================================================
-// ..M BOT
-// =========================================================
+                console.log(
+                    `[API] ${req.method} ${req.originalUrl} - ${res.statusCode} - ${duration}ms`
+                );
 
-app.use(
-    "/bot",
-    botRoutes
-);
-
-// =========================================================
-// ..M CURRENCY
-// =========================================================
-
-app.use(
-    "/currency",
-    currencyRoutes
-);
-
-// مسیر سازگار با Mini App
-app.use(
-    "/exchange-rate",
-    currencyRoutes
-);
-
-// =========================================================
-// ..M DEPOSIT
-// =========================================================
-
-app.use(
-    "/deposit",
-    depositRoutes
-);
-
-// =========================================================
-// ..M PAYMENT
-// =========================================================
-
-app.use(
-    "/payment",
-    paymentRoutes
-);
-
-// =========================================================
-// ..M WITHDRAW
-// =========================================================
-
-app.use(
-    "/withdraw",
-    withdrawRoutes
-);
-
-// سازگاری با Frontend
-app.use(
-    "/wallet/withdraw",
-    withdrawRoutes
-);
-
-// =========================================================
-// ..M 404
-// =========================================================
-
-app.use((req, res) => {
-
-    console.warn(
-        `[404] ${req.method} ${req.originalUrl}`
-    );
-
-    res.status(404).json({
-
-        success: false,
-
-        message:
-            "API route not found",
-
-        path:
-            req.originalUrl
-
-    });
-
-});
-
-// =========================================================
-// ..M ERROR HANDLER
-// =========================================================
-
-app.use(
-    (
-        err,
-        req,
-        res,
-        next
-    ) => {
-
-        console.error(
-            "❌ Server Error:",
-            err
+            }
         );
 
-        res.status(
-            err.status || 500
-        ).json({
+        next();
 
-            success: false,
+    }
+);
+
+
+// =====================================
+// Root Route
+// =====================================
+
+app.get(
+    "/",
+    (req, res) => {
+
+        return res.json({
+
+            success: true,
+
+            service:
+                "AutoTrade AI Backend",
+
+            status:
+                "online",
+
+            environment:
+                NODE_ENV,
 
             message:
-                err.message ||
-                "Internal server error"
+                "AutoTrade AI Backend Running 🚀"
 
         });
 
     }
 );
 
-// =========================================================
-// ..M START SERVER
-// =========================================================
 
-const startServer = async () => {
+// =====================================
+// Health Check
+// =====================================
+
+app.get(
+    "/health",
+    async (req, res) => {
+
+        try {
+
+            return res.json({
+
+                success: true,
+
+                status:
+                    "healthy",
+
+                database:
+                    "connected",
+
+                environment:
+                    NODE_ENV,
+
+                timestamp:
+                    new Date().toISOString()
+
+            });
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "[HEALTH ERROR]",
+                error
+            );
+
+            return res.status(503).json({
+
+                success: false,
+
+                status:
+                    "unhealthy",
+
+                database:
+                    "unknown",
+
+                timestamp:
+                    new Date().toISOString()
+
+            });
+
+        }
+
+    }
+);
+
+
+// =====================================
+// API Routes
+// =====================================
+
+// Users
+app.use(
+    "/api/users",
+    userRoutes
+);
+
+
+// Wallet
+app.use(
+    "/api/wallet",
+    walletRoutes
+);
+
+
+// Trades
+app.use(
+    "/api/trades",
+    tradeRoutes
+);
+
+
+// AI Trading Bot
+app.use(
+    "/api/bot",
+    botRoutes
+);
+
+
+// =====================================
+// 404 Handler
+// =====================================
+
+app.use(
+    (req, res) => {
+
+        return res.status(404).json({
+
+            success: false,
+
+            message:
+                "API route not found",
+
+            path:
+                req.originalUrl
+
+        });
+
+    }
+);
+
+
+// =====================================
+// Global Error Handler
+// =====================================
+
+app.use(
+    (
+        error,
+        req,
+        res,
+        next
+    ) => {
+
+        console.error(
+            "[SERVER ERROR]",
+            error
+        );
+
+        if (
+            res.headersSent
+        ) {
+
+            return next(error);
+
+        }
+
+        return res.status(500).json({
+
+            success: false,
+
+            message:
+                "Internal server error",
+
+            ...(NODE_ENV !== "production"
+                ? {
+                    error:
+                        error.message
+                }
+                : {})
+
+        });
+
+    }
+);
+
+
+// =====================================
+// Start Server
+// =====================================
+
+async function startServer() {
 
     try {
 
+        // ---------------------------------
+        // Connect MongoDB
+        // ---------------------------------
+
         await connectDatabase();
+
+
+        // ---------------------------------
+        // Start HTTP Server
+        // ---------------------------------
 
         app.listen(
             PORT,
@@ -277,7 +337,7 @@ const startServer = async () => {
             () => {
 
                 console.log(
-                    "========================================"
+                    "===================================="
                 );
 
                 console.log(
@@ -289,10 +349,7 @@ const startServer = async () => {
                 );
 
                 console.log(
-                    `📡 Environment: ${
-                        process.env.NODE_ENV ||
-                        "production"
-                    }`
+                    `⚙️ Environment: ${NODE_ENV}`
                 );
 
                 console.log(
@@ -300,16 +357,18 @@ const startServer = async () => {
                 );
 
                 console.log(
-                    "========================================"
+                    "===================================="
                 );
 
             }
         );
 
-    } catch (error) {
+    }
+
+    catch (error) {
 
         console.error(
-            "❌ Failed to start server:"
+            "❌ Failed to start AutoTrade AI Backend"
         );
 
         console.error(
@@ -320,6 +379,11 @@ const startServer = async () => {
 
     }
 
-};
+}
+
+
+// =====================================
+// Start Application
+// =====================================
 
 startServer();
