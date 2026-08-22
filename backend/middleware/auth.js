@@ -1,97 +1,375 @@
 // =====================================
-// ..M Auth Middleware
+// Auth Middleware :: M
 // AutoTrade AI
-// Authentication & Access Control
+// Secure Telegram WebApp Authentication
 // File: backend/middleware/auth.js
 // =====================================
 
-import mongoose from "mongoose";
+import crypto from "crypto";
 import User from "../models/User.js";
 
 
 // =====================================
-// ..M Require User Authentication
-// احراز هویت کاربر
+// Telegram InitData Validation :: M
 // =====================================
 
-export async function requireUser(req, res, next) {
+function validateTelegramInitData(initData) {
+
+    const botToken =
+        process.env.TELEGRAM_BOT_TOKEN;
+
+
+    if (!botToken) {
+
+        throw new Error(
+            "TELEGRAM_BOT_TOKEN is not configured"
+        );
+
+    }
+
+
+    if (!initData) {
+
+        return {
+            valid: false,
+            reason: "Telegram initData is missing"
+        };
+
+    }
+
 
     try {
 
-        const userId =
-            req.headers["x-user-id"];
+        const params =
+            new URLSearchParams(initData);
 
 
-        // =====================================
-        // ..M بررسی وجود User ID
-        // =====================================
+        const receivedHash =
+            params.get("hash");
 
-        if (!userId) {
 
-            return res.status(401).json({
+        if (!receivedHash) {
 
-                success: false,
-
-                message:
-                    "Authentication required"
-
-            });
+            return {
+                valid: false,
+                reason: "Telegram hash is missing"
+            };
 
         }
 
 
-        // =====================================
-        // ..M بررسی معتبر بودن MongoDB ID
-        // =====================================
+        params.delete("hash");
 
-        if (
-            !mongoose.Types.ObjectId.isValid(
-                userId
-            )
-        ) {
 
-            return res.status(401).json({
-
-                success: false,
-
-                message:
-                    "Invalid user ID"
-
-            });
-
-        }
+        const dataCheckString =
+            [...params.entries()]
+                .sort(
+                    ([a], [b]) =>
+                        a.localeCompare(b)
+                )
+                .map(
+                    ([key, value]) =>
+                        `${key}=${value}`
+                )
+                .join("\n");
 
 
         // =====================================
-        // ..M پیدا کردن کاربر
+        // Telegram Secret Key
         // =====================================
 
-        const user =
-            await User.findById(
-                userId
+        const secretKey =
+            crypto
+                .createHmac(
+                    "sha256",
+                    "WebAppData"
+                )
+                .update(botToken)
+                .digest();
+
+
+        // =====================================
+        // Telegram Data Hash
+        // =====================================
+
+        const calculatedHash =
+            crypto
+                .createHmac(
+                    "sha256",
+                    secretKey
+                )
+                .update(dataCheckString)
+                .digest("hex");
+
+
+        const receivedBuffer =
+            Buffer.from(
+                receivedHash,
+                "hex"
             );
 
 
+        const calculatedBuffer =
+            Buffer.from(
+                calculatedHash,
+                "hex"
+            );
+
+
+        if (
+            receivedBuffer.length !==
+            calculatedBuffer.length
+        ) {
+
+            return {
+                valid: false,
+                reason: "Invalid Telegram hash"
+            };
+
+        }
+
+
+        const isValid =
+            crypto.timingSafeEqual(
+                receivedBuffer,
+                calculatedBuffer
+            );
+
+
+        if (!isValid) {
+
+            return {
+                valid: false,
+                reason: "Invalid Telegram signature"
+            };
+
+        }
+
+
         // =====================================
-        // ..M کاربر پیدا نشد
+        // Extract Telegram User
+        // =====================================
+
+        const userRaw =
+            params.get("user");
+
+
+        if (!userRaw) {
+
+            return {
+                valid: false,
+                reason: "Telegram user data missing"
+            };
+
+        }
+
+
+        let telegramUser;
+
+
+        try {
+
+            telegramUser =
+                JSON.parse(userRaw);
+
+        }
+
+        catch {
+
+            return {
+                valid: false,
+                reason: "Invalid Telegram user data"
+            };
+
+        }
+
+
+        if (!telegramUser?.id) {
+
+            return {
+                valid: false,
+                reason: "Telegram user ID missing"
+            };
+
+        }
+
+
+        return {
+
+            valid: true,
+
+            telegramUser,
+
+            authDate:
+                Number(
+                    params.get("auth_date") || 0
+                )
+
+        };
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "[Telegram Auth Error]",
+            error
+        );
+
+
+        return {
+
+            valid: false,
+
+            reason:
+                "Telegram authentication failed"
+
+        };
+
+    }
+
+}
+
+
+// =====================================
+// Telegram Authentication Middleware
+// =====================================
+
+export async function requireTelegramUser(
+    req,
+    res,
+    next
+) {
+
+    try {
+
+        const initData =
+            req.headers[
+                "x-telegram-init-data"
+            ];
+
+
+        if (!initData) {
+
+            return res.status(401).json({
+
+                success: false,
+
+                message:
+                    "Telegram authentication required"
+
+            });
+
+        }
+
+
+        const validation =
+            validateTelegramInitData(
+                initData
+            );
+
+
+        if (!validation.valid) {
+
+            return res.status(401).json({
+
+                success: false,
+
+                message:
+                    validation.reason
+
+            });
+
+        }
+
+
+        const telegramUser =
+            validation.telegramUser;
+
+
+        // =====================================
+        // Find User
+        // =====================================
+
+        let user =
+            await User.findOne({
+
+                telegramId:
+                    String(telegramUser.id)
+
+            });
+
+
+        // =====================================
+        // Create User Automatically
         // =====================================
 
         if (!user) {
 
-            return res.status(401).json({
+            user =
+                await User.create({
 
-                success: false,
+                    telegramId:
+                        String(telegramUser.id),
 
-                message:
-                    "User not found"
+                    username:
+                        telegramUser.username || "",
 
-            });
+                    firstName:
+                        telegramUser.first_name || "",
+
+                    lastName:
+                        telegramUser.last_name || "",
+
+                    accessEnabled:
+                        false,
+
+                    isAdmin:
+                        false,
+
+                    botAccess:
+                        false,
+
+                    botActive:
+                        false,
+
+                    status:
+                        "PENDING"
+
+                });
+
+        }
+
+        else {
+
+            // =====================================
+            // Update Telegram Profile
+            // =====================================
+
+            user.username =
+                telegramUser.username || "";
+
+            user.firstName =
+                telegramUser.first_name || "";
+
+            if (
+                telegramUser.last_name !==
+                undefined
+            ) {
+
+                user.lastName =
+                    telegramUser.last_name || "";
+
+            }
+
+
+            await user.save();
 
         }
 
 
         // =====================================
-        // ..M بررسی وضعیت Block
+        // Blocked User
         // =====================================
 
         if (
@@ -112,11 +390,23 @@ export async function requireUser(req, res, next) {
 
 
         // =====================================
-        // ..M ذخیره کاربر داخل Request
+        // Attach Authenticated User
         // =====================================
 
         req.user =
             user;
+
+
+        req.telegramUser =
+            telegramUser;
+
+
+        req.telegramAuth = {
+
+            authDate:
+                validation.authDate
+
+        };
 
 
         next();
@@ -126,9 +416,10 @@ export async function requireUser(req, res, next) {
     catch (error) {
 
         console.error(
-            "Require User Error:",
+            "[Auth Middleware Error]",
             error
         );
+
 
         next(error);
 
@@ -138,8 +429,7 @@ export async function requireUser(req, res, next) {
 
 
 // =====================================
-// ..M Require Approved User
-// کاربر باید تأیید شده باشد
+// Require Approved User
 // =====================================
 
 export function requireApprovedUser(
@@ -148,10 +438,6 @@ export function requireApprovedUser(
     next
 ) {
 
-    // =====================================
-    // ..M بررسی Authentication
-    // =====================================
-
     if (!req.user) {
 
         return res.status(401).json({
@@ -166,32 +452,8 @@ export function requireApprovedUser(
     }
 
 
-    // =====================================
-    // ..M بررسی وضعیت حساب
-    // =====================================
-
     if (
-        req.user.status !==
-        "ACTIVE"
-    ) {
-
-        return res.status(403).json({
-
-            success: false,
-
-            message:
-                "User account is not active"
-
-        });
-
-    }
-
-
-    // =====================================
-    // ..M بررسی Approval
-    // =====================================
-
-    if (
+        req.user.approvalStatus &&
         req.user.approvalStatus !==
         "APPROVED"
     ) {
@@ -207,10 +469,6 @@ export function requireApprovedUser(
 
     }
 
-
-    // =====================================
-    // ..M بررسی دسترسی
-    // =====================================
 
     if (
         req.user.accessEnabled !==
@@ -235,126 +493,7 @@ export function requireApprovedUser(
 
 
 // =====================================
-// ..M Require Bot Access
-// اجازه استفاده از ربات
-// =====================================
-
-export function requireBotAccess(
-    req,
-    res,
-    next
-) {
-
-    // =====================================
-    // ..M Authentication
-    // =====================================
-
-    if (!req.user) {
-
-        return res.status(401).json({
-
-            success: false,
-
-            message:
-                "Authentication required"
-
-        });
-
-    }
-
-
-    // =====================================
-    // ..M Approval
-    // =====================================
-
-    if (
-        req.user.approvalStatus !==
-        "APPROVED"
-    ) {
-
-        return res.status(403).json({
-
-            success: false,
-
-            message:
-                "User approval is required"
-
-        });
-
-    }
-
-
-    // =====================================
-    // ..M Access Enabled
-    // =====================================
-
-    if (
-        req.user.accessEnabled !==
-        true
-    ) {
-
-        return res.status(403).json({
-
-            success: false,
-
-            message:
-                "User access is disabled"
-
-        });
-
-    }
-
-
-    // =====================================
-    // ..M Bot Access
-    // =====================================
-
-    if (
-        req.user.botAccess !==
-        true
-    ) {
-
-        return res.status(403).json({
-
-            success: false,
-
-            message:
-                "Trading bot access is disabled"
-
-        });
-
-    }
-
-
-    // =====================================
-    // ..M Active Account
-    // =====================================
-
-    if (
-        req.user.status !==
-        "ACTIVE"
-    ) {
-
-        return res.status(403).json({
-
-            success: false,
-
-            message:
-                "User account is not active"
-
-        });
-
-    }
-
-
-    next();
-
-}
-
-
-// =====================================
-// ..M Require Admin
-// دسترسی مدیر
+// Require Admin
 // =====================================
 
 export function requireAdmin(
@@ -363,10 +502,6 @@ export function requireAdmin(
     next
 ) {
 
-    // =====================================
-    // ..M Authentication
-    // =====================================
-
     if (!req.user) {
 
         return res.status(401).json({
@@ -380,10 +515,6 @@ export function requireAdmin(
 
     }
 
-
-    // =====================================
-    // ..M بررسی Admin
-    // =====================================
 
     if (
         req.user.isAdmin !==
@@ -402,44 +533,6 @@ export function requireAdmin(
     }
 
 
-    // =====================================
-    // ..M Admin باید Active باشد
-    // =====================================
-
-    if (
-        req.user.status ===
-        "BLOCKED"
-    ) {
-
-        return res.status(403).json({
-
-            success: false,
-
-            message:
-                "Admin account is blocked"
-
-        });
-
-    }
-
-
     next();
 
 }
-
-
-// =====================================
-// ..M Export
-// =====================================
-
-export default {
-
-    requireUser,
-
-    requireApprovedUser,
-
-    requireBotAccess,
-
-    requireAdmin
-
-};
