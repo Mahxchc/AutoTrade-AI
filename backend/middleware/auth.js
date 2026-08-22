@@ -1,12 +1,8 @@
 // =====================================
-// Auth Middleware:: M
+// Authentication Middleware :: M
 // AutoTrade AI
-// Telegram WebApp Authentication
-// Authentication & Access Control
 // File: backend/middleware/auth.js
 // =====================================
-
-import User from "../models/User.js";
 
 import {
     validateTelegramInitData
@@ -14,10 +10,10 @@ import {
 
 
 // =====================================
-// Require Telegram User Authentication
+// Required Telegram User
 // =====================================
 
-export async function requireUser(
+export function requiredTelegramUser(
     req,
     res,
     next
@@ -25,15 +21,20 @@ export async function requireUser(
 
     try {
 
+        // ---------------------------------
+        // Get Telegram initData
+        // ---------------------------------
+
         const initData =
-            req.headers[
-                "x-telegram-init-data"
-            ];
+            req.headers["x-telegram-init-data"] ||
+            req.headers["x-telegram-initdata"] ||
+            req.body?.initData ||
+            req.query?.initData;
 
 
-        // =====================================
-        // Telegram initData Required
-        // =====================================
+        // ---------------------------------
+        // Missing initData
+        // ---------------------------------
 
         if (!initData) {
 
@@ -49,173 +50,44 @@ export async function requireUser(
         }
 
 
-        // =====================================
-        // Validate Telegram Signature
-        // =====================================
+        // ---------------------------------
+        // Validate Telegram signature
+        // ---------------------------------
 
-        const telegramResult =
-            validateTelegramInitData(
-                initData
-            );
+        const result =
+            validateTelegramInitData(initData);
 
 
-        if (
-            !telegramResult.valid
-        ) {
+        if (!result.valid) {
 
             return res.status(401).json({
 
                 success: false,
 
                 message:
-                    telegramResult.message
+                    result.message ||
+                    "Invalid Telegram authentication"
 
             });
 
         }
 
 
-        // =====================================
-        // Telegram User
-        // =====================================
-
-        const telegramUser =
-            telegramResult.user;
-
-
-        const telegramId =
-            String(
-                telegramUser.id
-            );
-
-
-        // =====================================
-        // Find Existing User
-        // =====================================
-
-        let user =
-            await User.findOne({
-
-                telegramId
-
-            });
-
-
-        // =====================================
-        // Create New User
-        // =====================================
-
-        if (!user) {
-
-            user =
-                await User.create({
-
-                    telegramId,
-
-                    username:
-                        telegramUser.username ||
-                        "",
-
-                    firstName:
-                        telegramUser.first_name ||
-                        "",
-
-                    lastName:
-                        telegramUser.last_name ||
-                        "",
-
-                    accessEnabled:
-                        false,
-
-                    approvalStatus:
-                        "PENDING",
-
-                    isAdmin:
-                        false,
-
-                    botAccess:
-                        false,
-
-                    botActive:
-                        false,
-
-                    status:
-                        "PENDING",
-
-                    lastLogin:
-                        new Date()
-
-                });
-
-        }
-
-        else {
-
-            // =====================================
-            // Update Telegram Profile Information
-            // =====================================
-
-            user.username =
-                telegramUser.username ||
-                "";
-
-            user.firstName =
-                telegramUser.first_name ||
-                "";
-
-            user.lastName =
-                telegramUser.last_name ||
-                "";
-
-            user.lastLogin =
-                new Date();
-
-
-            await user.save();
-
-        }
-
-
-        // =====================================
-        // Blocked User
-        // =====================================
-
-        if (
-            user.status ===
-            "BLOCKED"
-        ) {
-
-            return res.status(403).json({
-
-                success: false,
-
-                message:
-                    "User account is blocked"
-
-            });
-
-        }
-
-
-        // =====================================
-        // Attach Authenticated User
-        // =====================================
-
-        req.user =
-            user;
-
+        // ---------------------------------
+        // Attach Telegram user
+        // ---------------------------------
 
         req.telegramUser =
-            telegramUser;
+            result.user;
 
 
         req.telegramId =
-            telegramId;
+            String(result.user.id);
 
 
-        // =====================================
+        // ---------------------------------
         // Continue
-        // =====================================
+        // ---------------------------------
 
         next();
 
@@ -224,12 +96,19 @@ export async function requireUser(
     catch (error) {
 
         console.error(
-            "Auth middleware error:",
+            "Telegram middleware error:",
             error
         );
 
 
-        next(error);
+        return res.status(401).json({
+
+            success: false,
+
+            message:
+                "Telegram authentication failed"
+
+        });
 
     }
 
@@ -237,157 +116,111 @@ export async function requireUser(
 
 
 // =====================================
-// Require Approved User
+// Optional Telegram User
 // =====================================
 
-export function requireApprovedUser(
+export function optionalTelegramUser(
     req,
     res,
     next
 ) {
 
-    // =====================================
-    // Authentication Check
-    // =====================================
+    try {
 
-    if (!req.user) {
-
-        return res.status(401).json({
-
-            success: false,
-
-            message:
-                "Authentication required"
-
-        });
-
-    }
+        const initData =
+            req.headers["x-telegram-init-data"] ||
+            req.headers["x-telegram-initdata"] ||
+            req.body?.initData ||
+            req.query?.initData;
 
 
-    // =====================================
-    // Account Status Check
-    // =====================================
+        if (!initData) {
 
-    if (
-        req.user.status ===
-        "BLOCKED"
-    ) {
+            return next();
 
-        return res.status(403).json({
+        }
 
-            success: false,
 
-            message:
-                "User account is blocked"
+        const result =
+            validateTelegramInitData(initData);
 
-        });
+
+        if (result.valid) {
+
+            req.telegramUser =
+                result.user;
+
+
+            req.telegramId =
+                String(result.user.id);
+
+        }
+
+
+        next();
 
     }
 
+    catch (error) {
 
-    // =====================================
-    // Approval Check
-    // =====================================
+        console.error(
+            "Optional Telegram authentication error:",
+            error
+        );
 
-    if (
-        req.user.approvalStatus !==
-        "APPROVED"
-    ) {
-
-        return res.status(403).json({
-
-            success: false,
-
-            message:
-                "User approval is required"
-
-        });
+        next();
 
     }
-
-
-    // =====================================
-    // Access Check
-    // =====================================
-
-    if (
-        req.user.accessEnabled !==
-        true
-    ) {
-
-        return res.status(403).json({
-
-            success: false,
-
-            message:
-                "User access is disabled"
-
-        });
-
-    }
-
-
-    // =====================================
-    // Account Must Be Active
-    // =====================================
-
-    if (
-        req.user.status !==
-        "ACTIVE"
-    ) {
-
-        return res.status(403).json({
-
-            success: false,
-
-            message:
-                "User account is not active"
-
-        });
-
-    }
-
-
-    next();
 
 }
 
 
 // =====================================
-// Require Admin
+// Admin Authentication
 // =====================================
 
-export function requireAdmin(
+export function requiredAdmin(
     req,
     res,
     next
 ) {
 
-    // =====================================
-    // Authentication Check
-    // =====================================
-
-    if (!req.user) {
+    if (!req.telegramUser) {
 
         return res.status(401).json({
 
             success: false,
 
             message:
-                "Authentication required"
+                "Telegram authentication required"
 
         });
 
     }
 
 
-    // =====================================
-    // Admin Permission
-    // =====================================
+    // Admin ID must be configured
+    const adminTelegramId =
+        process.env.ADMIN_TELEGRAM_ID;
+
+
+    if (!adminTelegramId) {
+
+        return res.status(500).json({
+
+            success: false,
+
+            message:
+                "ADMIN_TELEGRAM_ID is not configured"
+
+        });
+
+    }
+
 
     if (
-        req.user.isAdmin !==
-        true
+        String(req.telegramUser.id) !==
+        String(adminTelegramId)
     ) {
 
         return res.status(403).json({
@@ -395,7 +228,7 @@ export function requireAdmin(
             success: false,
 
             message:
-                "Admin permission required"
+                "Admin access required"
 
         });
 
