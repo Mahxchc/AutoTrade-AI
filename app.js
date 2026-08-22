@@ -1,11 +1,21 @@
 // =====================================
 // Telegram Authentication :: M
 // AutoTrade AI
+// File: MiniApp/app.js
+// =====================================
+
+
+// =====================================
+// Telegram WebApp
 // =====================================
 
 const tg =
     window.Telegram?.WebApp;
 
+
+// =====================================
+// Check Telegram
+// =====================================
 
 if (!tg) {
 
@@ -26,7 +36,13 @@ tg?.expand();
 
 
 // =====================================
-// Get Secure Telegram InitData
+// Secure Telegram InitData
+// =====================================
+//
+// IMPORTANT:
+// initData is the signed Telegram data.
+// Do NOT use initDataUnsafe for authentication.
+//
 // =====================================
 
 const telegramInitData =
@@ -42,7 +58,7 @@ const BACKEND_URL =
 
 
 // =====================================
-// Authenticated API Request
+// API Fetch
 // =====================================
 
 async function apiFetch(
@@ -76,16 +92,30 @@ async function apiFetch(
         );
 
 
-    const data =
-        await response.json();
+    let data;
+
+    try {
+
+        data =
+            await response.json();
+
+    }
+
+    catch (error) {
+
+        throw new Error(
+            "Backend returned an invalid response."
+        );
+
+    }
 
 
     if (!response.ok) {
 
         throw new Error(
 
-            data.message ||
-            "API request failed"
+            data?.message ||
+            `API request failed (${response.status})`
 
         );
 
@@ -98,10 +128,14 @@ async function apiFetch(
 
 
 // =====================================
-// Authenticate With Backend
+// Telegram Authentication
 // =====================================
 
 async function authenticateTelegram() {
+
+    // ---------------------------------
+    // Check Telegram InitData
+    // ---------------------------------
 
     if (!telegramInitData) {
 
@@ -115,13 +149,34 @@ async function authenticateTelegram() {
     }
 
 
+    // ---------------------------------
+    // Authenticate with Backend
+    // ---------------------------------
+
     const result =
         await apiFetch(
-            "/auth/telegram",
+            "/api/auth/telegram",
             {
                 method: "POST"
             }
         );
+
+
+    if (
+        !result ||
+        !result.success ||
+        !result.authenticated ||
+        !result.user
+    ) {
+
+        throw new Error(
+
+            result?.message ||
+            "Telegram authentication failed."
+
+        );
+
+    }
 
 
     console.log(
@@ -136,44 +191,169 @@ async function authenticateTelegram() {
 
 
 // =====================================
-// Start Authentication
+// Initialize App
 // =====================================
 
 async function initializeApp() {
 
     try {
 
+        console.log(
+            "====================================="
+        );
+
+        console.log(
+            "🚀 AutoTrade AI Mini App"
+        );
+
+        console.log(
+            "🔐 Starting Telegram authentication..."
+        );
+
+        console.log(
+            "====================================="
+        );
+
+
+        // ---------------------------------
+        // Authenticate Telegram
+        // ---------------------------------
+
         const user =
             await authenticateTelegram();
 
 
-        console.log(
-            "Authenticated user:",
-            user
-        );
-
-
-        // =====================================
-        // Your Dashboard Initialization
-        // =====================================
+        // ---------------------------------
+        // Store Current User
+        // ---------------------------------
 
         window.currentUser =
             user;
 
+
+        // ---------------------------------
+        // Authentication Success
+        // ---------------------------------
+
+        console.log(
+            "✅ User authenticated:",
+            user
+        );
+
+
+        // ---------------------------------
+        // Dispatch Event
+        // ---------------------------------
+        //
+        // Other dashboard code can listen:
+        //
+        // window.addEventListener(
+        //     "autotrade:authenticated",
+        //     event => {}
+        // );
+        //
+        // ---------------------------------
+
+        window.dispatchEvent(
+
+            new CustomEvent(
+                "autotrade:authenticated",
+                {
+
+                    detail: user
+
+                }
+
+            )
+
+        );
+
+
+        // ---------------------------------
+        // Optional Dashboard Hook
+        // ---------------------------------
+
+        if (
+            typeof window.initializeDashboard ===
+            "function"
+        ) {
+
+            await window.initializeDashboard(
+                user
+            );
+
+        }
+
+
+        console.log(
+            "🚀 AutoTrade AI initialized successfully."
+        );
 
     }
 
     catch (error) {
 
         console.error(
-            "Authentication failed:",
+            "❌ Telegram authentication failed:",
             error
         );
 
 
-        console.error(
-            "AutoTrade AI authentication failed."
+        window.currentUser =
+            null;
+
+
+        // ---------------------------------
+        // Dispatch Authentication Error
+        // ---------------------------------
+
+        window.dispatchEvent(
+
+            new CustomEvent(
+                "autotrade:auth-error",
+                {
+
+                    detail: {
+
+                        message:
+                            error.message
+
+                    }
+
+                }
+
+            )
+
         );
+
+
+        // ---------------------------------
+        // Telegram Alert
+        // ---------------------------------
+
+        if (tg) {
+
+            try {
+
+                tg.showAlert(
+
+                    "Authentication failed.\n\n" +
+                    error.message
+
+                );
+
+            }
+
+            catch (alertError) {
+
+                console.error(
+                    "Telegram alert error:",
+                    alertError
+                );
+
+            }
+
+        }
 
     }
 
@@ -181,7 +361,26 @@ async function initializeApp() {
 
 
 // =====================================
-// Run
+// Global API
+// =====================================
+//
+// Allows other Mini App files to use:
+//
+// apiFetch("/api/wallet/...")
+//
+// =====================================
+
+window.autoTradeAPI = {
+
+    apiFetch,
+
+    authenticateTelegram
+
+};
+
+
+// =====================================
+// Start Application
 // =====================================
 
 initializeApp();
