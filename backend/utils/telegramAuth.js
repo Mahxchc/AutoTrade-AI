@@ -1,5 +1,5 @@
 // =====================================
-// Telegram Authentication:: M
+// Telegram Authentication :: M
 // AutoTrade AI
 // Secure Telegram WebApp Authentication
 // File: backend/utils/telegramAuth.js
@@ -26,11 +26,14 @@ export function validateTelegramInitData(
 
     try {
 
-        // =====================================
-        // Check initData
-        // =====================================
+        // =================================
+        // Validate Input
+        // =================================
 
-        if (!initData) {
+        if (
+            typeof initData !== "string" ||
+            !initData.trim()
+        ) {
 
             return {
 
@@ -44,15 +47,21 @@ export function validateTelegramInitData(
         }
 
 
-        // =====================================
+        // =================================
         // Get Bot Token
-        // =====================================
+        // =================================
 
         const botToken =
-            process.env.TELEGRAM_BOT_TOKEN;
+            process.env.TELEGRAM_BOT_TOKEN
+                ?.trim();
 
 
         if (!botToken) {
+
+            console.error(
+                "[TELEGRAM AUTH] TELEGRAM_BOT_TOKEN is missing"
+            );
+
 
             return {
 
@@ -66,9 +75,9 @@ export function validateTelegramInitData(
         }
 
 
-        // =====================================
-        // Parse Telegram Data
-        // =====================================
+        // =================================
+        // Parse Telegram InitData
+        // =================================
 
         const params =
             new URLSearchParams(
@@ -76,9 +85,9 @@ export function validateTelegramInitData(
             );
 
 
-        // =====================================
-        // Get Telegram Hash
-        // =====================================
+        // =================================
+        // Get Received Hash
+        // =================================
 
         const receivedHash =
             params.get("hash");
@@ -98,12 +107,12 @@ export function validateTelegramInitData(
         }
 
 
-        // =====================================
+        // =================================
         // Validate Hash Format
-        // =====================================
+        // =================================
 
         if (
-            !/^[a-f0-9]{64}$/i.test(
+            !/^[a-fA-F0-9]{64}$/.test(
                 receivedHash
             )
         ) {
@@ -120,19 +129,21 @@ export function validateTelegramInitData(
         }
 
 
-        // =====================================
+        // =================================
         // Remove Hash
-        // =====================================
+        // =================================
 
         params.delete("hash");
 
 
-        // =====================================
+        // =================================
         // Build Data Check String
-        // =====================================
+        // =================================
 
         const dataCheckString =
-            [...params.entries()]
+            Array.from(
+                params.entries()
+            )
                 .sort(
                     ([keyA], [keyB]) =>
                         keyA.localeCompare(
@@ -146,9 +157,40 @@ export function validateTelegramInitData(
                 .join("\n");
 
 
-        // =====================================
+        if (!dataCheckString) {
+
+            return {
+
+                valid: false,
+
+                message:
+                    "Telegram data check string is empty"
+
+            };
+
+        }
+
+
+        // =================================
         // Create Telegram Secret Key
-        // =====================================
+        // =================================
+        //
+        // Telegram specification:
+        //
+        // secret_key =
+        // HMAC_SHA256(
+        //     bot_token,
+        //     "WebAppData"
+        // )
+        //
+        // Node.js:
+        //
+        // createHmac(
+        //     "sha256",
+        //     "WebAppData"
+        // ).update(botToken)
+        //
+        // =================================
 
         const secretKey =
             crypto
@@ -157,14 +199,15 @@ export function validateTelegramInitData(
                     "WebAppData"
                 )
                 .update(
-                    botToken
+                    botToken,
+                    "utf8"
                 )
                 .digest();
 
 
-        // =====================================
+        // =================================
         // Calculate Telegram Hash
-        // =====================================
+        // =================================
 
         const calculatedHash =
             crypto
@@ -173,14 +216,15 @@ export function validateTelegramInitData(
                     secretKey
                 )
                 .update(
-                    dataCheckString
+                    dataCheckString,
+                    "utf8"
                 )
                 .digest("hex");
 
 
-        // =====================================
-        // Convert Hashes To Buffers
-        // =====================================
+        // =================================
+        // Convert Hashes
+        // =================================
 
         const receivedBuffer =
             Buffer.from(
@@ -196,15 +240,20 @@ export function validateTelegramInitData(
             );
 
 
-        // =====================================
-        // Hash Length Check
-        // =====================================
+        // =================================
+        // Compare Hashes
+        // =================================
 
         if (
             receivedBuffer.length !==
             calculatedBuffer.length
         ) {
 
+            console.error(
+                "[TELEGRAM AUTH] Hash length mismatch"
+            );
+
+
             return {
 
                 valid: false,
@@ -217,16 +266,51 @@ export function validateTelegramInitData(
         }
 
 
-        // =====================================
-        // Secure Hash Comparison
-        // =====================================
-
-        if (
-            !crypto.timingSafeEqual(
+        const hashesMatch =
+            crypto.timingSafeEqual(
                 receivedBuffer,
                 calculatedBuffer
-            )
-        ) {
+            );
+
+
+        if (!hashesMatch) {
+
+            console.error(
+                "[TELEGRAM AUTH] Signature mismatch"
+            );
+
+
+            // ---------------------------------
+            // Safe diagnostic information
+            // ---------------------------------
+            //
+            // NEVER log the bot token.
+            //
+            console.error(
+                "[TELEGRAM AUTH] Bot token configured:",
+                Boolean(botToken)
+            );
+
+            console.error(
+                "[TELEGRAM AUTH] InitData length:",
+                initData.length
+            );
+
+            console.error(
+                "[TELEGRAM AUTH] Data check length:",
+                dataCheckString.length
+            );
+
+            console.error(
+                "[TELEGRAM AUTH] Received hash:",
+                receivedHash
+            );
+
+            console.error(
+                "[TELEGRAM AUTH] Calculated hash:",
+                calculatedHash
+            );
+
 
             return {
 
@@ -240,9 +324,9 @@ export function validateTelegramInitData(
         }
 
 
-        // =====================================
+        // =================================
         // Validate auth_date
-        // =====================================
+        // =================================
 
         const authDate =
             Number(
@@ -253,9 +337,10 @@ export function validateTelegramInitData(
 
 
         if (
-            !Number.isFinite(
+            !Number.isSafeInteger(
                 authDate
-            )
+            ) ||
+            authDate <= 0
         ) {
 
             return {
@@ -263,16 +348,16 @@ export function validateTelegramInitData(
                 valid: false,
 
                 message:
-                    "Telegram auth_date is missing"
+                    "Telegram auth_date is missing or invalid"
 
             };
 
         }
 
 
-        // =====================================
+        // =================================
         // Current Time
-        // =====================================
+        // =================================
 
         const currentTime =
             Math.floor(
@@ -285,9 +370,9 @@ export function validateTelegramInitData(
             authDate;
 
 
-        // =====================================
+        // =================================
         // Reject Future Data
-        // =====================================
+        // =================================
 
         if (
             authAge < -60
@@ -305,9 +390,9 @@ export function validateTelegramInitData(
         }
 
 
-        // =====================================
+        // =================================
         // Reject Old Data
-        // =====================================
+        // =================================
 
         if (
             authAge >
@@ -326,9 +411,9 @@ export function validateTelegramInitData(
         }
 
 
-        // =====================================
+        // =================================
         // Get Telegram User
-        // =====================================
+        // =================================
 
         const userRaw =
             params.get("user");
@@ -348,9 +433,9 @@ export function validateTelegramInitData(
         }
 
 
-        // =====================================
+        // =================================
         // Parse Telegram User
-        // =====================================
+        // =================================
 
         let telegramUser;
 
@@ -364,7 +449,12 @@ export function validateTelegramInitData(
 
         }
 
-        catch {
+        catch (error) {
+
+            console.error(
+                "[TELEGRAM AUTH] User JSON parse error"
+            );
+
 
             return {
 
@@ -378,9 +468,9 @@ export function validateTelegramInitData(
         }
 
 
-        // =====================================
-        // Validate Telegram User ID
-        // =====================================
+        // =================================
+        // Validate Telegram User
+        // =================================
 
         if (
             !telegramUser ||
@@ -399,9 +489,9 @@ export function validateTelegramInitData(
         }
 
 
-        // =====================================
-        // Final Success
-        // =====================================
+        // =================================
+        // Authentication Successful
+        // =================================
 
         return {
 
@@ -411,7 +501,6 @@ export function validateTelegramInitData(
                 telegramUser,
 
             authDate:
-
                 authDate
 
         };
@@ -421,7 +510,7 @@ export function validateTelegramInitData(
     catch (error) {
 
         console.error(
-            "Telegram authentication error:",
+            "[TELEGRAM AUTH ERROR]",
             error
         );
 
