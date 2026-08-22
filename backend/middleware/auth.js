@@ -64,7 +64,10 @@ export function requireTelegramUser(
             );
 
 
-        if (!result || !result.valid) {
+        if (
+            !result ||
+            !result.valid
+        ) {
 
             return res.status(401).json({
 
@@ -137,7 +140,18 @@ export function requireTelegramUser(
 
 
 // =====================================
-// Compatibility Alias
+// requireUser
+// =====================================
+//
+// Compatibility alias
+// =====================================
+
+export const requireUser =
+    requireTelegramUser;
+
+
+// =====================================
+// requiredTelegramUser
 // =====================================
 
 export const requiredTelegramUser =
@@ -239,7 +253,7 @@ export function requireAdmin(
 
 
 // =====================================
-// Compatibility Alias
+// requiredAdmin
 // =====================================
 
 export const requiredAdmin =
@@ -248,13 +262,6 @@ export const requiredAdmin =
 
 // =====================================
 // Require Approved User
-// =====================================
-//
-// User must:
-// 1. Be authenticated by Telegram
-// 2. Exist in database
-// 3. Have approval/access enabled
-//
 // =====================================
 
 export async function requireApprovedUser(
@@ -286,7 +293,7 @@ export async function requireApprovedUser(
 
 
         // ---------------------------------
-        // Import User model
+        // Load User Model
         // ---------------------------------
 
         const User =
@@ -298,14 +305,16 @@ export async function requireApprovedUser(
 
 
         // ---------------------------------
-        // Find user
+        // Find User
         // ---------------------------------
 
         const user =
             await User.findOne({
 
                 telegramId:
-                    String(req.telegramUser.id)
+                    String(
+                        req.telegramUser.id
+                    )
 
             });
 
@@ -318,6 +327,8 @@ export async function requireApprovedUser(
 
                 authenticated: true,
 
+                approved: false,
+
                 message:
                     "User not found"
 
@@ -327,7 +338,7 @@ export async function requireApprovedUser(
 
 
         // ---------------------------------
-        // Check blocked status
+        // Blocked User
         // ---------------------------------
 
         if (
@@ -353,7 +364,7 @@ export async function requireApprovedUser(
 
 
         // ---------------------------------
-        // Check approval
+        // Approval Check
         // ---------------------------------
 
         const approved =
@@ -386,7 +397,7 @@ export async function requireApprovedUser(
 
 
         // ---------------------------------
-        // Attach database user
+        // Attach Database User
         // ---------------------------------
 
         req.user =
@@ -394,7 +405,9 @@ export async function requireApprovedUser(
 
 
         req.telegramId =
-            String(req.telegramUser.id);
+            String(
+                req.telegramUser.id
+            );
 
 
         return next();
@@ -462,8 +475,11 @@ export function optionalTelegramUser(
             req.telegramUser =
                 result.user;
 
+
             req.telegramId =
-                String(result.user.id);
+                String(
+                    result.user.id
+                );
 
         }
 
@@ -492,6 +508,8 @@ export function optionalTelegramUser(
 // =====================================
 
 export default {
+
+    requireUser,
 
     requireTelegramUser,
 
