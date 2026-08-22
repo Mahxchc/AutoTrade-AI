@@ -2,6 +2,7 @@
 // Auth Middleware:: M
 // AutoTrade AI
 // Telegram WebApp Authentication
+// Authentication & Access Control
 // File: backend/middleware/auth.js
 // =====================================
 
@@ -30,6 +31,10 @@ export async function requireUser(
             ];
 
 
+        // =====================================
+        // Telegram initData Required
+        // =====================================
+
         if (!initData) {
 
             return res.status(401).json({
@@ -43,6 +48,10 @@ export async function requireUser(
 
         }
 
+
+        // =====================================
+        // Validate Telegram Signature
+        // =====================================
 
         const telegramResult =
             validateTelegramInitData(
@@ -66,6 +75,10 @@ export async function requireUser(
         }
 
 
+        // =====================================
+        // Telegram User
+        // =====================================
+
         const telegramUser =
             telegramResult.user;
 
@@ -76,14 +89,20 @@ export async function requireUser(
             );
 
 
+        // =====================================
+        // Find Existing User
+        // =====================================
+
         let user =
             await User.findOne({
+
                 telegramId
+
             });
 
 
         // =====================================
-        // Create Telegram User
+        // Create New User
         // =====================================
 
         if (!user) {
@@ -101,17 +120,58 @@ export async function requireUser(
                         telegramUser.first_name ||
                         "",
 
-                    accessEnabled: false,
+                    lastName:
+                        telegramUser.last_name ||
+                        "",
 
-                    isAdmin: false,
+                    accessEnabled:
+                        false,
 
-                    botAccess: false,
+                    approvalStatus:
+                        "PENDING",
 
-                    botActive: false,
+                    isAdmin:
+                        false,
 
-                    status: "PENDING"
+                    botAccess:
+                        false,
+
+                    botActive:
+                        false,
+
+                    status:
+                        "PENDING",
+
+                    lastLogin:
+                        new Date()
 
                 });
+
+        }
+
+        else {
+
+            // =====================================
+            // Update Telegram Profile Information
+            // =====================================
+
+            user.username =
+                telegramUser.username ||
+                "";
+
+            user.firstName =
+                telegramUser.first_name ||
+                "";
+
+            user.lastName =
+                telegramUser.last_name ||
+                "";
+
+            user.lastLogin =
+                new Date();
+
+
+            await user.save();
 
         }
 
@@ -138,7 +198,7 @@ export async function requireUser(
 
 
         // =====================================
-        // Attach User
+        // Attach Authenticated User
         // =====================================
 
         req.user =
@@ -153,6 +213,10 @@ export async function requireUser(
             telegramId;
 
 
+        // =====================================
+        // Continue
+        // =====================================
+
         next();
 
     }
@@ -163,6 +227,7 @@ export async function requireUser(
             "Auth middleware error:",
             error
         );
+
 
         next(error);
 
@@ -181,6 +246,10 @@ export function requireApprovedUser(
     next
 ) {
 
+    // =====================================
+    // Authentication Check
+    // =====================================
+
     if (!req.user) {
 
         return res.status(401).json({
@@ -195,9 +264,34 @@ export function requireApprovedUser(
     }
 
 
+    // =====================================
+    // Account Status Check
+    // =====================================
+
     if (
-        req.user.status !==
-        "ACTIVE"
+        req.user.status ===
+        "BLOCKED"
+    ) {
+
+        return res.status(403).json({
+
+            success: false,
+
+            message:
+                "User account is blocked"
+
+        });
+
+    }
+
+
+    // =====================================
+    // Approval Check
+    // =====================================
+
+    if (
+        req.user.approvalStatus !==
+        "APPROVED"
     ) {
 
         return res.status(403).json({
@@ -212,6 +306,10 @@ export function requireApprovedUser(
     }
 
 
+    // =====================================
+    // Access Check
+    // =====================================
+
     if (
         req.user.accessEnabled !==
         true
@@ -223,6 +321,27 @@ export function requireApprovedUser(
 
             message:
                 "User access is disabled"
+
+        });
+
+    }
+
+
+    // =====================================
+    // Account Must Be Active
+    // =====================================
+
+    if (
+        req.user.status !==
+        "ACTIVE"
+    ) {
+
+        return res.status(403).json({
+
+            success: false,
+
+            message:
+                "User account is not active"
 
         });
 
@@ -244,6 +363,10 @@ export function requireAdmin(
     next
 ) {
 
+    // =====================================
+    // Authentication Check
+    // =====================================
+
     if (!req.user) {
 
         return res.status(401).json({
@@ -257,6 +380,10 @@ export function requireAdmin(
 
     }
 
+
+    // =====================================
+    // Admin Permission
+    // =====================================
 
     if (
         req.user.isAdmin !==
