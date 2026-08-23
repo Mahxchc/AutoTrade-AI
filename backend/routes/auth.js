@@ -11,6 +11,8 @@ import {
     requireTelegramUser
 } from "../middleware/auth.js";
 
+import User from "../models/User.js";
+
 
 const router =
     express.Router();
@@ -27,13 +29,137 @@ router.post(
 
         try {
 
-            const user =
-                req.user;
+            // =================================
+            // Telegram User From Middleware
+            // =================================
 
+            const telegramUser =
+                req.telegramUser;
+
+
+            if (
+                !telegramUser ||
+                !telegramUser.id
+            ) {
+
+                return res.status(401).json({
+
+                    success: false,
+
+                    message:
+                        "Telegram user not found"
+
+                });
+
+            }
+
+
+            const telegramId =
+                String(
+                    telegramUser.id
+                );
+
+
+            // =================================
+            // Find Existing User
+            // =================================
+
+            let user =
+                await User.findOne({
+
+                    telegramId:
+                        telegramId
+
+                });
+
+
+            // =================================
+            // Create User If Not Exists
+            // =================================
+
+            if (!user) {
+
+                user =
+                    await User.create({
+
+                        telegramId:
+                            telegramId,
+
+                        username:
+                            telegramUser.username ||
+                            "",
+
+                        firstName:
+                            telegramUser.first_name ||
+                            "",
+
+                        lastName:
+                            telegramUser.last_name ||
+                            "",
+
+                        accessEnabled:
+                            false,
+
+                        isAdmin:
+                            false,
+
+                        botAccess:
+                            false,
+
+                        botActive:
+                            false,
+
+                        status:
+                            "PENDING"
+
+                    });
+
+            }
+
+            else {
+
+                // =================================
+                // Update Telegram Information
+                // =================================
+
+                user.username =
+                    telegramUser.username ||
+                    user.username ||
+                    "";
+
+                user.firstName =
+                    telegramUser.first_name ||
+                    user.firstName ||
+                    "";
+
+                user.lastName =
+                    telegramUser.last_name ||
+                    user.lastName ||
+                    "";
+
+
+                await user.save();
+
+            }
+
+
+            // =================================
+            // Attach User To Request
+            // =================================
+
+            req.user =
+                user;
+
+
+            // =================================
+            // Response
+            // =================================
 
             return res.json({
 
                 success: true,
+
+                authenticated: true,
 
                 message:
                     "Telegram authentication successful",
@@ -78,6 +204,11 @@ router.post(
 
         catch (error) {
 
+            console.error(
+                "[AUTH TELEGRAM ERROR]",
+                error
+            );
+
             next(error);
 
         }
@@ -97,13 +228,81 @@ router.get(
 
         try {
 
-            const user =
-                req.user;
+            // =================================
+            // Telegram User
+            // =================================
 
+            const telegramUser =
+                req.telegramUser;
+
+
+            if (
+                !telegramUser ||
+                !telegramUser.id
+            ) {
+
+                return res.status(401).json({
+
+                    success: false,
+
+                    message:
+                        "Telegram user not found"
+
+                });
+
+            }
+
+
+            // =================================
+            // Find User
+            // =================================
+
+            const user =
+                await User.findOne({
+
+                    telegramId:
+                        String(
+                            telegramUser.id
+                        )
+
+                });
+
+
+            // =================================
+            // User Not Found
+            // =================================
+
+            if (!user) {
+
+                return res.status(404).json({
+
+                    success: false,
+
+                    message:
+                        "User account not found"
+
+                });
+
+            }
+
+
+            // =================================
+            // Attach User
+            // =================================
+
+            req.user =
+                user;
+
+
+            // =================================
+            // Response
+            // =================================
 
             return res.json({
 
                 success: true,
+
+                authenticated: true,
 
                 user: {
 
@@ -145,6 +344,11 @@ router.get(
 
         catch (error) {
 
+            console.error(
+                "[AUTH ME ERROR]",
+                error
+            );
+
             next(error);
 
         }
@@ -152,5 +356,9 @@ router.get(
     }
 );
 
+
+// =====================================
+// Export Router
+// =====================================
 
 export default router;
