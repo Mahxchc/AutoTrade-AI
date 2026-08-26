@@ -1,6 +1,5 @@
 // =====================================
-// Telegram Authentication :: M
-// AutoTrade AI
+// AutoTrade AI Mini App
 // File: MiniApp/app.js
 // =====================================
 
@@ -14,25 +13,35 @@ const tg =
 
 
 // =====================================
-// Check Telegram
-// =====================================
-
-if (!tg) {
-
-    console.error(
-        "Telegram WebApp is not available"
-    );
-
-}
-
-
-// =====================================
 // Telegram Ready
 // =====================================
 
 tg?.ready();
-
 tg?.expand();
+
+
+// =====================================
+// Backend URL
+// =====================================
+
+const BACKEND_URL =
+    "https://autotrade-backend-02cc.onrender.com";
+
+
+// =====================================
+// Telegram InitData
+// =====================================
+
+const telegramInitData =
+    tg?.initData || "";
+
+
+// =====================================
+// Current Page
+// =====================================
+
+let currentPage =
+    "dashboard";
 
 
 // =====================================
@@ -56,13 +65,8 @@ function showLoadingScreen() {
 
     loadingScreen.style.display =
         "flex";
-
 }
 
-
-// =====================================
-// Hide Loading Screen
-// =====================================
 
 function hideLoadingScreen() {
 
@@ -81,34 +85,7 @@ function hideLoadingScreen() {
 
     loadingScreen.style.display =
         "none";
-
-    console.log(
-        "✅ Loading screen hidden"
-    );
-
 }
-
-
-// =====================================
-// Secure Telegram InitData
-// =====================================
-//
-// IMPORTANT:
-// initData is the signed Telegram data.
-// Do NOT use initDataUnsafe for authentication.
-//
-// =====================================
-
-const telegramInitData =
-    tg?.initData || "";
-
-
-// =====================================
-// Backend URL
-// =====================================
-
-const BACKEND_URL =
-    "https://autotrade-backend-02cc.onrender.com";
 
 
 // =====================================
@@ -178,7 +155,6 @@ async function apiFetch(
 
 
     return data;
-
 }
 
 
@@ -188,10 +164,6 @@ async function apiFetch(
 
 async function authenticateTelegram() {
 
-    // ---------------------------------
-    // Check Telegram WebApp
-    // ---------------------------------
-
     if (!tg) {
 
         throw new Error(
@@ -200,10 +172,6 @@ async function authenticateTelegram() {
 
     }
 
-
-    // ---------------------------------
-    // Check Telegram InitData
-    // ---------------------------------
 
     if (!telegramInitData) {
 
@@ -218,18 +186,9 @@ async function authenticateTelegram() {
 
 
     console.log(
-        "🔐 Telegram initData received"
+        "🔐 Authenticating Telegram..."
     );
 
-
-    console.log(
-        "📡 Sending authentication request..."
-    );
-
-
-    // ---------------------------------
-    // Authenticate with Backend
-    // ---------------------------------
 
     const result =
         await apiFetch(
@@ -239,10 +198,6 @@ async function authenticateTelegram() {
             }
         );
 
-
-    // ---------------------------------
-    // Validate Response
-    // ---------------------------------
 
     if (
         !result ||
@@ -262,18 +217,499 @@ async function authenticateTelegram() {
 
 
     console.log(
-        "✅ Telegram authentication successful"
-    );
-
-
-    console.log(
-        "👤 User:",
+        "✅ Telegram authentication successful",
         result.user
     );
 
 
     return result.user;
+}
 
+
+// =====================================
+// PAGE NAVIGATION
+// =====================================
+
+function showPage(
+    pageName
+) {
+
+    if (!pageName) {
+        return;
+    }
+
+
+    console.log(
+        "📄 Opening page:",
+        pageName
+    );
+
+
+    // ---------------------------------
+    // Find requested page
+    // ---------------------------------
+
+    const targetPage =
+        document.getElementById(
+            `page-${pageName}`
+        );
+
+
+    if (!targetPage) {
+
+        console.warn(
+            `Page not found: page-${pageName}`
+        );
+
+        return;
+    }
+
+
+    // ---------------------------------
+    // Hide all pages
+    // ---------------------------------
+
+    const pages =
+        document.querySelectorAll(
+            ".page"
+        );
+
+
+    pages.forEach(
+        page => {
+
+            page.classList.remove(
+                "active"
+            );
+
+            page.style.display =
+                "none";
+
+        }
+    );
+
+
+    // ---------------------------------
+    // Show selected page
+    // ---------------------------------
+
+    targetPage.classList.add(
+        "active"
+    );
+
+    targetPage.style.display =
+        "block";
+
+
+    // ---------------------------------
+    // Update bottom navigation
+    // ---------------------------------
+
+    const navItems =
+        document.querySelectorAll(
+            ".nav-item[data-page]"
+        );
+
+
+    navItems.forEach(
+        item => {
+
+            if (
+                item.dataset.page ===
+                pageName
+            ) {
+
+                item.classList.add(
+                    "active"
+                );
+
+            }
+
+            else {
+
+                item.classList.remove(
+                    "active"
+                );
+
+            }
+
+        }
+    );
+
+
+    // ---------------------------------
+    // Update page title
+    // ---------------------------------
+
+    const pageTitle =
+        document.getElementById(
+            "page-title"
+        );
+
+
+    const titles = {
+
+        dashboard:
+            "داشبورد",
+
+        wallet:
+            "کیف پول",
+
+        trades:
+            "معاملات",
+
+        analytics:
+            "تحلیل‌ها",
+
+        notifications:
+            "اعلان‌ها",
+
+        profile:
+            "پروفایل",
+
+        withdraw:
+            "برداشت"
+
+    };
+
+
+    if (pageTitle) {
+
+        pageTitle.textContent =
+            titles[pageName] ||
+            "AutoTrade AI";
+
+    }
+
+
+    // ---------------------------------
+    // Save current page
+    // ---------------------------------
+
+    currentPage =
+        pageName;
+
+
+    // ---------------------------------
+    // Scroll to top
+    // ---------------------------------
+
+    const mainContent =
+        document.getElementById(
+            "main-content"
+        );
+
+
+    if (mainContent) {
+
+        mainContent.scrollTop =
+            0;
+
+    }
+
+
+    window.scrollTo(
+        0,
+        0
+    );
+}
+
+
+// =====================================
+// Initialize Navigation
+// =====================================
+
+function initializeNavigation() {
+
+    console.log(
+        "🧭 Initializing navigation..."
+    );
+
+
+    // ---------------------------------
+    // Bottom navigation
+    // ---------------------------------
+
+    const navItems =
+        document.querySelectorAll(
+            ".nav-item[data-page]"
+        );
+
+
+    navItems.forEach(
+        button => {
+
+            button.addEventListener(
+                "click",
+                function (event) {
+
+                    event.preventDefault();
+                    event.stopPropagation();
+
+
+                    const page =
+                        this.dataset.page;
+
+
+                    if (!page) {
+                        return;
+                    }
+
+
+                    showPage(
+                        page
+                    );
+
+                }
+            );
+
+        }
+    );
+
+
+    // ---------------------------------
+    // Any element with data-page
+    // ---------------------------------
+    //
+    // This also handles buttons such as:
+    //
+    // مشاهده همه
+    // اعلان‌ها
+    //
+    // ---------------------------------
+
+    const pageButtons =
+        document.querySelectorAll(
+            "[data-page]:not(.nav-item)"
+        );
+
+
+    pageButtons.forEach(
+        button => {
+
+            button.addEventListener(
+                "click",
+                function (event) {
+
+                    event.preventDefault();
+
+
+                    const page =
+                        this.dataset.page;
+
+
+                    if (page) {
+
+                        showPage(
+                            page
+                        );
+
+                    }
+
+                }
+            );
+
+        }
+    );
+
+
+    // ---------------------------------
+    // Initial page
+    // ---------------------------------
+
+    showPage(
+        currentPage
+    );
+
+
+    console.log(
+        "✅ Navigation initialized"
+    );
+}
+
+
+// =====================================
+// Header Back Button
+// =====================================
+
+function initializeBackButton() {
+
+    const backButton =
+        document.getElementById(
+            "header-back"
+        );
+
+
+    if (!backButton) {
+        return;
+    }
+
+
+    backButton.addEventListener(
+        "click",
+        () => {
+
+            showPage(
+                "dashboard"
+            );
+
+        }
+    );
+}
+
+
+// =====================================
+// Notification Button
+// =====================================
+
+function initializeNotificationButton() {
+
+    const button =
+        document.getElementById(
+            "notification-button"
+        );
+
+
+    if (!button) {
+        return;
+    }
+
+
+    button.addEventListener(
+        "click",
+        () => {
+
+            showPage(
+                "notifications"
+            );
+
+        }
+    );
+}
+
+
+// =====================================
+// Dashboard Actions
+// =====================================
+
+function initializeActions() {
+
+    const actionButtons =
+        document.querySelectorAll(
+            "[data-action]"
+        );
+
+
+    actionButtons.forEach(
+        button => {
+
+            button.addEventListener(
+                "click",
+                function () {
+
+                    const action =
+                        this.dataset.action;
+
+
+                    console.log(
+                        "Action:",
+                        action
+                    );
+
+
+                    switch (action) {
+
+                        case "deposit":
+
+                            showToast(
+                                "صفحه افزایش موجودی به‌زودی آماده می‌شود."
+                            );
+
+                            break;
+
+
+                        case "withdraw":
+
+                            showPage(
+                                "withdraw"
+                            );
+
+                            break;
+
+
+                        case "transfer":
+
+                            showToast(
+                                "صفحه انتقال به‌زودی آماده می‌شود."
+                            );
+
+                            break;
+
+
+                        default:
+
+                            console.log(
+                                "Unknown action:",
+                                action
+                            );
+
+                    }
+
+                }
+            );
+
+        }
+    );
+}
+
+
+// =====================================
+// Toast
+// =====================================
+
+function showToast(
+    message
+) {
+
+    const toast =
+        document.getElementById(
+            "toast"
+        );
+
+    const toastMessage =
+        document.getElementById(
+            "toast-message"
+        );
+
+
+    if (
+        !toast ||
+        !toastMessage
+    ) {
+
+        return;
+    }
+
+
+    toastMessage.textContent =
+        message;
+
+
+    toast.classList.add(
+        "show"
+    );
+
+
+    setTimeout(
+        () => {
+
+            toast.classList.remove(
+                "show"
+            );
+
+        },
+        3000
+    );
 }
 
 
@@ -294,23 +730,32 @@ async function initializeApp() {
         );
 
         console.log(
-            "🔐 Starting Telegram authentication..."
-        );
-
-        console.log(
             "====================================="
         );
 
 
         // ---------------------------------
-        // Show Loading
+        // Initialize UI first
+        // ---------------------------------
+
+        initializeNavigation();
+
+        initializeBackButton();
+
+        initializeNotificationButton();
+
+        initializeActions();
+
+
+        // ---------------------------------
+        // Show loading
         // ---------------------------------
 
         showLoadingScreen();
 
 
         // ---------------------------------
-        // Authenticate Telegram
+        // Authenticate
         // ---------------------------------
 
         const user =
@@ -318,25 +763,21 @@ async function initializeApp() {
 
 
         // ---------------------------------
-        // Store Current User
+        // Store user
         // ---------------------------------
 
         window.currentUser =
             user;
 
 
-        // ---------------------------------
-        // Authentication Success
-        // ---------------------------------
-
         console.log(
-            "✅ User authenticated:",
+            "👤 Current user:",
             user
         );
 
 
         // ---------------------------------
-        // Dispatch Authentication Event
+        // Dispatch auth event
         // ---------------------------------
 
         window.dispatchEvent(
@@ -355,7 +796,7 @@ async function initializeApp() {
 
 
         // ---------------------------------
-        // Dashboard Initialization
+        // Dashboard hook
         // ---------------------------------
 
         if (
@@ -374,7 +815,7 @@ async function initializeApp() {
             catch (dashboardError) {
 
                 console.error(
-                    "Dashboard initialization error:",
+                    "Dashboard error:",
                     dashboardError
                 );
 
@@ -384,10 +825,19 @@ async function initializeApp() {
 
 
         // ---------------------------------
-        // Hide Loading
+        // Hide loading
         // ---------------------------------
 
         hideLoadingScreen();
+
+
+        // ---------------------------------
+        // Open dashboard
+        // ---------------------------------
+
+        showPage(
+            "dashboard"
+        );
 
 
         console.log(
@@ -399,29 +849,17 @@ async function initializeApp() {
     catch (error) {
 
         console.error(
-            "❌ Telegram authentication failed:",
+            "❌ Application initialization failed:",
             error
         );
 
-
-        // ---------------------------------
-        // Clear Current User
-        // ---------------------------------
 
         window.currentUser =
             null;
 
 
-        // ---------------------------------
-        // Hide Loading
-        // ---------------------------------
-
         hideLoadingScreen();
 
-
-        // ---------------------------------
-        // Dispatch Authentication Error
-        // ---------------------------------
 
         window.dispatchEvent(
 
@@ -443,25 +881,6 @@ async function initializeApp() {
         );
 
 
-        // ---------------------------------
-        // Show Error
-        // ---------------------------------
-
-        const errorMessage =
-            error?.message ||
-            "Authentication failed.";
-
-
-        console.error(
-            "AutoTrade AI:",
-            errorMessage
-        );
-
-
-        // ---------------------------------
-        // Telegram Alert
-        // ---------------------------------
-
         if (tg) {
 
             try {
@@ -469,7 +888,10 @@ async function initializeApp() {
                 tg.showAlert(
 
                     "Authentication failed.\n\n" +
-                    errorMessage
+                    (
+                        error?.message ||
+                        "Unknown error"
+                    )
 
                 );
 
@@ -494,12 +916,6 @@ async function initializeApp() {
 // =====================================
 // Global API
 // =====================================
-//
-// Other Mini App files can use:
-//
-// window.autoTradeAPI.apiFetch(...)
-//
-// =====================================
 
 window.autoTradeAPI = {
 
@@ -507,19 +923,17 @@ window.autoTradeAPI = {
 
     authenticateTelegram,
 
-    initializeApp
+    initializeApp,
+
+    showPage,
+
+    showToast
 
 };
 
 
 // =====================================
-// Start Application
-// =====================================
-//
-// IMPORTANT:
-// initializeApp() must be called AFTER
-// all event listeners and functions are ready.
-//
+// Start
 // =====================================
 
 initializeApp();
