@@ -36,6 +36,60 @@ tg?.expand();
 
 
 // =====================================
+// Loading Screen
+// =====================================
+
+function showLoadingScreen() {
+
+    const loadingScreen =
+        document.getElementById(
+            "loading-screen"
+        );
+
+    if (!loadingScreen) {
+        return;
+    }
+
+    loadingScreen.classList.remove(
+        "hidden"
+    );
+
+    loadingScreen.style.display =
+        "flex";
+
+}
+
+
+// =====================================
+// Hide Loading Screen
+// =====================================
+
+function hideLoadingScreen() {
+
+    const loadingScreen =
+        document.getElementById(
+            "loading-screen"
+        );
+
+    if (!loadingScreen) {
+        return;
+    }
+
+    loadingScreen.classList.add(
+        "hidden"
+    );
+
+    loadingScreen.style.display =
+        "none";
+
+    console.log(
+        "✅ Loading screen hidden"
+    );
+
+}
+
+
+// =====================================
 // Secure Telegram InitData
 // =====================================
 //
@@ -94,6 +148,7 @@ async function apiFetch(
 
     let data;
 
+
     try {
 
         data =
@@ -134,6 +189,19 @@ async function apiFetch(
 async function authenticateTelegram() {
 
     // ---------------------------------
+    // Check Telegram WebApp
+    // ---------------------------------
+
+    if (!tg) {
+
+        throw new Error(
+            "Telegram WebApp is not available."
+        );
+
+    }
+
+
+    // ---------------------------------
     // Check Telegram InitData
     // ---------------------------------
 
@@ -149,6 +217,16 @@ async function authenticateTelegram() {
     }
 
 
+    console.log(
+        "🔐 Telegram initData received"
+    );
+
+
+    console.log(
+        "📡 Sending authentication request..."
+    );
+
+
     // ---------------------------------
     // Authenticate with Backend
     // ---------------------------------
@@ -161,6 +239,10 @@ async function authenticateTelegram() {
             }
         );
 
+
+    // ---------------------------------
+    // Validate Response
+    // ---------------------------------
 
     if (
         !result ||
@@ -180,7 +262,12 @@ async function authenticateTelegram() {
 
 
     console.log(
-        "Telegram authentication successful:",
+        "✅ Telegram authentication successful"
+    );
+
+
+    console.log(
+        "👤 User:",
         result.user
     );
 
@@ -191,7 +278,7 @@ async function authenticateTelegram() {
 
 
 // =====================================
-// Initialize App
+// Initialize Application
 // =====================================
 
 async function initializeApp() {
@@ -213,6 +300,13 @@ async function initializeApp() {
         console.log(
             "====================================="
         );
+
+
+        // ---------------------------------
+        // Show Loading
+        // ---------------------------------
+
+        showLoadingScreen();
 
 
         // ---------------------------------
@@ -242,16 +336,7 @@ async function initializeApp() {
 
 
         // ---------------------------------
-        // Dispatch Event
-        // ---------------------------------
-        //
-        // Other dashboard code can listen:
-        //
-        // window.addEventListener(
-        //     "autotrade:authenticated",
-        //     event => {}
-        // );
-        //
+        // Dispatch Authentication Event
         // ---------------------------------
 
         window.dispatchEvent(
@@ -260,17 +345,17 @@ async function initializeApp() {
                 "autotrade:authenticated",
                 {
 
-                    detail: user
+                    detail:
+                        user
 
                 }
-
             )
 
         );
 
 
         // ---------------------------------
-        // Optional Dashboard Hook
+        // Dashboard Initialization
         // ---------------------------------
 
         if (
@@ -278,11 +363,31 @@ async function initializeApp() {
             "function"
         ) {
 
-            await window.initializeDashboard(
-                user
-            );
+            try {
+
+                await window.initializeDashboard(
+                    user
+                );
+
+            }
+
+            catch (dashboardError) {
+
+                console.error(
+                    "Dashboard initialization error:",
+                    dashboardError
+                );
+
+            }
 
         }
+
+
+        // ---------------------------------
+        // Hide Loading
+        // ---------------------------------
+
+        hideLoadingScreen();
 
 
         console.log(
@@ -299,8 +404,19 @@ async function initializeApp() {
         );
 
 
+        // ---------------------------------
+        // Clear Current User
+        // ---------------------------------
+
         window.currentUser =
             null;
+
+
+        // ---------------------------------
+        // Hide Loading
+        // ---------------------------------
+
+        hideLoadingScreen();
 
 
         // ---------------------------------
@@ -316,14 +432,29 @@ async function initializeApp() {
                     detail: {
 
                         message:
-                            error.message
+                            error?.message ||
+                            "Authentication failed."
 
                     }
 
                 }
-
             )
 
+        );
+
+
+        // ---------------------------------
+        // Show Error
+        // ---------------------------------
+
+        const errorMessage =
+            error?.message ||
+            "Authentication failed.";
+
+
+        console.error(
+            "AutoTrade AI:",
+            errorMessage
         );
 
 
@@ -338,7 +469,7 @@ async function initializeApp() {
                 tg.showAlert(
 
                     "Authentication failed.\n\n" +
-                    error.message
+                    errorMessage
 
                 );
 
@@ -364,9 +495,9 @@ async function initializeApp() {
 // Global API
 // =====================================
 //
-// Allows other Mini App files to use:
+// Other Mini App files can use:
 //
-// apiFetch("/api/wallet/...")
+// window.autoTradeAPI.apiFetch(...)
 //
 // =====================================
 
@@ -374,13 +505,21 @@ window.autoTradeAPI = {
 
     apiFetch,
 
-    authenticateTelegram
+    authenticateTelegram,
+
+    initializeApp
 
 };
 
 
 // =====================================
 // Start Application
+// =====================================
+//
+// IMPORTANT:
+// initializeApp() must be called AFTER
+// all event listeners and functions are ready.
+//
 // =====================================
 
 initializeApp();
