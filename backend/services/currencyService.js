@@ -1,269 +1,552 @@
-// ..M currencyService.js
+// =====================================
+// AutoTrade AI :: Currency Service
+// File: backend/services/currencyService.js
+// =====================================
 
-// =========================================================
-// ..M CONFIG
-// =========================================================
+const DEFAULT_USDT_USD_RATE = 1;
 
-const DEFAULT_USD_TO_IRR = Number(
-  process.env.USD_TO_IRR || 100000
-);
+const DEFAULT_USD_IRR_RATE = 0;
 
-// =========================================================
-// ..M GET USD TO IRR RATE
-// =========================================================
+const CACHE_TIME =
+    60 * 1000;
 
-export const getUsdToIrrRate = () => {
-  return DEFAULT_USD_TO_IRR;
-};
+let cachedRate = null;
 
-// =========================================================
-// ..M GET USD TO TOMAN RATE
-// =========================================================
+let cachedAt = 0;
 
-export const getUsdToTomanRate = () => {
-  // 1 Toman = 10 IRR
-  return getUsdToIrrRate() / 10;
-};
 
-// =========================================================
-// ..M GET TOMAN TO USD RATE
-// =========================================================
+// =====================================
+// Fetch JSON helper
+// =====================================
 
-export const getTomanToUsdRate = () => {
-  const rate = getUsdToTomanRate();
+async function fetchJson(url) {
 
-  if (rate <= 0) {
-    return 0;
-  }
+    const response =
+        await fetch(url);
 
-  return 1 / rate;
-};
+    if (!response.ok) {
 
-// =========================================================
-// ..M USD TO IRR
-// =========================================================
+        throw new Error(
+            `Currency API request failed: ${response.status}`
+        );
 
-export const usdToIrr = (
-  usd,
-  rate = getUsdToIrrRate()
-) => {
-  const value = Number(usd) || 0;
+    }
 
-  const exchangeRate =
-    Number(rate) || DEFAULT_USD_TO_IRR;
+    return await response.json();
 
-  return value * exchangeRate;
-};
+}
 
-// =========================================================
-// ..M IRR TO USD
-// =========================================================
 
-export const irrToUsd = (
-  irr,
-  rate = getUsdToIrrRate()
-) => {
-  const value = Number(irr) || 0;
+// =====================================
+// Get USD / IRR rate
+// =====================================
 
-  const exchangeRate =
-    Number(rate) || DEFAULT_USD_TO_IRR;
+export async function getUsdIrrRate() {
 
-  if (exchangeRate <= 0) {
-    return 0;
-  }
+    const now =
+        Date.now();
 
-  return value / exchangeRate;
-};
 
-// =========================================================
-// ..M USD TO TOMAN
-// =========================================================
+    // ---------------------------------
+    // Return cache
+    // ---------------------------------
 
-export const convertUsdToToman = (
-  usd,
-  rate = getUsdToTomanRate()
-) => {
-  const value = Number(usd) || 0;
+    if (
+        cachedRate !== null &&
+        now - cachedAt < CACHE_TIME
+    ) {
 
-  const tomanRate =
-    Number(rate) || getUsdToTomanRate();
+        return cachedRate;
 
-  return Math.round(
-    value * tomanRate
-  );
-};
+    }
 
-// =========================================================
-// ..M TOMAN TO USD
-// =========================================================
 
-export const convertTomanToUsd = (
-  toman,
-  rate = getUsdToTomanRate()
-) => {
-  const value = Number(toman) || 0;
+    // ---------------------------------
+    // API #1
+    // ---------------------------------
 
-  const tomanRate =
-    Number(rate) || getUsdToTomanRate();
+    try {
 
-  if (tomanRate <= 0) {
-    return 0;
-  }
+        const data =
+            await fetchJson(
+                "https://open.er-api.com/v6/latest/USD"
+            );
 
-  return value / tomanRate;
-};
 
-// =========================================================
-// ..M FORMAT USD
-// =========================================================
+        const rate =
+            Number(
+                data?.rates?.IRR
+            );
 
-export const formatUsd = (value) => {
-  const amount = Number(value) || 0;
 
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  }).format(amount);
-};
+        if (
+            Number.isFinite(rate) &&
+            rate > 0
+        ) {
 
-// =========================================================
-// ..M FORMAT USD - COMPATIBILITY
-// =========================================================
+            cachedRate =
+                rate;
 
-export const formatUSD = (value) => {
-  return formatUsd(value);
-};
+            cachedAt =
+                now;
 
-// =========================================================
-// ..M FORMAT IRR
-// =========================================================
+            return rate;
 
-export const formatIrr = (value) => {
-  const amount = Number(value) || 0;
+        }
 
-  return `${new Intl.NumberFormat("fa-IR").format(
-    Math.round(amount)
-  )} ریال`;
-};
+    }
 
-// =========================================================
-// ..M FORMAT IRR - COMPATIBILITY
-// =========================================================
+    catch (error) {
 
-export const formatIRR = (value) => {
-  return formatIrr(value);
-};
+        console.error(
+            "[CURRENCY] USD/IRR API error:",
+            error.message
+        );
 
-// =========================================================
-// ..M FORMAT TOMAN
-// =========================================================
+    }
 
-export const formatToman = (value) => {
-  const amount = Number(value) || 0;
 
-  return `${new Intl.NumberFormat("fa-IR").format(
-    Math.round(amount)
-  )} تومان`;
-};
+    // ---------------------------------
+    // Existing cache
+    // ---------------------------------
 
-// =========================================================
-// ..M WALLET DISPLAY VALUES
-// =========================================================
+    if (
+        cachedRate !== null &&
+        Number.isFinite(cachedRate)
+    ) {
 
-export const getWalletDisplayValues = ({
-  usd = 0,
-  rate = getUsdToTomanRate()
-} = {}) => {
-  const usdValue = Number(usd) || 0;
+        return cachedRate;
 
-  const tomanRate =
-    Number(rate) || getUsdToTomanRate();
+    }
 
-  const tomanValue =
-    convertUsdToToman(
-      usdValue,
-      tomanRate
+
+    // ---------------------------------
+    // No valid rate
+    // ---------------------------------
+
+    if (
+        DEFAULT_USD_IRR_RATE <= 0
+    ) {
+
+        throw new Error(
+            "USD/IRR exchange rate is unavailable"
+        );
+
+    }
+
+
+    return DEFAULT_USD_IRR_RATE;
+
+}
+
+
+// =====================================
+// USD -> IRR
+// =====================================
+
+export async function usdToIrr(
+    usd
+) {
+
+    const amount =
+        Number(usd);
+
+
+    if (
+        !Number.isFinite(amount)
+    ) {
+
+        throw new Error(
+            "Invalid USD amount"
+        );
+
+    }
+
+
+    const rate =
+        await getUsdIrrRate();
+
+
+    return amount * rate;
+
+}
+
+
+// =====================================
+// IRR -> USD
+// =====================================
+
+export async function irrToUsd(
+    irr
+) {
+
+    const amount =
+        Number(irr);
+
+
+    if (
+        !Number.isFinite(amount)
+    ) {
+
+        throw new Error(
+            "Invalid IRR amount"
+        );
+
+    }
+
+
+    const rate =
+        await getUsdIrrRate();
+
+
+    if (
+        !rate ||
+        rate <= 0
+    ) {
+
+        throw new Error(
+            "Invalid USD/IRR exchange rate"
+        );
+
+    }
+
+
+    return amount / rate;
+
+}
+
+
+// =====================================
+// USDT -> USD
+// =====================================
+
+export function usdtToUsd(
+    usdt
+) {
+
+    const amount =
+        Number(usdt);
+
+
+    if (
+        !Number.isFinite(amount)
+    ) {
+
+        throw new Error(
+            "Invalid USDT amount"
+        );
+
+    }
+
+
+    return (
+        amount *
+        DEFAULT_USDT_USD_RATE
     );
 
-  const irrValue =
-    tomanValue * 10;
+}
 
-  return {
-    usd: usdValue,
 
-    usdFormatted:
-      formatUSD(usdValue),
+// =====================================
+// USD -> USDT
+// =====================================
 
-    irr: irrValue,
+export function usdToUsdt(
+    usd
+) {
 
-    irrFormatted:
-      formatIrr(irrValue),
+    const amount =
+        Number(usd);
 
-    toman: tomanValue,
 
-    tomanFormatted:
-      formatToman(tomanValue),
+    if (
+        !Number.isFinite(amount)
+    ) {
 
-    exchangeRate:
-      getUsdToIrrRate(),
+        throw new Error(
+            "Invalid USD amount"
+        );
 
-    tomanPerUsd:
-      tomanRate
-  };
-};
+    }
 
-// =========================================================
-// ..M CURRENCY INFO
-// =========================================================
 
-export const getCurrencyInfo = () => {
-  const usdToIrrRate =
-    getUsdToIrrRate();
+    return (
+        amount /
+        DEFAULT_USDT_USD_RATE
+    );
 
-  const usdToTomanRate =
-    getUsdToTomanRate();
+}
 
-  return {
-    baseCurrency: "USD",
 
-    displayCurrency: "TOMAN",
+// =====================================
+// IRR -> USDT
+// =====================================
 
-    usdToIrrRate,
+export async function irrToUsdt(
+    irr
+) {
 
-    usdToTomanRate,
+    const usd =
+        await irrToUsd(
+            irr
+        );
 
-    tomanPerUsd:
-      usdToTomanRate,
 
-    tomanEnabled: true
-  };
-};
+    return usdToUsdt(
+        usd
+    );
 
-// =========================================================
-// ..M DEFAULT EXPORT
-// =========================================================
+}
+
+
+// =====================================
+// USDT -> IRR
+// =====================================
+
+export async function usdtToIrr(
+    usdt
+) {
+
+    const usd =
+        usdtToUsd(
+            usdt
+        );
+
+
+    return usdToIrr(
+        usd
+    );
+
+}
+
+
+// =====================================
+// Convert amount
+// =====================================
+
+export async function convertCurrency(
+    amount,
+    from,
+    to
+) {
+
+    const value =
+        Number(amount);
+
+
+    if (
+        !Number.isFinite(value)
+    ) {
+
+        throw new Error(
+            "Invalid amount"
+        );
+
+    }
+
+
+    const source =
+        String(from)
+            .toUpperCase()
+            .trim();
+
+
+    const target =
+        String(to)
+            .toUpperCase()
+            .trim();
+
+
+    // ---------------------------------
+    // Same currency
+    // ---------------------------------
+
+    if (
+        source === target
+    ) {
+
+        return value;
+
+    }
+
+
+    // ---------------------------------
+    // USD -> IRR
+    // ---------------------------------
+
+    if (
+        source === "USD" &&
+        target === "IRR"
+    ) {
+
+        return await usdToIrr(
+            value
+        );
+
+    }
+
+
+    // ---------------------------------
+    // IRR -> USD
+    // ---------------------------------
+
+    if (
+        source === "IRR" &&
+        target === "USD"
+    ) {
+
+        return await irrToUsd(
+            value
+        );
+
+    }
+
+
+    // ---------------------------------
+    // USDT -> USD
+    // ---------------------------------
+
+    if (
+        source === "USDT" &&
+        target === "USD"
+    ) {
+
+        return usdtToUsd(
+            value
+        );
+
+    }
+
+
+    // ---------------------------------
+    // USD -> USDT
+    // ---------------------------------
+
+    if (
+        source === "USD" &&
+        target === "USDT"
+    ) {
+
+        return usdToUsdt(
+            value
+        );
+
+    }
+
+
+    // ---------------------------------
+    // IRR -> USDT
+    // ---------------------------------
+
+    if (
+        source === "IRR" &&
+        target === "USDT"
+    ) {
+
+        return await irrToUsdt(
+            value
+        );
+
+    }
+
+
+    // ---------------------------------
+    // USDT -> IRR
+    // ---------------------------------
+
+    if (
+        source === "USDT" &&
+        target === "IRR"
+    ) {
+
+        return await usdtToIrr(
+            value
+        );
+
+    }
+
+
+    throw new Error(
+        `Unsupported currency conversion: ${source} -> ${target}`
+    );
+
+}
+
+
+// =====================================
+// Currency information
+// =====================================
+
+export async function getCurrencyInfo() {
+
+    const usdIrr =
+        await getUsdIrrRate();
+
+
+    return {
+
+        baseCurrency:
+            "USD",
+
+        tradingCurrency:
+            "USDT",
+
+        localCurrency:
+            "IRR",
+
+        usdtUsdRate:
+            DEFAULT_USDT_USD_RATE,
+
+        usdIrrRate:
+            usdIrr,
+
+        timestamp:
+            new Date().toISOString()
+
+    };
+
+}
+
+
+// =====================================
+// Clear cache
+// =====================================
+
+export function clearCurrencyCache() {
+
+    cachedRate =
+        null;
+
+    cachedAt =
+        0;
+
+}
+
+
+// =====================================
+// Default export
+// =====================================
 
 export default {
-  getUsdToIrrRate,
-  getUsdToTomanRate,
-  getTomanToUsdRate,
 
-  usdToIrr,
-  irrToUsd,
+    getUsdIrrRate,
 
-  convertUsdToToman,
-  convertTomanToUsd,
+    usdToIrr,
 
-  formatUsd,
-  formatUSD,
+    irrToUsd,
 
-  formatIrr,
-  formatIRR,
+    usdtToUsd,
 
-  formatToman,
+    usdToUsdt,
 
-  getWalletDisplayValues,
-  getCurrencyInfo
+    irrToUsdt,
+
+    usdtToIrr,
+
+    convertCurrency,
+
+    getCurrencyInfo,
+
+    clearCurrencyCache
+
 };
