@@ -10,10 +10,15 @@ import mongoose from "mongoose";
 
 import {
     createDeposit,
-    getUserDeposits
+    getUserDeposits,
+    getDepositById
 } from "../services/depositService.js";
 
-import Deposit from "../models/Deposit.js";
+import User from "../models/User.js";
+
+import {
+    requiredTelegramUser
+} from "../middleware/auth.js";
 
 
 const router =
@@ -21,20 +26,77 @@ const router =
 
 
 // =====================================
+// Helper: Find Telegram User
+// پیدا کردن کاربر از Telegram ID
+// =====================================
+
+async function getAuthenticatedUser(req) {
+
+    const telegramId =
+        req.telegramId ||
+        req.telegramUser?.id ||
+        req.user?.telegramId;
+
+
+    if (!telegramId) {
+
+        throw new Error(
+            "Telegram user is not authenticated"
+        );
+
+    }
+
+
+    const user =
+        await User.findOne({
+
+            telegramId:
+                String(telegramId)
+
+        });
+
+
+    if (!user) {
+
+        throw new Error(
+            "User not found"
+        );
+
+    }
+
+
+    return user;
+
+}
+
+
+// =====================================
 // CREATE DEPOSIT
 // ایجاد درخواست واریز
 // POST /api/deposit
 // =====================================
+//
+// نکته مهم:
+//
+// userId از Body به عنوان هویت کاربر
+// پذیرفته نمی‌شود.
+//
+// کاربر از Telegram Authentication
+// شناسایی می‌شود.
+// =====================================
 
 router.post(
     "/",
+    requiredTelegramUser,
     async (req, res) => {
 
         try {
 
-            const {
+            const user =
+                await getAuthenticatedUser(req);
 
-                userId,
+
+            const {
 
                 amountToman,
 
@@ -48,42 +110,8 @@ router.post(
 
 
             // =====================================
-            // بررسی اطلاعات
+            // بررسی مبلغ
             // =====================================
-
-            if (!userId) {
-
-                return res.status(400).json({
-
-                    success:
-                        false,
-
-                    message:
-                        "شناسه کاربر ارسال نشده است"
-
-                });
-
-            }
-
-
-            if (
-                !mongoose.Types.ObjectId.isValid(
-                    userId
-                )
-            ) {
-
-                return res.status(400).json({
-
-                    success:
-                        false,
-
-                    message:
-                        "شناسه کاربر نامعتبر است"
-
-                });
-
-            }
-
 
             if (
                 amountToman == null
@@ -101,6 +129,10 @@ router.post(
 
             }
 
+
+            // =====================================
+            // بررسی نرخ
+            // =====================================
 
             if (
                 exchangeRate == null
@@ -120,13 +152,14 @@ router.post(
 
 
             // =====================================
-            // ایجاد درخواست واریز
+            // ایجاد Deposit
             // =====================================
 
             const deposit =
                 await createDeposit({
 
-                    userId,
+                    userId:
+                        user._id,
 
                     amountToman,
 
@@ -219,58 +252,27 @@ router.post(
 
 
 // =====================================
-// GET USER DEPOSITS
-// دریافت لیست واریزهای کاربر
-// GET /api/deposit/user/:userId
+// GET MY DEPOSITS
+// دریافت واریزهای کاربر فعلی
+// GET /api/deposit/my
 // =====================================
 
 router.get(
-    "/user/:userId",
+    "/my",
+    requiredTelegramUser,
     async (req, res) => {
 
         try {
 
-            const {
-                userId
-            } = req.params;
+            const user =
+                await getAuthenticatedUser(req);
 
-
-            // =====================================
-            // بررسی شناسه کاربر
-            // =====================================
-
-            if (
-                !mongoose.Types.ObjectId.isValid(
-                    userId
-                )
-            ) {
-
-                return res.status(400).json({
-
-                    success:
-                        false,
-
-                    message:
-                        "شناسه کاربر نامعتبر است"
-
-                });
-
-            }
-
-
-            // =====================================
-            // دریافت واریزها
-            // =====================================
 
             const deposits =
                 await getUserDeposits(
-                    userId
+                    user._id
                 );
 
-
-            // =====================================
-            // پاسخ
-            // =====================================
 
             return res.status(200).json({
 
@@ -289,7 +291,7 @@ router.get(
         catch (error) {
 
             console.error(
-                "Get User Deposits Error:",
+                "Get My Deposits Error:",
                 error
             );
 
@@ -312,16 +314,21 @@ router.get(
 
 
 // =====================================
-// GET DEPOSIT STATUS
-// دریافت وضعیت یک واریز
+// GET MY DEPOSIT STATUS
+// دریافت وضعیت واریز خود کاربر
 // GET /api/deposit/:depositId
 // =====================================
 
 router.get(
     "/:depositId",
+    requiredTelegramUser,
     async (req, res) => {
 
         try {
+
+            const user =
+                await getAuthenticatedUser(req);
+
 
             const {
                 depositId
@@ -329,7 +336,7 @@ router.get(
 
 
             // =====================================
-            // بررسی شناسه واریز
+            // Validate Deposit ID
             // =====================================
 
             if (
@@ -352,32 +359,22 @@ router.get(
 
 
             // =====================================
-            // پیدا کردن واریز
+            // فقط واریز متعلق به همین کاربر
             // =====================================
 
             const deposit =
-                await Deposit.findById(
-                    depositId
-                );
+                await getDepositById({
 
+                    depositId,
 
-            if (!deposit) {
-
-                return res.status(404).json({
-
-                    success:
-                        false,
-
-                    message:
-                        "واریز پیدا نشد"
+                    userId:
+                        user._id
 
                 });
 
-            }
-
 
             // =====================================
-            // پاسخ وضعیت
+            // پاسخ
             // =====================================
 
             return res.status(200).json({
@@ -443,12 +440,22 @@ router.get(
             );
 
 
-            return res.status(500).json({
+            const statusCode =
+                error.message ===
+                "واریز پیدا نشد"
+                    ? 404
+                    : 500;
+
+
+            return res.status(
+                statusCode
+            ).json({
 
                 success:
                     false,
 
                 message:
+                    error.message ||
                     "دریافت وضعیت واریز ناموفق بود"
 
             });
