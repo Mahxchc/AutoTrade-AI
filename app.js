@@ -1,7 +1,6 @@
 // =====================================
-// AutoTrade AI Mini App :: M
+// ..M AutoTrade AI Mini App
 // File: MiniApp/app.js
-// Dashboard + Telegram Auth + API
 // =====================================
 
 
@@ -12,17 +11,12 @@
 const tg =
     window.Telegram?.WebApp;
 
-
-// =====================================
-// Telegram Ready
-// =====================================
-
 tg?.ready();
 tg?.expand();
 
 
 // =====================================
-// Backend URL
+// Backend
 // =====================================
 
 const BACKEND_URL =
@@ -30,7 +24,7 @@ const BACKEND_URL =
 
 
 // =====================================
-// Telegram InitData
+// Telegram Init Data
 // =====================================
 
 const telegramInitData =
@@ -41,72 +35,27 @@ const telegramInitData =
 // Application State
 // =====================================
 
-const appState = {
+let currentPage = "dashboard";
 
-    user: null,
+let currentUser = null;
 
-    wallet: null,
+let currentWallet = null;
 
-    trades: [],
+let currentBot = null;
 
-    bot: null,
+let currentTrades = [];
 
-    exchangeRate: 0,
-
-    authenticated: false
-
-};
+let usdToTomanRate = 0;
 
 
 // =====================================
-// Current Page
+// DOM Helper
 // =====================================
 
-let currentPage =
-    "dashboard";
+function $(id) {
 
+    return document.getElementById(id);
 
-// =====================================
-// Loading Screen
-// =====================================
-
-function showLoadingScreen() {
-
-    const loadingScreen =
-        document.getElementById(
-            "loading-screen"
-        );
-
-    if (!loadingScreen) {
-        return;
-    }
-
-    loadingScreen.classList.remove(
-        "hidden"
-    );
-
-    loadingScreen.style.display =
-        "flex";
-}
-
-
-function hideLoadingScreen() {
-
-    const loadingScreen =
-        document.getElementById(
-            "loading-screen"
-        );
-
-    if (!loadingScreen) {
-        return;
-    }
-
-    loadingScreen.classList.add(
-        "hidden"
-    );
-
-    loadingScreen.style.display =
-        "none";
 }
 
 
@@ -114,10 +63,7 @@ function hideLoadingScreen() {
 // Safe Number
 // =====================================
 
-function safeNumber(
-    value,
-    fallback = 0
-) {
+function numberValue(value, fallback = 0) {
 
     const number =
         Number(value);
@@ -125,6 +71,7 @@ function safeNumber(
     return Number.isFinite(number)
         ? number
         : fallback;
+
 }
 
 
@@ -132,12 +79,10 @@ function safeNumber(
 // Format USD
 // =====================================
 
-function formatUSD(
-    value
-) {
+function formatUSD(value) {
 
     const number =
-        safeNumber(value);
+        numberValue(value);
 
     return number.toLocaleString(
         "en-US",
@@ -151,19 +96,13 @@ function formatUSD(
 
 
 // =====================================
-// Format Integer
+// Format Number
 // =====================================
 
-function formatInteger(
-    value
-) {
+function formatNumber(value) {
 
-    const number =
-        safeNumber(value);
-
-    return number.toLocaleString(
-        "en-US"
-    );
+    return numberValue(value)
+        .toLocaleString("en-US");
 
 }
 
@@ -172,48 +111,50 @@ function formatInteger(
 // Format Toman
 // =====================================
 
-function formatTomanValue(
-    value
-) {
+function formatToman(value) {
 
-    const number =
-        safeNumber(value);
-
-    return number.toLocaleString(
-        "fa-IR",
-        {
-            maximumFractionDigits: 0
-        }
-    );
+    return numberValue(value)
+        .toLocaleString(
+            "fa-IR"
+        ) + " تومان";
 
 }
 
 
 // =====================================
-// USD To Toman
+// Loading Screen
 // =====================================
 
-function usdToToman(
-    usd
-) {
+function showLoadingScreen() {
 
-    const rate =
-        safeNumber(
-            appState.exchangeRate
-        );
+    const element =
+        $("loading-screen");
 
-    if (
-        rate <= 0
-    ) {
+    if (!element) return;
 
-        return 0;
-
-    }
-
-    return (
-        safeNumber(usd) *
-        rate
+    element.classList.remove(
+        "hidden"
     );
+
+    element.style.display =
+        "flex";
+
+}
+
+
+function hideLoadingScreen() {
+
+    const element =
+        $("loading-screen");
+
+    if (!element) return;
+
+    element.classList.add(
+        "hidden"
+    );
+
+    element.style.display =
+        "none";
 
 }
 
@@ -244,16 +185,13 @@ async function apiFetch(
         await fetch(
             `${BACKEND_URL}${endpoint}`,
             {
-
                 ...options,
-
                 headers
-
             }
         );
 
 
-    let data;
+    let data = null;
 
 
     try {
@@ -263,7 +201,7 @@ async function apiFetch(
 
     }
 
-    catch (error) {
+    catch {
 
         throw new Error(
             "Backend returned an invalid response."
@@ -275,10 +213,8 @@ async function apiFetch(
     if (!response.ok) {
 
         throw new Error(
-
             data?.message ||
-            `API request failed (${response.status})`
-
+            `API error ${response.status}`
         );
 
     }
@@ -307,18 +243,10 @@ async function authenticateTelegram() {
     if (!telegramInitData) {
 
         throw new Error(
-
-            "Telegram authentication data is missing. " +
-            "Please open the Mini App inside Telegram."
-
+            "Telegram authentication data is missing."
         );
 
     }
-
-
-    console.log(
-        "🔐 Authenticating Telegram..."
-    );
 
 
     const result =
@@ -333,31 +261,15 @@ async function authenticateTelegram() {
     if (
         !result ||
         !result.success ||
-        !result.authenticated ||
         !result.user
     ) {
 
         throw new Error(
-
             result?.message ||
             "Telegram authentication failed."
-
         );
 
     }
-
-
-    console.log(
-        "✅ Telegram authentication successful",
-        result.user
-    );
-
-
-    appState.user =
-        result.user;
-
-    appState.authenticated =
-        true;
 
 
     return result.user;
@@ -366,161 +278,1070 @@ async function authenticateTelegram() {
 
 
 // =====================================
-// Get User ID
+// Currency
 // =====================================
 
-function getUserId(
-    user
+async function loadCurrencyRate() {
+
+    try {
+
+        const result =
+            await apiFetch(
+                "/api/currency/usd-toman"
+            );
+
+
+        usdToTomanRate =
+            numberValue(
+                result?.currency?.usdToTomanRate
+            );
+
+
+        console.log(
+            "💱 USD/Toman:",
+            usdToTomanRate
+        );
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Currency error:",
+            error
+        );
+
+        usdToTomanRate = 0;
+
+    }
+
+}
+
+
+// =====================================
+// USD → Toman
+// =====================================
+
+function usdToToman(
+    usd
 ) {
 
-    if (!user) {
-        return null;
+    if (
+        !usdToTomanRate
+    ) {
+
+        return 0;
+
     }
 
 
     return (
-
-        user._id ||
-        user.id ||
-        user.userId ||
-        user.telegramId
-
+        numberValue(usd) *
+        usdToTomanRate
     );
 
 }
 
 
 // =====================================
-// PAGE NAVIGATION
+// Load Wallet
+// =====================================
+
+async function loadWallet(
+    userId
+) {
+
+    if (!userId) {
+
+        console.warn(
+            "Wallet skipped: userId missing"
+        );
+
+        return null;
+
+    }
+
+
+    try {
+
+        const result =
+            await apiFetch(
+                `/api/wallet/${encodeURIComponent(userId)}`
+            );
+
+
+        if (
+            result?.success &&
+            result?.wallet
+        ) {
+
+            currentWallet =
+                result.wallet;
+
+            console.log(
+                "💰 Wallet:",
+                currentWallet
+            );
+
+            updateWalletUI(
+                currentWallet
+            );
+
+            return currentWallet;
+
+        }
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Wallet error:",
+            error
+        );
+
+    }
+
+
+    return null;
+
+}
+
+
+// =====================================
+// Update Wallet UI
+// =====================================
+
+function updateWalletUI(
+    wallet
+) {
+
+    if (!wallet) return;
+
+
+    const balance =
+        numberValue(
+            wallet.balanceUSD
+        );
+
+
+    const profit =
+        numberValue(
+            wallet.totalProfitUSD
+        );
+
+
+    const withdrawable =
+        numberValue(
+            wallet.withdrawableUSD
+        );
+
+
+    // ---------------------------------
+    // Dashboard Balance
+    // ---------------------------------
+
+    if ($("dashboard-balance-usd")) {
+
+        $("dashboard-balance-usd")
+            .textContent =
+            formatUSD(balance);
+
+    }
+
+
+    if ($("dashboard-balance-irr")) {
+
+        const toman =
+            wallet.balanceToman ??
+            usdToToman(balance);
+
+        $("dashboard-balance-irr")
+            .textContent =
+            `معادل تومان: ${formatToman(toman)}`;
+
+    }
+
+
+    // ---------------------------------
+    // Wallet
+    // ---------------------------------
+
+    if ($("wallet-balance-usd")) {
+
+        $("wallet-balance-usd")
+            .textContent =
+            formatUSD(balance);
+
+    }
+
+
+    if ($("wallet-balance-irr")) {
+
+        const toman =
+            wallet.balanceToman ??
+            usdToToman(balance);
+
+        $("wallet-balance-irr")
+            .textContent =
+            `معادل تومان: ${formatToman(toman)}`;
+
+    }
+
+
+    if ($("wallet-available-usd")) {
+
+        $("wallet-available-usd")
+            .textContent =
+            formatUSD(withdrawable);
+
+    }
+
+
+    if ($("wallet-available-irr")) {
+
+        const toman =
+            wallet.withdrawableToman ??
+            usdToToman(withdrawable);
+
+        $("wallet-available-irr")
+            .textContent =
+            `معادل تومان: ${formatToman(toman)}`;
+
+    }
+
+
+    // ---------------------------------
+    // Dashboard Profit
+    // ---------------------------------
+
+    if ($("total-profit-usd")) {
+
+        $("total-profit-usd")
+            .textContent =
+            `$${formatUSD(profit)}`;
+
+    }
+
+
+    if ($("total-profit-irr")) {
+
+        const toman =
+            wallet.totalProfitToman ??
+            usdToToman(profit);
+
+        $("total-profit-irr")
+            .textContent =
+            `معادل تومان: ${formatToman(toman)}`;
+
+    }
+
+
+    // ---------------------------------
+    // Trades Count
+    // ---------------------------------
+
+    if ($("total-trades")) {
+
+        $("total-trades")
+            .textContent =
+            formatNumber(
+                wallet.totalTrades
+            );
+
+    }
+
+
+    // ---------------------------------
+    // Wallet Summary
+    // ---------------------------------
+
+    if ($("wallet-summary-balance")) {
+
+        $("wallet-summary-balance")
+            .textContent =
+            `$${formatUSD(balance)}`;
+
+    }
+
+
+    if ($("wallet-summary-profit")) {
+
+        $("wallet-summary-profit")
+            .textContent =
+            `$${formatUSD(profit)}`;
+
+    }
+
+
+    if ($("wallet-summary-total")) {
+
+        $("wallet-summary-total")
+            .textContent =
+            `$${formatUSD(balance + profit)}`;
+
+    }
+
+
+    // ---------------------------------
+    // Withdraw
+    // ---------------------------------
+
+    if ($("withdraw-available-usd")) {
+
+        $("withdraw-available-usd")
+            .textContent =
+            formatUSD(withdrawable);
+
+    }
+
+
+    if ($("withdraw-available-irr")) {
+
+        $("withdraw-available-irr")
+            .textContent =
+            `معادل تومان: ${formatToman(
+                usdToToman(withdrawable)
+            )}`;
+
+    }
+
+
+}
+
+
+// =====================================
+// Load Bot
+// =====================================
+
+async function loadBot(
+    userId
+) {
+
+    if (!userId) return null;
+
+
+    try {
+
+        const result =
+            await apiFetch(
+                `/api/bot/${encodeURIComponent(userId)}`
+            );
+
+
+        if (
+            result?.success &&
+            result?.bot
+        ) {
+
+            currentBot =
+                result.bot;
+
+            console.log(
+                "🤖 Bot:",
+                currentBot
+            );
+
+            updateBotUI(
+                currentBot
+            );
+
+            return currentBot;
+
+        }
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Bot error:",
+            error
+        );
+
+    }
+
+
+    return null;
+
+}
+
+
+// =====================================
+// Update Bot UI
+// =====================================
+
+function updateBotUI(
+    bot
+) {
+
+    if (!bot) return;
+
+
+    const strategy =
+        bot.strategy ||
+        "AI Scalping";
+
+
+    const status =
+        bot.status ||
+        "STOPPED";
+
+
+    const accuracy =
+        numberValue(
+            bot.accuracy
+        );
+
+
+    // ---------------------------------
+    // Strategy
+    // ---------------------------------
+
+    if ($("ai-strategy")) {
+
+        $("ai-strategy")
+            .textContent =
+            strategy;
+
+    }
+
+
+    // ---------------------------------
+    // Accuracy
+    // ---------------------------------
+
+    if ($("ai-accuracy")) {
+
+        $("ai-accuracy")
+            .textContent =
+            `${formatNumber(accuracy)}%`;
+
+    }
+
+
+    // ---------------------------------
+    // Status
+    // ---------------------------------
+
+    if ($("ai-status")) {
+
+        $("ai-status")
+            .textContent =
+            status === "ACTIVE"
+                ? "فعال"
+                : status === "PAUSED"
+                    ? "متوقف موقت"
+                    : "متوقف";
+
+    }
+
+
+    if ($("ai-mode")) {
+
+        $("ai-mode")
+            .textContent =
+            status === "ACTIVE"
+                ? "در حال معامله"
+                : "آماده";
+
+    }
+
+
+    // ---------------------------------
+    // Trading Button
+    // ---------------------------------
+
+    const button =
+        $("ai-trading-button");
+
+
+    if (!button) return;
+
+
+    if (
+        status === "ACTIVE"
+    ) {
+
+        button.textContent =
+            "توقف معاملات AI";
+
+        button.dataset.botState =
+            "active";
+
+    }
+
+    else {
+
+        button.textContent =
+            "شروع معاملات AI";
+
+        button.dataset.botState =
+            "stopped";
+
+    }
+
+}
+
+
+// =====================================
+// Start / Stop Bot
+// =====================================
+
+async function toggleBot() {
+
+    if (!currentUser) {
+
+        showToast(
+            "کاربر احراز هویت نشده است."
+        );
+
+        return;
+
+    }
+
+
+    const userId =
+        currentUser._id ||
+        currentUser.id;
+
+
+    if (!userId) {
+
+        showToast(
+            "شناسه کاربر پیدا نشد."
+        );
+
+        return;
+
+    }
+
+
+    const button =
+        $("ai-trading-button");
+
+
+    if (button) {
+
+        button.disabled =
+            true;
+
+    }
+
+
+    try {
+
+        const active =
+            currentBot?.status ===
+            "ACTIVE";
+
+
+        const endpoint =
+            active
+                ? `/api/bot/stop/${encodeURIComponent(userId)}`
+                : `/api/bot/start/${encodeURIComponent(userId)}`;
+
+
+        const result =
+            await apiFetch(
+                endpoint,
+                {
+                    method: "POST"
+                }
+            );
+
+
+        if (
+            result?.success
+        ) {
+
+            currentBot =
+                result.bot ||
+                currentBot;
+
+            updateBotUI(
+                currentBot
+            );
+
+
+            showToast(
+                active
+                    ? "معاملات AI متوقف شد."
+                    : "معاملات AI شروع شد."
+            );
+
+        }
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Bot toggle error:",
+            error
+        );
+
+
+        showToast(
+            error.message ||
+            "عملیات ربات انجام نشد."
+        );
+
+    }
+
+    finally {
+
+        if (button) {
+
+            button.disabled =
+                false;
+
+        }
+
+    }
+
+}
+
+
+// =====================================
+// Load Trades
+// =====================================
+
+async function loadTrades(
+    userId
+) {
+
+    if (!userId) return;
+
+
+    try {
+
+        const result =
+            await apiFetch(
+                `/api/trades/${encodeURIComponent(userId)}`
+            );
+
+
+        const trades =
+            Array.isArray(result)
+                ? result
+                : Array.isArray(result?.trades)
+                    ? result.trades
+                    : [];
+
+
+        currentTrades =
+            trades;
+
+
+        renderDashboardTrades(
+            trades
+        );
+
+
+        renderTrades(
+            trades
+        );
+
+
+        calculateSuccessRate(
+            trades
+        );
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Trades error:",
+            error
+        );
+
+    }
+
+}
+
+
+// =====================================
+// Success Rate
+// =====================================
+
+function calculateSuccessRate(
+    trades
+) {
+
+    const element =
+        $("success-rate");
+
+
+    if (!element) return;
+
+
+    const closed =
+        trades.filter(
+            trade =>
+                String(
+                    trade.status || ""
+                ).toUpperCase() ===
+                "CLOSED"
+        );
+
+
+    if (!closed.length) {
+
+        element.textContent =
+            "0%";
+
+        return;
+
+    }
+
+
+    const wins =
+        closed.filter(
+            trade =>
+                numberValue(
+                    trade.profit
+                ) > 0
+        );
+
+
+    const rate =
+        (
+            wins.length /
+            closed.length
+        ) * 100;
+
+
+    element.textContent =
+        `${rate.toFixed(0)}%`;
+
+}
+
+
+// =====================================
+// Dashboard Trades
+// =====================================
+
+function renderDashboardTrades(
+    trades
+) {
+
+    const container =
+        $("dashboard-trades");
+
+
+    if (!container) return;
+
+
+    if (!trades.length) {
+
+        container.innerHTML = `
+            <div class="empty-icon">—</div>
+            <p>هنوز اطلاعات معاملاتی دریافت نشده است.</p>
+        `;
+
+        return;
+
+    }
+
+
+    const recent =
+        trades.slice(
+            0,
+            3
+        );
+
+
+    container.classList.remove(
+        "empty-state"
+    );
+
+
+    container.innerHTML =
+        recent.map(
+            trade => {
+
+                const symbol =
+                    trade.symbol ||
+                    "نامشخص";
+
+
+                const type =
+                    trade.type ||
+                    "WAIT";
+
+
+                const profit =
+                    numberValue(
+                        trade.profit
+                    );
+
+
+                return `
+                    <div class="trade-row">
+                        <strong>${symbol}</strong>
+                        <span>${type}</span>
+                        <strong>
+                            ${profit >= 0 ? "+" : ""}
+                            $${formatUSD(profit)}
+                        </strong>
+                    </div>
+                `;
+
+            }
+        ).join("");
+
+}
+
+
+// =====================================
+// Trades Page
+// =====================================
+
+function renderTrades(
+    trades
+) {
+
+    const container =
+        $("trades-list");
+
+
+    if (!container) return;
+
+
+    if (!trades.length) {
+
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon">—</div>
+                <p>معامله‌ای برای نمایش وجود ندارد.</p>
+            </div>
+        `;
+
+        return;
+
+    }
+
+
+    container.innerHTML =
+        trades.map(
+            trade => {
+
+                const symbol =
+                    trade.symbol ||
+                    "نامشخص";
+
+
+                const type =
+                    trade.type ||
+                    "—";
+
+
+                const status =
+                    trade.status ||
+                    "—";
+
+
+                const profit =
+                    numberValue(
+                        trade.profit
+                    );
+
+
+                return `
+                    <div class="trade-row">
+                        <strong>${symbol}</strong>
+                        <span>${type}</span>
+                        <span>${status}</span>
+                        <strong>
+                            ${profit >= 0 ? "+" : ""}
+                            $${formatUSD(profit)}
+                        </strong>
+                    </div>
+                `;
+
+            }
+        ).join("");
+
+}
+
+
+// =====================================
+// Profile UI
+// =====================================
+
+function updateProfileUI(
+    user
+) {
+
+    if (!user) return;
+
+
+    const firstName =
+        user.firstName ||
+        user.first_name ||
+        "کاربر";
+
+
+    const lastName =
+        user.lastName ||
+        user.last_name ||
+        "";
+
+
+    const fullName =
+        `${firstName} ${lastName}`
+            .trim();
+
+
+    const username =
+        user.username
+            ? `@${String(
+                user.username
+            ).replace(
+                /^@/,
+                ""
+            )}`
+            : "بدون نام کاربری";
+
+
+    // ---------------------------------
+    // Name
+    // ---------------------------------
+
+    if ($("profile-name")) {
+
+        $("profile-name")
+            .textContent =
+            fullName;
+
+    }
+
+
+    // ---------------------------------
+    // Username
+    // ---------------------------------
+
+    if ($("profile-username")) {
+
+        $("profile-username")
+            .textContent =
+            username;
+
+    }
+
+
+    // ---------------------------------
+    // Avatar
+    // ---------------------------------
+
+    if ($("profile-avatar")) {
+
+        $("profile-avatar")
+            .textContent =
+            firstName
+                .charAt(0)
+                .toUpperCase();
+
+    }
+
+
+    // ---------------------------------
+    // Status
+    // ---------------------------------
+
+    if ($("profile-status")) {
+
+        const active =
+            user.status ===
+            "ACTIVE";
+
+
+        $("profile-status")
+            .textContent =
+            active
+                ? "فعال"
+                : "در انتظار تأیید";
+
+    }
+
+}
+
+
+// =====================================
+// Navigation
 // =====================================
 
 function showPage(
     pageName
 ) {
 
-    if (!pageName) {
-        return;
-    }
+    const target =
+        $(`page-${pageName}`);
 
 
-    console.log(
-        "📄 Opening page:",
-        pageName
-    );
+    if (!target) return;
 
 
-    const targetPage =
-        document.getElementById(
-            `page-${pageName}`
+    document
+        .querySelectorAll(".page")
+        .forEach(
+            page => {
+
+                page.classList.remove(
+                    "active"
+                );
+
+                page.style.display =
+                    "none";
+
+            }
         );
 
 
-    if (!targetPage) {
-
-        console.warn(
-            `Page not found: page-${pageName}`
-        );
-
-        return;
-
-    }
-
-
-    const pages =
-        document.querySelectorAll(
-            ".page"
-        );
-
-
-    pages.forEach(
-        page => {
-
-            page.classList.remove(
-                "active"
-            );
-
-            page.style.display =
-                "none";
-
-        }
-    );
-
-
-    targetPage.classList.add(
+    target.classList.add(
         "active"
     );
 
-    targetPage.style.display =
+    target.style.display =
         "block";
 
 
-    const navItems =
-        document.querySelectorAll(
+    document
+        .querySelectorAll(
             ".nav-item[data-page]"
-        );
+        )
+        .forEach(
+            item => {
 
-
-    navItems.forEach(
-        item => {
-
-            if (
-                item.dataset.page ===
-                pageName
-            ) {
-
-                item.classList.add(
-                    "active"
+                item.classList.toggle(
+                    "active",
+                    item.dataset.page ===
+                    pageName
                 );
 
             }
-
-            else {
-
-                item.classList.remove(
-                    "active"
-                );
-
-            }
-
-        }
-    );
-
-
-    const pageTitle =
-        document.getElementById(
-            "page-title"
         );
 
 
     const titles = {
 
-        dashboard:
-            "داشبورد",
-
-        wallet:
-            "کیف پول",
-
-        trades:
-            "معاملات",
-
-        analytics:
-            "تحلیل‌ها",
-
-        notifications:
-            "اعلان‌ها",
-
-        profile:
-            "پروفایل",
-
-        withdraw:
-            "برداشت"
+        dashboard: "داشبورد",
+        wallet: "کیف پول",
+        trades: "معاملات",
+        analytics: "تحلیل‌ها",
+        notifications: "اعلان‌ها",
+        profile: "پروفایل",
+        withdraw: "برداشت"
 
     };
 
 
-    if (pageTitle) {
+    if ($("page-title")) {
 
-        pageTitle.textContent =
+        $("page-title")
+            .textContent =
             titles[pageName] ||
             "AutoTrade AI";
 
@@ -529,20 +1350,6 @@ function showPage(
 
     currentPage =
         pageName;
-
-
-    const mainContent =
-        document.getElementById(
-            "main-content"
-        );
-
-
-    if (mainContent) {
-
-        mainContent.scrollTop =
-            0;
-
-    }
 
 
     window.scrollTo(
@@ -554,117 +1361,125 @@ function showPage(
 
 
 // =====================================
-// Navigation
+// Navigation Events
 // =====================================
 
 function initializeNavigation() {
 
-    console.log(
-        "🧭 Initializing navigation..."
-    );
+    document
+        .querySelectorAll(
+            "[data-page]"
+        )
+        .forEach(
+            element => {
+
+                element.addEventListener(
+                    "click",
+                    event => {
+
+                        event.preventDefault();
+
+                        event.stopPropagation();
 
 
-    const navItems =
-        document.querySelectorAll(
-            ".nav-item[data-page]"
-        );
+                        const page =
+                            element.dataset.page;
 
 
-    navItems.forEach(
-        button => {
+                        if (page) {
 
-            button.addEventListener(
-                "click",
-                function (event) {
+                            showPage(
+                                page
+                            );
 
-                    event.preventDefault();
-                    event.stopPropagation();
-
-
-                    const page =
-                        this.dataset.page;
-
-
-                    if (page) {
-
-                        showPage(
-                            page
-                        );
+                        }
 
                     }
+                );
 
-                }
-            );
-
-        }
-    );
-
-
-    const pageButtons =
-        document.querySelectorAll(
-            "[data-page]:not(.nav-item)"
+            }
         );
-
-
-    pageButtons.forEach(
-        button => {
-
-            button.addEventListener(
-                "click",
-                function (event) {
-
-                    event.preventDefault();
-
-
-                    const page =
-                        this.dataset.page;
-
-
-                    if (page) {
-
-                        showPage(
-                            page
-                        );
-
-                    }
-
-                }
-            );
-
-        }
-    );
 
 
     showPage(
         currentPage
     );
 
+}
 
-    console.log(
-        "✅ Navigation initialized"
-    );
+
+// =====================================
+// Profile Buttons
+// =====================================
+
+function initializeProfileButtons() {
+
+    document
+        .querySelectorAll(
+            "[data-profile-action]"
+        )
+        .forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    event => {
+
+                        event.preventDefault();
+
+
+                        const action =
+                            button.dataset.profileAction;
+
+
+                        const messages = {
+
+                            account:
+                                "اطلاعات حساب کاربری در حال آماده‌سازی است.",
+
+                            security:
+                                "تنظیمات امنیتی در حال آماده‌سازی است.",
+
+                            referral:
+                                "برنامه معرفی دوستان در حال آماده‌سازی است.",
+
+                            support:
+                                "بخش پشتیبانی در حال آماده‌سازی است.",
+
+                            about:
+                                "AutoTrade AI — پلتفرم معاملات هوشمند."
+
+                        };
+
+
+                        showToast(
+                            messages[action] ||
+                            "این بخش به‌زودی آماده می‌شود."
+                        );
+
+                    }
+                );
+
+            }
+        );
 
 }
 
 
 // =====================================
-// Header Back Button
+// Header Back
 // =====================================
 
 function initializeBackButton() {
 
-    const backButton =
-        document.getElementById(
-            "header-back"
-        );
+    const button =
+        $("header-back");
 
 
-    if (!backButton) {
-        return;
-    }
+    if (!button) return;
 
 
-    backButton.addEventListener(
+    button.addEventListener(
         "click",
         () => {
 
@@ -679,108 +1494,145 @@ function initializeBackButton() {
 
 
 // =====================================
-// Notification Button
+// Notifications
 // =====================================
 
-function initializeNotificationButton() {
+function initializeNotifications() {
 
     const button =
-        document.getElementById(
-            "notification-button"
+        $("notification-button");
+
+
+    if (button) {
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                showPage(
+                    "notifications"
+                );
+
+            }
         );
 
-
-    if (!button) {
-        return;
     }
 
 
-    button.addEventListener(
-        "click",
-        () => {
+    const markRead =
+        $("mark-notifications-read");
 
-            showPage(
-                "notifications"
-            );
 
-        }
-    );
+    if (markRead) {
+
+        markRead.addEventListener(
+            "click",
+            () => {
+
+                const badge =
+                    $("notification-badge");
+
+
+                if (badge) {
+
+                    badge.classList.add(
+                        "hidden"
+                    );
+
+                }
+
+
+                showToast(
+                    "همه اعلان‌ها خوانده شدند."
+                );
+
+            }
+        );
+
+    }
 
 }
 
 
 // =====================================
-// Dashboard Actions
+// Actions
 // =====================================
 
 function initializeActions() {
 
-    const actionButtons =
-        document.querySelectorAll(
+    document
+        .querySelectorAll(
             "[data-action]"
-        );
+        )
+        .forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    () => {
+
+                        const action =
+                            button.dataset.action;
 
 
-    actionButtons.forEach(
-        button => {
-
-            button.addEventListener(
-                "click",
-                function () {
-
-                    const action =
-                        this.dataset.action;
-
-
-                    console.log(
-                        "Action:",
-                        action
-                    );
-
-
-                    switch (action) {
-
-                        case "deposit":
-
-                            showToast(
-                                "صفحه افزایش موجودی به‌زودی آماده می‌شود."
-                            );
-
-                            break;
-
-
-                        case "withdraw":
+                        if (
+                            action ===
+                            "withdraw"
+                        ) {
 
                             showPage(
                                 "withdraw"
                             );
 
-                            break;
+                            return;
+
+                        }
 
 
-                        case "transfer":
+                        if (
+                            action ===
+                            "deposit"
+                        ) {
 
                             showToast(
-                                "صفحه انتقال به‌زودی آماده می‌شود."
+                                "بخش واریز به‌زودی فعال می‌شود."
                             );
 
-                            break;
+                            return;
+
+                        }
 
 
-                        default:
+                        if (
+                            action ===
+                            "transfer"
+                        ) {
 
-                            console.log(
-                                "Unknown action:",
-                                action
+                            showToast(
+                                "بخش انتقال به‌زودی فعال می‌شود."
                             );
+
+                        }
 
                     }
+                );
 
-                }
-            );
+            }
+        );
 
-        }
-    );
+
+    const botButton =
+        $("ai-trading-button");
+
+
+    if (botButton) {
+
+        botButton.addEventListener(
+            "click",
+            toggleBot
+        );
+
+    }
 
 }
 
@@ -794,27 +1646,21 @@ function showToast(
 ) {
 
     const toast =
-        document.getElementById(
-            "toast"
-        );
-
-    const toastMessage =
-        document.getElementById(
-            "toast-message"
-        );
+        $("toast");
 
 
-    if (
-        !toast ||
-        !toastMessage
-    ) {
+    const text =
+        $("toast-message");
+
+
+    if (!toast || !text) {
 
         return;
 
     }
 
 
-    toastMessage.textContent =
+    text.textContent =
         message;
 
 
@@ -838,1313 +1684,7 @@ function showToast(
 
 
 // =====================================
-// Load Wallet
-// =====================================
-
-async function loadWallet(
-    userId
-) {
-
-    if (!userId) {
-
-        console.warn(
-            "⚠️ User ID unavailable for wallet."
-        );
-
-        return null;
-
-    }
-
-
-    try {
-
-        const data =
-            await apiFetch(
-                `/api/wallet/${encodeURIComponent(userId)}`
-            );
-
-
-        console.log(
-            "💰 Wallet:",
-            data
-        );
-
-
-        const wallet =
-            data?.wallet ||
-            data?.data ||
-            data;
-
-
-        appState.wallet =
-            wallet || null;
-
-
-        return wallet;
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "❌ Wallet loading failed:",
-            error
-        );
-
-
-        return null;
-
-    }
-
-}
-
-
-// =====================================
-// Load Trades
-// =====================================
-
-async function loadTrades(
-    userId
-) {
-
-    if (!userId) {
-
-        return [];
-
-    }
-
-
-    try {
-
-        const data =
-            await apiFetch(
-                `/api/trades/${encodeURIComponent(userId)}`
-            );
-
-
-        console.log(
-            "📊 Trades:",
-            data
-        );
-
-
-        let trades =
-            data?.trades ||
-            data?.data ||
-            data;
-
-
-        if (!Array.isArray(trades)) {
-
-            trades = [];
-
-        }
-
-
-        appState.trades =
-            trades;
-
-
-        return trades;
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "❌ Trades loading failed:",
-            error
-        );
-
-
-        appState.trades =
-            [];
-
-
-        return [];
-
-    }
-
-}
-
-
-// =====================================
-// Load Bot
-// =====================================
-
-async function loadBot(
-    userId
-) {
-
-    if (!userId) {
-
-        return null;
-
-    }
-
-
-    try {
-
-        const data =
-            await apiFetch(
-                `/api/bot/${encodeURIComponent(userId)}`
-            );
-
-
-        console.log(
-            "🤖 Bot:",
-            data
-        );
-
-
-        const bot =
-            data?.bot ||
-            data?.data ||
-            data;
-
-
-        appState.bot =
-            bot || null;
-
-
-        return bot;
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "❌ Bot loading failed:",
-            error
-        );
-
-
-        return null;
-
-    }
-
-}
-
-
-// =====================================
-// Load Exchange Rate
-// =====================================
-
-async function loadExchangeRate() {
-
-    try {
-
-        const data =
-            await apiFetch(
-                "/api/currency/exchange-rate"
-            );
-
-
-        console.log(
-            "💱 Exchange rate:",
-            data
-        );
-
-
-        const rate =
-            data?.rate ||
-            data?.exchangeRate ||
-            data?.usdToToman ||
-            data?.usdToIrr ||
-            data?.data?.rate ||
-            data?.data?.exchangeRate;
-
-
-        const numericRate =
-            safeNumber(
-                rate
-            );
-
-
-        if (
-            numericRate > 0
-        ) {
-
-            appState.exchangeRate =
-                numericRate;
-
-        }
-
-
-        return appState.exchangeRate;
-
-    }
-
-    catch (error) {
-
-        console.warn(
-            "⚠️ Exchange rate unavailable:",
-            error
-        );
-
-
-        appState.exchangeRate =
-            0;
-
-
-        return 0;
-
-    }
-
-}
-
-
-// =====================================
-// Get Wallet Balance
-// =====================================
-
-function getWalletBalance(
-    wallet
-) {
-
-    if (!wallet) {
-        return 0;
-    }
-
-
-    return safeNumber(
-
-        wallet.balance ??
-        wallet.balanceUSDT ??
-        wallet.usdtBalance ??
-        wallet.amount ??
-        0
-
-    );
-
-}
-
-
-// =====================================
-// Get Wallet Profit
-// =====================================
-
-function getWalletProfit(
-    wallet
-) {
-
-    if (!wallet) {
-        return 0;
-    }
-
-
-    return safeNumber(
-
-        wallet.totalProfit ??
-        wallet.profit ??
-        wallet.total_profit ??
-        0
-
-    );
-
-}
-
-
-// =====================================
-// Get Available Balance
-// =====================================
-
-function getAvailableBalance(
-    wallet
-) {
-
-    if (!wallet) {
-        return 0;
-    }
-
-
-    return safeNumber(
-
-        wallet.withdrawable ??
-        wallet.available ??
-        wallet.availableBalance ??
-        wallet.balance ??
-        0
-
-    );
-
-}
-
-
-// =====================================
-// Calculate Trade Profit
-// =====================================
-
-function getTradeProfit(
-    trade
-) {
-
-    if (!trade) {
-        return 0;
-    }
-
-
-    return safeNumber(
-
-        trade.profit ??
-        trade.pnl ??
-        trade.profitLoss ??
-        0
-
-    );
-
-}
-
-
-// =====================================
-// Calculate Total Profit
-// =====================================
-
-function calculateTotalProfit(
-    trades
-) {
-
-    if (
-        !Array.isArray(trades)
-    ) {
-
-        return 0;
-
-    }
-
-
-    return trades.reduce(
-        (
-            total,
-            trade
-        ) => {
-
-            return (
-                total +
-                getTradeProfit(
-                    trade
-                )
-            );
-
-        },
-        0
-    );
-
-}
-
-
-// =====================================
-// Calculate Today Profit
-// =====================================
-
-function calculateTodayProfit(
-    trades
-) {
-
-    if (
-        !Array.isArray(trades)
-    ) {
-
-        return 0;
-
-    }
-
-
-    const now =
-        new Date();
-
-
-    const year =
-        now.getFullYear();
-
-    const month =
-        now.getMonth();
-
-    const day =
-        now.getDate();
-
-
-    return trades.reduce(
-        (
-            total,
-            trade
-        ) => {
-
-            const dateValue =
-
-                trade.closedAt ||
-                trade.updatedAt ||
-                trade.createdAt ||
-                trade.date;
-
-
-            if (!dateValue) {
-
-                return total;
-
-            }
-
-
-            const date =
-                new Date(
-                    dateValue
-                );
-
-
-            if (
-                Number.isNaN(
-                    date.getTime()
-                )
-            ) {
-
-                return total;
-
-            }
-
-
-            if (
-                date.getFullYear() ===
-                year &&
-                date.getMonth() ===
-                month &&
-                date.getDate() ===
-                day
-            ) {
-
-                return (
-                    total +
-                    getTradeProfit(
-                        trade
-                    )
-                );
-
-            }
-
-
-            return total;
-
-        },
-        0
-    );
-
-}
-
-
-// =====================================
-// Calculate Success Rate
-// =====================================
-
-function calculateSuccessRate(
-    trades
-) {
-
-    if (
-        !Array.isArray(trades) ||
-        trades.length === 0
-    ) {
-
-        return 0;
-
-    }
-
-
-    const closedTrades =
-        trades.filter(
-            trade => {
-
-                return (
-                    String(
-                        trade.status ||
-                        ""
-                    ).toUpperCase() ===
-                    "CLOSED"
-                );
-
-            }
-        );
-
-
-    if (
-        closedTrades.length === 0
-    ) {
-
-        return 0;
-
-    }
-
-
-    const successfulTrades =
-        closedTrades.filter(
-            trade => {
-
-                return (
-                    getTradeProfit(
-                        trade
-                    ) > 0
-                );
-
-            }
-        );
-
-
-    return (
-        successfulTrades.length /
-        closedTrades.length *
-        100
-    );
-
-}
-
-
-// =====================================
-// Update Dashboard
-// =====================================
-
-function updateDashboard() {
-
-    const wallet =
-        appState.wallet || {};
-
-    const trades =
-        appState.trades || [];
-
-    const bot =
-        appState.bot || {};
-
-
-    // ---------------------------------
-    // Wallet
-    // ---------------------------------
-
-    const balance =
-        getWalletBalance(
-            wallet
-        );
-
-
-    const walletProfit =
-        getWalletProfit(
-            wallet
-        );
-
-
-    const totalProfit =
-        walletProfit !== 0
-            ? walletProfit
-            : calculateTotalProfit(
-                trades
-            );
-
-
-    const todayProfit =
-        calculateTodayProfit(
-            trades
-        );
-
-
-    const availableBalance =
-        getAvailableBalance(
-            wallet
-        );
-
-
-    // ---------------------------------
-    // Success Rate
-    // ---------------------------------
-
-    const successRate =
-        calculateSuccessRate(
-            trades
-        );
-
-
-    // ---------------------------------
-    // Dashboard Balance
-    // ---------------------------------
-
-    const dashboardBalanceUSD =
-        document.getElementById(
-            "dashboard-balance-usd"
-        );
-
-
-    if (dashboardBalanceUSD) {
-
-        dashboardBalanceUSD.textContent =
-            formatUSD(
-                balance
-            );
-
-    }
-
-
-    const dashboardBalanceIRR =
-        document.getElementById(
-            "dashboard-balance-irr"
-        );
-
-
-    if (dashboardBalanceIRR) {
-
-        const toman =
-            usdToToman(
-                balance
-            );
-
-
-        dashboardBalanceIRR.textContent =
-
-            appState.exchangeRate > 0
-
-                ? `معادل تومان: ${formatTomanValue(toman)}`
-
-                : "معادل تومان: —";
-
-    }
-
-
-    // ---------------------------------
-    // Today Profit
-    // ---------------------------------
-
-    const todayProfitUSD =
-        document.getElementById(
-            "today-profit-usd"
-        );
-
-
-    if (todayProfitUSD) {
-
-        todayProfitUSD.textContent =
-            `$${formatUSD(todayProfit)}`;
-
-    }
-
-
-    const todayProfitIRR =
-        document.getElementById(
-            "today-profit-irr"
-        );
-
-
-    if (todayProfitIRR) {
-
-        const toman =
-            usdToToman(
-                todayProfit
-            );
-
-
-        todayProfitIRR.textContent =
-
-            appState.exchangeRate > 0
-
-                ? `معادل تومان: ${formatTomanValue(toman)}`
-
-                : "معادل تومان: —";
-
-    }
-
-
-    // ---------------------------------
-    // Total Profit
-    // ---------------------------------
-
-    const totalProfitUSD =
-        document.getElementById(
-            "total-profit-usd"
-        );
-
-
-    if (totalProfitUSD) {
-
-        totalProfitUSD.textContent =
-            `$${formatUSD(totalProfit)}`;
-
-    }
-
-
-    const totalProfitIRR =
-        document.getElementById(
-            "total-profit-irr"
-        );
-
-
-    if (totalProfitIRR) {
-
-        const toman =
-            usdToToman(
-                totalProfit
-            );
-
-
-        totalProfitIRR.textContent =
-
-            appState.exchangeRate > 0
-
-                ? `معادل تومان: ${formatTomanValue(toman)}`
-
-                : "معادل تومان: —";
-
-    }
-
-
-    // ---------------------------------
-    // Success Rate
-    // ---------------------------------
-
-    const successRateElement =
-        document.getElementById(
-            "success-rate"
-        );
-
-
-    if (successRateElement) {
-
-        successRateElement.textContent =
-            `${successRate.toFixed(1)}%`;
-
-    }
-
-
-    // ---------------------------------
-    // Total Trades
-    // ---------------------------------
-
-    const totalTradesElement =
-        document.getElementById(
-            "total-trades"
-        );
-
-
-    if (totalTradesElement) {
-
-        totalTradesElement.textContent =
-            formatInteger(
-                trades.length
-            );
-
-    }
-
-
-    // ---------------------------------
-    // AI Strategy
-    // ---------------------------------
-
-    const strategy =
-        bot.strategy ||
-        "AI Scalping";
-
-
-    const aiStrategy =
-        document.getElementById(
-            "ai-strategy"
-        );
-
-
-    if (aiStrategy) {
-
-        aiStrategy.textContent =
-            strategy;
-
-    }
-
-
-    // ---------------------------------
-    // AI Accuracy
-    // ---------------------------------
-
-    const accuracy =
-        safeNumber(
-            bot.accuracy ??
-            bot.confidence ??
-            0
-        );
-
-
-    const aiAccuracy =
-        document.getElementById(
-            "ai-accuracy"
-        );
-
-
-    if (aiAccuracy) {
-
-        aiAccuracy.textContent =
-
-            accuracy > 0
-                ? `${accuracy}%`
-                : "—";
-
-    }
-
-
-    // ---------------------------------
-    // AI Status
-    // ---------------------------------
-
-    const botStatus =
-        String(
-            bot.status ||
-            "STOPPED"
-        ).toUpperCase();
-
-
-    const aiStatus =
-        document.getElementById(
-            "ai-status"
-        );
-
-
-    const aiMode =
-        document.getElementById(
-            "ai-mode"
-        );
-
-
-    if (
-        botStatus ===
-        "ACTIVE"
-    ) {
-
-        if (aiStatus) {
-
-            aiStatus.textContent =
-                "فعال";
-
-        }
-
-
-        if (aiMode) {
-
-            aiMode.textContent =
-                "در حال معامله";
-
-        }
-
-    }
-
-    else {
-
-        if (aiStatus) {
-
-            aiStatus.textContent =
-                "متوقف";
-
-        }
-
-
-        if (aiMode) {
-
-            aiMode.textContent =
-                "متوقف";
-
-        }
-
-    }
-
-
-    // ---------------------------------
-    // Wallet Page
-    // ---------------------------------
-
-    const walletBalanceUSD =
-        document.getElementById(
-            "wallet-balance-usd"
-        );
-
-
-    if (walletBalanceUSD) {
-
-        walletBalanceUSD.textContent =
-            formatUSD(
-                balance
-            );
-
-    }
-
-
-    const walletBalanceIRR =
-        document.getElementById(
-            "wallet-balance-irr"
-        );
-
-
-    if (walletBalanceIRR) {
-
-        walletBalanceIRR.textContent =
-
-            appState.exchangeRate > 0
-
-                ? `معادل تومان: ${formatTomanValue(usdToToman(balance))}`
-
-                : "معادل تومان: —";
-
-    }
-
-
-    const walletAvailableUSD =
-        document.getElementById(
-            "wallet-available-usd"
-        );
-
-
-    if (walletAvailableUSD) {
-
-        walletAvailableUSD.textContent =
-            formatUSD(
-                availableBalance
-            );
-
-    }
-
-
-    const walletAvailableIRR =
-        document.getElementById(
-            "wallet-available-irr"
-        );
-
-
-    if (walletAvailableIRR) {
-
-        walletAvailableIRR.textContent =
-
-            appState.exchangeRate > 0
-
-                ? `معادل تومان: ${formatTomanValue(usdToToman(availableBalance))}`
-
-                : "معادل تومان: —";
-
-    }
-
-
-    // ---------------------------------
-    // Wallet Summary
-    // ---------------------------------
-
-    const summaryBalance =
-        document.getElementById(
-            "wallet-summary-balance"
-        );
-
-
-    if (summaryBalance) {
-
-        summaryBalance.textContent =
-            `$${formatUSD(balance)}`;
-
-    }
-
-
-    const summaryProfit =
-        document.getElementById(
-            "wallet-summary-profit"
-        );
-
-
-    if (summaryProfit) {
-
-        summaryProfit.textContent =
-            `$${formatUSD(totalProfit)}`;
-
-    }
-
-
-    const summaryTotal =
-        document.getElementById(
-            "wallet-summary-total"
-        );
-
-
-    if (summaryTotal) {
-
-        summaryTotal.textContent =
-            `$${formatUSD(balance + totalProfit)}`;
-
-    }
-
-
-    // ---------------------------------
-    // Withdraw
-    // ---------------------------------
-
-    const withdrawAvailable =
-        document.getElementById(
-            "withdraw-available-usd"
-        );
-
-
-    if (withdrawAvailable) {
-
-        withdrawAvailable.textContent =
-            formatUSD(
-                availableBalance
-            );
-
-    }
-
-
-    const withdrawAvailableIRR =
-        document.getElementById(
-            "withdraw-available-irr"
-        );
-
-
-    if (withdrawAvailableIRR) {
-
-        withdrawAvailableIRR.textContent =
-
-            appState.exchangeRate > 0
-
-                ? `معادل تومان: ${formatTomanValue(usdToToman(availableBalance))}`
-
-                : "معادل تومان: —";
-
-    }
-
-
-    // ---------------------------------
-    // Profile
-    // ---------------------------------
-
-    updateProfile();
-
-}
-
-
-// =====================================
-// Update Profile
-// =====================================
-
-function updateProfile() {
-
-    const user =
-        appState.user;
-
-
-    if (!user) {
-        return;
-    }
-
-
-    const firstName =
-        user.firstName ||
-        user.first_name ||
-        "";
-
-
-    const lastName =
-        user.lastName ||
-        user.last_name ||
-        "";
-
-
-    const username =
-        user.username ||
-        "";
-
-
-    const fullName =
-        `${firstName} ${lastName}`
-            .trim() ||
-        username ||
-        "کاربر";
-
-
-    const profileName =
-        document.getElementById(
-            "profile-name"
-        );
-
-
-    if (profileName) {
-
-        profileName.textContent =
-            fullName;
-
-    }
-
-
-    const profileUsername =
-        document.getElementById(
-            "profile-username"
-        );
-
-
-    if (profileUsername) {
-
-        profileUsername.textContent =
-            username
-                ? `@${username}`
-                : "Telegram User";
-
-    }
-
-
-    const avatar =
-        document.getElementById(
-            "profile-avatar"
-        );
-
-
-    if (avatar) {
-
-        avatar.textContent =
-            (
-                firstName ||
-                username ||
-                "U"
-            )
-                .charAt(0)
-                .toUpperCase();
-
-    }
-
-
-    const profileStatus =
-        document.getElementById(
-            "profile-status"
-        );
-
-
-    if (profileStatus) {
-
-        profileStatus.textContent =
-            user.status ||
-            (
-                user.accessEnabled
-                    ? "فعال"
-                    : "تأیید شده"
-            );
-
-    }
-
-}
-
-
-// =====================================
-// Update Recent Trades
-// =====================================
-
-function updateRecentTrades() {
-
-    const container =
-        document.getElementById(
-            "dashboard-trades"
-        );
-
-
-    if (!container) {
-        return;
-    }
-
-
-    const trades =
-        Array.isArray(
-            appState.trades
-        )
-            ? appState.trades
-            : [];
-
-
-    if (
-        trades.length === 0
-    ) {
-
-        container.innerHTML = `
-
-            <div class="empty-icon">
-                —
-            </div>
-
-            <p>
-                هنوز اطلاعات معاملاتی دریافت نشده است.
-            </p>
-
-        `;
-
-        return;
-
-    }
-
-
-    const recentTrades =
-        trades.slice(
-            0,
-            5
-        );
-
-
-    container.classList.remove(
-        "empty-state"
-    );
-
-
-    container.innerHTML =
-        recentTrades
-            .map(
-                trade => {
-
-                    const symbol =
-                        trade.symbol ||
-                        "UNKNOWN";
-
-
-                    const type =
-                        String(
-                            trade.type ||
-                            "WAIT"
-                        ).toUpperCase();
-
-
-                    const profit =
-                        getTradeProfit(
-                            trade
-                        );
-
-
-                    const status =
-                        String(
-                            trade.status ||
-                            ""
-                        ).toUpperCase();
-
-
-                    return `
-
-                        <div class="trade-row">
-
-                            <div>
-
-                                <strong>
-                                    ${symbol}
-                                </strong>
-
-                                <small>
-                                    ${type}
-                                    ${status ? ` • ${status}` : ""}
-                                </small>
-
-                            </div>
-
-                            <strong>
-                                ${profit >= 0 ? "+" : ""}
-                                $${formatUSD(profit)}
-                            </strong>
-
-                        </div>
-
-                    `;
-
-                }
-            )
-            .join("");
-
-}
-
-
-// =====================================
-// Initialize Dashboard
+// Dashboard Loader
 // =====================================
 
 async function initializeDashboard(
@@ -2152,26 +1692,20 @@ async function initializeDashboard(
 ) {
 
     console.log(
-        "📊 Loading Dashboard..."
+        "📊 Loading dashboard..."
     );
 
 
     const userId =
-        getUserId(
-            user
-        );
-
-
-    console.log(
-        "👤 Dashboard User ID:",
-        userId
-    );
+        user?._id ||
+        user?.id;
 
 
     if (!userId) {
 
-        console.warn(
-            "⚠️ User ID not found."
+        console.error(
+            "User ID missing:",
+            user
         );
 
         return;
@@ -2179,17 +1713,16 @@ async function initializeDashboard(
     }
 
 
-    // ---------------------------------
-    // Load All Data
-    // ---------------------------------
+    updateProfileUI(
+        user
+    );
+
 
     await Promise.allSettled([
 
-        loadWallet(
-            userId
-        ),
+        loadCurrencyRate(),
 
-        loadTrades(
+        loadWallet(
             userId
         ),
 
@@ -2197,303 +1730,65 @@ async function initializeDashboard(
             userId
         ),
 
-        loadExchangeRate()
+        loadTrades(
+            userId
+        )
 
     ]);
 
 
-    // ---------------------------------
-    // Update UI
-    // ---------------------------------
+    // Update wallet again
+    // after currency rate is ready
 
-    updateDashboard();
+    if (currentWallet) {
 
-    updateRecentTrades();
+        updateWalletUI(
+            currentWallet
+        );
 
-
-    console.log(
-        "✅ Dashboard loaded successfully."
-    );
+    }
 
 
     console.log(
-        "📦 Application State:",
-        appState
+        "✅ Dashboard loaded"
     );
 
 }
 
 
 // =====================================
-// AI Trading Button
+// Logout
 // =====================================
 
-function initializeAITradingButton() {
+function initializeLogout() {
 
     const button =
-        document.getElementById(
-            "ai-trading-button"
-        );
+        $("logout-button");
 
 
-    if (!button) {
-        return;
-    }
+    if (!button) return;
 
 
     button.addEventListener(
         "click",
-        async () => {
+        () => {
 
-            const userId =
-                getUserId(
-                    appState.user
-                );
+            currentUser = null;
 
+            currentWallet = null;
 
-            if (!userId) {
+            currentBot = null;
 
-                showToast(
-                    "کاربر احراز هویت نشده است."
-                );
+            currentTrades = [];
 
-                return;
 
-            }
-
-
-            button.disabled =
-                true;
-
-
-            const originalText =
-                button.textContent;
-
-
-            button.textContent =
-                "در حال فعال‌سازی...";
-
-
-            try {
-
-                const result =
-                    await apiFetch(
-                        `/api/bot/start/${encodeURIComponent(userId)}`,
-                        {
-                            method: "POST"
-                        }
-                    );
-
-
-                console.log(
-                    "🤖 Bot started:",
-                    result
-                );
-
-
-                appState.bot =
-                    result?.bot ||
-                    result?.data ||
-                    result;
-
-
-                updateDashboard();
-
-
-                showToast(
-                    "معاملات AI فعال شد ✅"
-                );
-
-            }
-
-            catch (error) {
-
-                console.error(
-                    "❌ Failed to start AI trading:",
-                    error
-                );
-
-
-                showToast(
-                    error?.message ||
-                    "فعال‌سازی معاملات AI انجام نشد."
-                );
-
-            }
-
-            finally {
-
-                button.disabled =
-                    false;
-
-                button.textContent =
-                    originalText;
-
-            }
-
-        }
-    );
-
-}
-
-
-// =====================================
-// Initialize Withdraw
-// =====================================
-
-function initializeWithdraw() {
-
-    const form =
-        document.getElementById(
-            "withdraw-form"
-        );
-
-
-    if (!form) {
-        return;
-    }
-
-
-    form.addEventListener(
-        "submit",
-        async event => {
-
-            event.preventDefault();
-
-
-            const amountInput =
-                document.getElementById(
-                    "withdraw-amount"
-                );
-
-
-            const networkInput =
-                document.getElementById(
-                    "withdraw-network"
-                );
-
-
-            const addressInput =
-                document.getElementById(
-                    "withdraw-address"
-                );
-
-
-            const amount =
-                safeNumber(
-                    amountInput?.value
-                );
-
-
-            const network =
-                networkInput?.value ||
-                "";
-
-
-            const address =
-                addressInput?.value?.trim() ||
-                "";
-
-
-            if (
-                amount <= 0
-            ) {
-
-                showToast(
-                    "مبلغ برداشت را وارد کنید."
-                );
-
-                return;
-
-            }
-
-
-            if (!network) {
-
-                showToast(
-                    "شبکه برداشت را انتخاب کنید."
-                );
-
-                return;
-
-            }
-
-
-            if (!address) {
-
-                showToast(
-                    "آدرس کیف پول را وارد کنید."
-                );
-
-                return;
-
-            }
+            window.currentUser =
+                null;
 
 
             showToast(
-                "درخواست برداشت در حال ارسال است..."
+                "از حساب خارج شدید."
             );
-
-
-            try {
-
-                const userId =
-                    getUserId(
-                        appState.user
-                    );
-
-
-                const result =
-                    await apiFetch(
-                        "/api/withdraw",
-                        {
-
-                            method: "POST",
-
-                            body:
-                                JSON.stringify({
-
-                                    userId,
-
-                                    amount,
-
-                                    network,
-
-                                    address
-
-                                })
-
-                        }
-                    );
-
-
-                console.log(
-                    "💸 Withdraw:",
-                    result
-                );
-
-
-                showToast(
-                    result?.message ||
-                    "درخواست برداشت ثبت شد."
-                );
-
-            }
-
-            catch (error) {
-
-                console.error(
-                    "❌ Withdraw error:",
-                    error
-                );
-
-
-                showToast(
-                    error?.message ||
-                    "ثبت درخواست برداشت ناموفق بود."
-                );
-
-            }
 
         }
     );
@@ -2502,7 +1797,7 @@ function initializeWithdraw() {
 
 
 // =====================================
-// Initialize App
+// Main Initialization
 // =====================================
 
 async function initializeApp() {
@@ -2514,7 +1809,7 @@ async function initializeApp() {
         );
 
         console.log(
-            "🚀 AutoTrade AI Mini App"
+            "🚀 AutoTrade AI"
         );
 
         console.log(
@@ -2522,36 +1817,32 @@ async function initializeApp() {
         );
 
 
-        // ---------------------------------
-        // Initialize UI
-        // ---------------------------------
-
         initializeNavigation();
+
+        initializeProfileButtons();
 
         initializeBackButton();
 
-        initializeNotificationButton();
+        initializeNotifications();
 
         initializeActions();
 
-        initializeAITradingButton();
+        initializeLogout();
 
-        initializeWithdraw();
-
-
-        // ---------------------------------
-        // Show Loading
-        // ---------------------------------
 
         showLoadingScreen();
 
 
         // ---------------------------------
-        // Telegram Authentication
+        // Authenticate
         // ---------------------------------
 
         const user =
             await authenticateTelegram();
+
+
+        currentUser =
+            user;
 
 
         window.currentUser =
@@ -2559,27 +1850,8 @@ async function initializeApp() {
 
 
         console.log(
-            "👤 Current user:",
+            "👤 Authenticated user:",
             user
-        );
-
-
-        // ---------------------------------
-        // Authentication Event
-        // ---------------------------------
-
-        window.dispatchEvent(
-
-            new CustomEvent(
-                "autotrade:authenticated",
-                {
-
-                    detail:
-                        user
-
-                }
-            )
-
         );
 
 
@@ -2593,15 +1865,23 @@ async function initializeApp() {
 
 
         // ---------------------------------
-        // Hide Loading
+        // Global Event
         // ---------------------------------
+
+        window.dispatchEvent(
+
+            new CustomEvent(
+                "autotrade:authenticated",
+                {
+                    detail: user
+                }
+            )
+
+        );
+
 
         hideLoadingScreen();
 
-
-        // ---------------------------------
-        // Dashboard
-        // ---------------------------------
 
         showPage(
             "dashboard"
@@ -2609,15 +1889,7 @@ async function initializeApp() {
 
 
         console.log(
-            "====================================="
-        );
-
-        console.log(
             "🚀 AutoTrade AI initialized successfully."
-        );
-
-        console.log(
-            "====================================="
         );
 
     }
@@ -2630,35 +1902,15 @@ async function initializeApp() {
         );
 
 
+        currentUser =
+            null;
+
+
         window.currentUser =
             null;
 
 
-        appState.authenticated =
-            false;
-
-
         hideLoadingScreen();
-
-
-        window.dispatchEvent(
-
-            new CustomEvent(
-                "autotrade:auth-error",
-                {
-
-                    detail: {
-
-                        message:
-                            error?.message ||
-                            "Authentication failed."
-
-                    }
-
-                }
-            )
-
-        );
 
 
         if (tg) {
@@ -2666,25 +1918,16 @@ async function initializeApp() {
             try {
 
                 tg.showAlert(
-
-                    "Authentication failed.\n\n" +
+                    "خطا در اتصال به حساب کاربری\n\n" +
                     (
                         error?.message ||
-                        "Unknown error"
+                        "خطای نامشخص"
                     )
-
                 );
 
             }
 
-            catch (alertError) {
-
-                console.error(
-                    "Telegram alert error:",
-                    alertError
-                );
-
-            }
+            catch {}
 
         }
 
@@ -2707,27 +1950,21 @@ window.autoTradeAPI = {
 
     initializeDashboard,
 
+    loadWallet,
+
+    loadBot,
+
+    loadTrades,
+
     showPage,
 
-    showToast,
-
-    updateDashboard,
-
-    appState
+    showToast
 
 };
 
 
 // =====================================
-// Global Dashboard Hook
-// =====================================
-
-window.initializeDashboard =
-    initializeDashboard;
-
-
-// =====================================
-// Start Application
+// Start
 // =====================================
 
 initializeApp();
