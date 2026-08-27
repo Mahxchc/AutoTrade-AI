@@ -1,7 +1,7 @@
 // =====================================
 // Currency Service:: M
 // AutoTrade AI
-// Currency Conversion Service
+// Currency Conversion & Wallet Display
 // File: backend/services/currencyService.js
 // =====================================
 
@@ -11,140 +11,141 @@
 // =====================================
 
 const DEFAULT_USD_TO_IRR =
-    Number(
-        process.env.USD_TO_IRR || 100000
-    );
+    Number(process.env.USD_TO_IRR || 100000);
 
 
 // =====================================
-// Get USD to IRR Rate:: M
+// Get USD → IRR Rate:: M
 // =====================================
 
-export function getUsdToIrrRate() {
+export function getUsdIrrRate() {
 
-    return Number.isFinite(
-        DEFAULT_USD_TO_IRR
-    )
-        ? DEFAULT_USD_TO_IRR
-        : 100000;
+    return DEFAULT_USD_TO_IRR;
 
 }
 
 
 // =====================================
-// Get USD to Toman Rate:: M
+// Get USD → Toman Rate:: M
 // =====================================
 
 export function getUsdToTomanRate() {
 
-    return (
-        getUsdToIrrRate() / 10
-    );
+    return DEFAULT_USD_TO_IRR / 10;
 
 }
 
 
 // =====================================
-// USD → Toman:: M
-// =====================================
-
-export function usdToToman(
-    usd
-) {
-
-    const value =
-        Number(usd);
-
-
-    if (
-        !Number.isFinite(value)
-    ) {
-
-        return 0;
-
-    }
-
-
-    return Number(
-
-        (
-            value *
-            getUsdToTomanRate()
-
-        ).toFixed(0)
-
-    );
-
-}
-
-
-// =====================================
-// Toman → USD:: M
-// =====================================
-
-export function tomanToUsd(
-    toman
-) {
-
-    const value =
-        Number(toman);
-
-
-    const rate =
-        getUsdToTomanRate();
-
-
-    if (
-        !Number.isFinite(value) ||
-        value < 0 ||
-        !Number.isFinite(rate) ||
-        rate <= 0
-    ) {
-
-        return 0;
-
-    }
-
-
-    return Number(
-
-        (
-            value / rate
-
-        ).toFixed(8)
-
-    );
-
-}
-
-
-// =====================================
-// Compatibility Alias
-// convertTomanToUsd:: M
-// =====================================
-
-export function convertTomanToUsd(
-    toman
-) {
-
-    return tomanToUsd(
-        toman
-    );
-
-}
-
-
-// =====================================
-// Compatibility Alias
-// convertUsdToToman:: M
+// Convert USD → Toman:: M
 // =====================================
 
 export function convertUsdToToman(
     usd
 ) {
 
-    return usdToToman(
-        usd
+    const numericUsd =
+        Number(usd);
+
+    if (
+        !Number.isFinite(numericUsd)
+    ) {
+        return 0;
+    }
+
+    return (
+        numericUsd *
+        getUsdToTomanRate()
+    );
+
+}
+
+
+// =====================================
+// Convert Toman → USD:: M
+// =====================================
+
+export function convertTomanToUsd(
+    toman
+) {
+
+    const numericToman =
+        Number(toman);
+
+    if (
+        !Number.isFinite(numericToman)
+    ) {
+        return 0;
+    }
+
+    const rate =
+        getUsdToTomanRate();
+
+    if (
+        !Number.isFinite(rate) ||
+        rate <= 0
+    ) {
+        return 0;
+    }
+
+    return (
+        numericToman / rate
+    );
+
+}
+
+
+// =====================================
+// Convert IRR → USD:: M
+// =====================================
+
+export function convertIrrToUsd(
+    irr
+) {
+
+    const numericIrr =
+        Number(irr);
+
+    if (
+        !Number.isFinite(numericIrr)
+    ) {
+        return 0;
+    }
+
+    if (
+        DEFAULT_USD_TO_IRR <= 0
+    ) {
+        return 0;
+    }
+
+    return (
+        numericIrr /
+        DEFAULT_USD_TO_IRR
+    );
+
+}
+
+
+// =====================================
+// Convert USD → IRR:: M
+// =====================================
+
+export function convertUsdToIrr(
+    usd
+) {
+
+    const numericUsd =
+        Number(usd);
+
+    if (
+        !Number.isFinite(numericUsd)
+    ) {
+        return 0;
+    }
+
+    return (
+        numericUsd *
+        DEFAULT_USD_TO_IRR
     );
 
 }
@@ -158,26 +159,26 @@ export function formatUSD(
     usd
 ) {
 
-    const value =
+    const numericUsd =
         Number(usd);
 
-
     if (
-        !Number.isFinite(value)
+        !Number.isFinite(numericUsd)
     ) {
-
         return "$0.00";
-
     }
-
 
     return new Intl.NumberFormat(
         "en-US",
         {
+            style: "currency",
+            currency: "USD",
             minimumFractionDigits: 2,
-            maximumFractionDigits: 8
+            maximumFractionDigits: 2
         }
-    ).format(value);
+    ).format(
+        numericUsd
+    );
 
 }
 
@@ -187,19 +188,25 @@ export function formatUSD(
 // =====================================
 
 export function formatToman(
-    usd
+    toman
 ) {
 
-    const toman =
-        usdToToman(
-            usd
-        );
+    const numericToman =
+        Number(toman);
 
+    if (
+        !Number.isFinite(numericToman)
+    ) {
+        return "۰ تومان";
+    }
 
-    return new Intl.NumberFormat(
-        "fa-IR"
-    ).format(
-        toman
+    return (
+        new Intl.NumberFormat(
+            "fa-IR"
+        ).format(
+            Math.round(numericToman)
+        ) +
+        " تومان"
     );
 
 }
@@ -209,98 +216,42 @@ export function formatToman(
 // Get Wallet Display Values:: M
 // =====================================
 
-export function getWalletDisplayValues({
+export function getWalletDisplayValues(
+    usd
+) {
 
-    balance = 0,
+    const numericUsd =
+        Number(usd);
 
-    totalProfit = 0,
+    const safeUsd =
+        Number.isFinite(numericUsd)
+            ? numericUsd
+            : 0;
 
-    withdrawable = 0
-
-} = {}) {
-
-    const numericBalance =
-        Number(balance) || 0;
-
-
-    const numericTotalProfit =
-        Number(totalProfit) || 0;
-
-
-    const numericWithdrawable =
-        Number(withdrawable) || 0;
-
+    const toman =
+        convertUsdToToman(
+            safeUsd
+        );
 
     return {
 
-        balanceUSD:
-            Number(
-                numericBalance.toFixed(8)
-            ),
+        usd:
+            safeUsd,
 
-        balanceUSDFormatted:
+        toman,
+
+        usdFormatted:
             formatUSD(
-                numericBalance
+                safeUsd
             ),
 
-        balanceToman:
-            usdToToman(
-                numericBalance
-            ),
-
-        balanceTomanFormatted:
+        tomanFormatted:
             formatToman(
-                numericBalance
+                toman
             ),
 
-
-        totalProfitUSD:
-            Number(
-                numericTotalProfit.toFixed(8)
-            ),
-
-        totalProfitUSDFormatted:
-            formatUSD(
-                numericTotalProfit
-            ),
-
-        totalProfitToman:
-            usdToToman(
-                numericTotalProfit
-            ),
-
-        totalProfitTomanFormatted:
-            formatToman(
-                numericTotalProfit
-            ),
-
-
-        withdrawableUSD:
-            Number(
-                numericWithdrawable.toFixed(8)
-            ),
-
-        withdrawableUSDFormatted:
-            formatUSD(
-                numericWithdrawable
-            ),
-
-        withdrawableToman:
-            usdToToman(
-                numericWithdrawable
-            ),
-
-        withdrawableTomanFormatted:
-            formatToman(
-                numericWithdrawable
-            ),
-
-
-        usdToTomanRate:
-            getUsdToTomanRate(),
-
-        usdToIrrRate:
-            getUsdToIrrRate()
+        exchangeRate:
+            getUsdToTomanRate()
 
     };
 
@@ -313,17 +264,17 @@ export function getWalletDisplayValues({
 
 export default {
 
-    getUsdToIrrRate,
+    getUsdIrrRate,
 
     getUsdToTomanRate,
 
-    usdToToman,
-
-    tomanToUsd,
+    convertUsdToToman,
 
     convertTomanToUsd,
 
-    convertUsdToToman,
+    convertIrrToUsd,
+
+    convertUsdToIrr,
 
     formatUSD,
 
