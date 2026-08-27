@@ -1,10 +1,9 @@
 // =====================================
-// Trading Service:: M
+// Trading Service :: M
 // AutoTrade AI
 // لایه اجرای معاملات
 // File: backend/services/tradingService.js
 // =====================================
-
 
 import Bot from "../models/Bot.js";
 
@@ -15,7 +14,7 @@ import {
 
 
 // =====================================
-// Execute Trade:: M
+// Execute Trade
 // اجرای یک معامله
 // =====================================
 
@@ -39,9 +38,8 @@ export async function executeTrade({
 
 }) {
 
-
     // =====================================
-    // بررسی اطلاعات اصلی معامله:: M
+    // Validate User
     // =====================================
 
     if (!userId) {
@@ -53,6 +51,10 @@ export async function executeTrade({
     }
 
 
+    // =====================================
+    // Validate Symbol
+    // =====================================
+
     if (!symbol) {
 
         throw new Error(
@@ -62,18 +64,19 @@ export async function executeTrade({
     }
 
 
+    // =====================================
+    // Validate Quantity
+    // =====================================
+
     const numericQuantity =
         Number(quantity);
 
 
     if (
-
         !Number.isFinite(
             numericQuantity
         ) ||
-
         numericQuantity <= 0
-
     ) {
 
         throw new Error(
@@ -84,7 +87,7 @@ export async function executeTrade({
 
 
     // =====================================
-    // دریافت ربات کاربر:: M
+    // Find Bot
     // =====================================
 
     const bot =
@@ -105,27 +108,27 @@ export async function executeTrade({
 
 
     // =====================================
-    // بررسی فعال بودن ربات:: M
+    // Check Bot Status
     // =====================================
 
     if (
-
         bot.enabled !== true ||
-
         bot.status !== "ACTIVE"
-
     ) {
 
         return {
 
-            executed: false,
+            executed:
+                false,
 
-            status: "BOT_NOT_ACTIVE",
+            status:
+                "BOT_NOT_ACTIVE",
 
             reason:
                 "Bot is not active",
 
-            order: null
+            order:
+                null
 
         };
 
@@ -133,20 +136,37 @@ export async function executeTrade({
 
 
     // =====================================
-    // بررسی توقف خودکار بعد از ضرر متوالی:: M
+    // Check Consecutive Losses
     // =====================================
 
+    const consecutiveLosses =
+        Number(
+            bot.consecutiveLosses || 0
+        );
+
+
+    const maxConsecutiveLosses =
+        Math.max(
+
+            1,
+
+            Number(
+                bot.maxConsecutiveLosses || 2
+            )
+
+        );
+
+
     if (
-
-        bot.consecutiveLosses >=
-        bot.maxConsecutiveLosses
-
+        consecutiveLosses >=
+        maxConsecutiveLosses
     ) {
 
+        bot.status =
+            "PAUSED";
 
-        bot.status = "PAUSED";
-
-        bot.enabled = false;
+        bot.enabled =
+            false;
 
         bot.stopReason =
             "Maximum consecutive losses reached";
@@ -160,14 +180,17 @@ export async function executeTrade({
 
         return {
 
-            executed: false,
+            executed:
+                false,
 
-            status: "BOT_PAUSED",
+            status:
+                "BOT_PAUSED",
 
             reason:
                 "Bot paused after maximum consecutive losses",
 
-            order: null
+            order:
+                null
 
         };
 
@@ -175,26 +198,45 @@ export async function executeTrade({
 
 
     // =====================================
-    // بررسی تعداد معاملات باز:: M
+    // Check Open Trades
     // =====================================
 
+    const openTrades =
+        Number(
+            bot.openTrades || 0
+        );
+
+
+    const maxOpenTrades =
+        Math.max(
+
+            1,
+
+            Number(
+                bot.maxOpenTrades || 1
+            )
+
+        );
+
+
     if (
-
-        bot.openTrades >=
-        bot.maxOpenTrades
-
+        openTrades >=
+        maxOpenTrades
     ) {
 
         return {
 
-            executed: false,
+            executed:
+                false,
 
-            status: "MAX_OPEN_TRADES",
+            status:
+                "MAX_OPEN_TRADES",
 
             reason:
                 "Maximum open trades reached",
 
-            order: null
+            order:
+                null
 
         };
 
@@ -202,12 +244,15 @@ export async function executeTrade({
 
 
     // =====================================
-    // سیگنال انتظار:: M
+    // WAIT Signal
     // =====================================
 
-    if (signal === "WAIT") {
+    if (
+        signal === "WAIT"
+    ) {
 
-        bot.lastSignal = "WAIT";
+        bot.lastSignal =
+            "WAIT";
 
         bot.lastSignalAt =
             new Date();
@@ -215,19 +260,23 @@ export async function executeTrade({
         bot.lastHeartbeat =
             new Date();
 
+
         await bot.save();
 
 
         return {
 
-            executed: false,
+            executed:
+                false,
 
-            status: "WAITING",
+            status:
+                "WAITING",
 
             reason:
                 "AI decided to wait",
 
-            order: null
+            order:
+                null
 
         };
 
@@ -235,15 +284,12 @@ export async function executeTrade({
 
 
     // =====================================
-    // بررسی سیگنال خرید یا فروش:: M
+    // Validate Signal
     // =====================================
 
     if (
-
         signal !== "BUY" &&
-
         signal !== "SELL"
-
     ) {
 
         throw new Error(
@@ -254,7 +300,7 @@ export async function executeTrade({
 
 
     // =====================================
-    // ثبت آخرین سیگنال AI:: M
+    // Update Bot Signal
     // =====================================
 
     bot.lastSignal =
@@ -274,7 +320,7 @@ export async function executeTrade({
 
 
     // =====================================
-    // ارسال سفارش به لایه صرافی:: M
+    // Place Exchange Order
     // =====================================
 
     const order =
@@ -282,7 +328,8 @@ export async function executeTrade({
 
             symbol,
 
-            type: signal,
+            type:
+                signal,
 
             amount:
                 numericQuantity,
@@ -299,22 +346,21 @@ export async function executeTrade({
 
 
     // =====================================
-    // بررسی دریافت شناسه سفارش:: M
+    // Validate Order ID
     // =====================================
 
     if (
-
         !order ||
-
         !order.orderId
-
     ) {
 
         return {
 
-            executed: false,
+            executed:
+                false,
 
-            status: "NOT_CONFIRMED",
+            status:
+                "NOT_CONFIRMED",
 
             reason:
                 "Exchange did not provide a confirmed order ID",
@@ -328,7 +374,7 @@ export async function executeTrade({
 
 
     // =====================================
-    // بررسی وضعیت سفارش:: M
+    // Check Exchange Status
     // =====================================
 
     const orderStatus =
@@ -340,9 +386,11 @@ export async function executeTrade({
         });
 
 
-    // =====================================
-    // وضعیت‌های تأیید شده:: M
-    // =====================================
+    const currentStatus =
+        String(
+            orderStatus?.status || ""
+        ).toUpperCase();
+
 
     const confirmedStatuses = [
 
@@ -355,33 +403,29 @@ export async function executeTrade({
     ];
 
 
-    const currentStatus =
-
-        String(
-
-            orderStatus?.status || ""
-
-        ).toUpperCase();
-
-
     const executed =
-
         confirmedStatuses.includes(
-
             currentStatus
-
         );
 
 
     // =====================================
-    // اگر معامله تأیید شد:: M
+    // Successful Execution
     // =====================================
 
-    if (executed) {
+    if (
+        executed
+    ) {
 
-        bot.openTrades += 1;
+        bot.openTrades =
+            Number(
+                bot.openTrades || 0
+            ) + 1;
 
-        bot.totalTrades += 1;
+        bot.totalTrades =
+            Number(
+                bot.totalTrades || 0
+            ) + 1;
 
         bot.lastHeartbeat =
             new Date();
@@ -393,7 +437,7 @@ export async function executeTrade({
 
 
     // =====================================
-    // نتیجه اجرای معامله:: M
+    // Return
     // =====================================
 
     return {
@@ -401,7 +445,8 @@ export async function executeTrade({
         executed,
 
         status:
-            orderStatus.status,
+            orderStatus?.status ||
+            currentStatus,
 
         order,
 
@@ -410,3 +455,14 @@ export async function executeTrade({
     };
 
 }
+
+
+// =====================================
+// Default Export
+// =====================================
+
+export default {
+
+    executeTrade
+
+};
