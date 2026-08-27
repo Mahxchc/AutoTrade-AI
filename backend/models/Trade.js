@@ -1,5 +1,5 @@
 // =====================================
-// Trade Model:: M
+// Trade Model :: M
 // AutoTrade AI
 // Real Trade Database Model
 // File: backend/models/Trade.js
@@ -9,7 +9,7 @@ import mongoose from "mongoose";
 
 
 // =====================================
-// Trade Schema:: M
+// Trade Schema
 // =====================================
 
 const tradeSchema = new mongoose.Schema(
@@ -17,7 +17,7 @@ const tradeSchema = new mongoose.Schema(
     {
 
         // =====================================
-        // User Reference:: M
+        // User Reference
         // =====================================
 
         userId: {
@@ -25,339 +25,400 @@ const tradeSchema = new mongoose.Schema(
             type:
                 mongoose.Schema.Types.ObjectId,
 
-            ref: "User",
+            ref:
+                "User",
 
-            required: true,
+            required:
+                true,
 
-            index: true
+            index:
+                true
 
         },
 
 
         // =====================================
-        // Market:: M
+        // Market
         // =====================================
 
         symbol: {
 
-            type: String,
+            type:
+                String,
 
-            required: true,
+            required:
+                true,
 
-            uppercase: true,
+            uppercase:
+                true,
 
-            trim: true,
+            trim:
+                true,
 
-            index: true
+            index:
+                true
 
         },
 
 
         market: {
 
-            type: String,
+            type:
+                String,
 
             enum: [
 
                 "crypto",
-
                 "forex",
-
                 "stocks",
-
                 "other"
 
             ],
 
-            default: "crypto",
+            default:
+                "crypto",
 
-            index: true
+            index:
+                true
 
         },
 
 
         // =====================================
-        // Trade Side:: M
+        // Trade Side
         // =====================================
 
         side: {
 
-            type: String,
+            type:
+                String,
 
             enum: [
 
                 "BUY",
-
                 "SELL"
 
             ],
 
-            required: true
+            required:
+                true
 
         },
 
 
         // =====================================
-        // Trade Quantity:: M
+        // Trade Quantity
         // =====================================
 
         quantity: {
 
-            type: Number,
+            type:
+                Number,
 
-            required: true,
+            required:
+                true,
 
-            min: 0
+            min:
+                0,
+
+            default:
+                0
 
         },
 
 
         // =====================================
-        // Entry Price:: M
+        // Entry Price
         // =====================================
 
         entryPrice: {
 
-            type: Number,
+            type:
+                Number,
 
-            required: true,
+            required:
+                true,
 
-            min: 0
+            min:
+                0
 
         },
 
 
         // =====================================
-        // Exit Price:: M
+        // Exit Price
         // =====================================
 
         exitPrice: {
 
-            type: Number,
+            type:
+                Number,
 
-            default: null,
+            default:
+                null,
 
-            min: 0
+            min:
+                0
 
         },
 
 
         // =====================================
-        // Stop Loss:: M
+        // Stop Loss
         // =====================================
 
         stopLossPrice: {
 
-            type: Number,
+            type:
+                Number,
 
-            default: null,
+            default:
+                null,
 
-            min: 0
+            min:
+                0
 
         },
 
 
         // =====================================
-        // Take Profit:: M
+        // Take Profit
         // =====================================
 
         takeProfitPrice: {
 
-            type: Number,
+            type:
+                Number,
 
-            default: null,
+            default:
+                null,
 
-            min: 0
+            min:
+                0
 
         },
 
 
         // =====================================
-        // Profit / Loss USD:: M
+        // Gross Profit / Loss USD
         // =====================================
 
         profitUSD: {
 
-            type: Number,
+            type:
+                Number,
 
-            default: 0
+            default:
+                0
 
         },
 
 
         // =====================================
-        // Trading Fees USD:: M
+        // Trading Fees USD
         // =====================================
 
         feesUSD: {
 
-            type: Number,
+            type:
+                Number,
 
-            default: 0,
+            default:
+                0,
 
-            min: 0
+            min:
+                0
 
         },
 
 
         // =====================================
-        // Net Profit USD:: M
+        // Net Profit / Loss USD
         // =====================================
 
         netProfitUSD: {
 
-            type: Number,
+            type:
+                Number,
 
-            default: 0
+            default:
+                0
 
         },
 
 
         // =====================================
-        // AI Signal:: M
+        // AI Signal
         // =====================================
 
         aiSignal: {
 
-            type: String,
+            type:
+                String,
 
             enum: [
 
                 "BUY",
-
                 "SELL",
-
                 "WAIT"
 
             ],
 
-            default: "WAIT"
+            default:
+                "WAIT"
 
         },
 
 
         // =====================================
-        // AI Confidence:: M
+        // AI Confidence
         // =====================================
 
         aiConfidence: {
 
-            type: Number,
+            type:
+                Number,
 
-            default: 0,
+            default:
+                0,
 
-            min: 0,
+            min:
+                0,
 
-            max: 100
+            max:
+                100
 
         },
 
 
         // =====================================
-        // AI Reason:: M
+        // AI Reason
         // =====================================
 
         aiReason: {
 
-            type: String,
+            type:
+                String,
 
-            default: "",
+            default:
+                "",
 
-            trim: true
+            trim:
+                true
 
         },
 
 
         // =====================================
-        // Trade Status:: M
+        // Trade Status
         // =====================================
 
         status: {
 
-            type: String,
+            type:
+                String,
 
             enum: [
 
                 "OPEN",
-
                 "CLOSED",
-
                 "CANCELLED",
-
                 "FAILED"
 
             ],
 
-            default: "OPEN",
+            default:
+                "OPEN",
 
-            index: true
+            index:
+                true
 
         },
 
 
         // =====================================
-        // External Broker Order ID:: M
+        // External Broker Order ID
         // =====================================
 
         externalOrderId: {
 
-            type: String,
+            type:
+                String,
 
-            default: null,
+            default:
+                null,
 
-            index: true
+            index:
+                true,
+
+            trim:
+                true
 
         },
 
 
         // =====================================
-        // External Order Status:: M
+        // External Order Status
         // =====================================
 
         externalStatus: {
 
-            type: String,
+            type:
+                String,
 
-            default: null
+            default:
+                null,
+
+            trim:
+                true
 
         },
 
 
         // =====================================
-        // Error Message:: M
+        // Error Message
         // =====================================
 
         errorMessage: {
 
-            type: String,
+            type:
+                String,
 
-            default: ""
+            default:
+                "",
+
+            trim:
+                true
 
         },
 
 
         // =====================================
-        // Trade Open Time:: M
+        // Trade Open Time
         // =====================================
 
         openedAt: {
 
-            type: Date,
+            type:
+                Date,
 
-            default: Date.now
+            default:
+                Date.now
 
         },
 
 
         // =====================================
-        // Trade Close Time:: M
+        // Trade Close Time
         // =====================================
 
         closedAt: {
 
-            type: Date,
+            type:
+                Date,
 
-            default: null
+            default:
+                null
 
         }
 
@@ -365,7 +426,8 @@ const tradeSchema = new mongoose.Schema(
 
     {
 
-        timestamps: true
+        timestamps:
+            true
 
     }
 
@@ -373,38 +435,156 @@ const tradeSchema = new mongoose.Schema(
 
 
 // =====================================
-// Database Indexes:: M
+// Database Indexes
 // =====================================
 
 tradeSchema.index({
 
-    userId: 1,
+    userId:
+        1,
 
-    createdAt: -1
+    createdAt:
+        -1
 
 });
 
 
 tradeSchema.index({
 
-    status: 1,
+    status:
+        1,
 
-    createdAt: -1
+    createdAt:
+        -1
+
+});
+
+
+tradeSchema.index({
+
+    userId:
+        1,
+
+    status:
+        1,
+
+    createdAt:
+        -1
 
 });
 
 
 // =====================================
-// Trade Model:: M
+// Prevent Invalid Closed Trade
 // =====================================
 
-const Trade = mongoose.model(
+tradeSchema.pre(
+    "save",
+    function (next) {
 
-    "Trade",
+        try {
 
-    tradeSchema
+            if (
+                this.status ===
+                "CLOSED"
+            ) {
 
+                if (
+                    this.exitPrice ===
+                    null ||
+                    this.exitPrice ===
+                    undefined
+                ) {
+
+                    return next(
+                        new Error(
+                            "Closed trade must have an exit price"
+                        )
+                    );
+
+                }
+
+
+                if (
+                    !this.closedAt
+                ) {
+
+                    this.closedAt =
+                        new Date();
+
+                }
+
+            }
+
+
+            next();
+
+        }
+
+        catch (error) {
+
+            next(error);
+
+        }
+
+    }
 );
+
+
+// =====================================
+// Normalize Profit Values
+// =====================================
+
+tradeSchema.pre(
+    "save",
+    function (next) {
+
+        try {
+
+            this.profitUSD =
+                Number(
+                    this.profitUSD
+                ) || 0;
+
+
+            this.feesUSD =
+                Math.max(
+                    0,
+                    Number(
+                        this.feesUSD
+                    ) || 0
+                );
+
+
+            this.netProfitUSD =
+                Number(
+                    this.netProfitUSD
+                ) || 0;
+
+
+            next();
+
+        }
+
+        catch (error) {
+
+            next(error);
+
+        }
+
+    }
+);
+
+
+// =====================================
+// Trade Model
+// =====================================
+
+const Trade =
+    mongoose.model(
+        "Trade",
+        tradeSchema
+    );
 
 
 export default Trade;
