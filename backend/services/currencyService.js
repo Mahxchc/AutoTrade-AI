@@ -7,7 +7,7 @@
 
 
 // =====================================
-// Default USD to IRR Rate:: M
+// Configuration:: M
 // =====================================
 
 const DEFAULT_USD_TO_IRR =
@@ -45,21 +45,19 @@ export function getUsdToTomanRate() {
 
 
 // =====================================
-// Convert USD To Toman:: M
+// USD → Toman:: M
 // =====================================
 
 export function usdToToman(
     usd
 ) {
 
-    const numericUsd =
+    const value =
         Number(usd);
 
 
     if (
-        !Number.isFinite(
-            numericUsd
-        )
+        !Number.isFinite(value)
     ) {
 
         return 0;
@@ -70,7 +68,7 @@ export function usdToToman(
     return Number(
 
         (
-            numericUsd *
+            value *
             getUsdToTomanRate()
 
         ).toFixed(0)
@@ -81,14 +79,14 @@ export function usdToToman(
 
 
 // =====================================
-// Convert Toman To USD:: M
+// Toman → USD:: M
 // =====================================
 
 export function tomanToUsd(
     toman
 ) {
 
-    const numericToman =
+    const value =
         Number(toman);
 
 
@@ -97,10 +95,8 @@ export function tomanToUsd(
 
 
     if (
-        !Number.isFinite(
-            numericToman
-        ) ||
-        numericToman < 0 ||
+        !Number.isFinite(value) ||
+        value < 0 ||
         !Number.isFinite(rate) ||
         rate <= 0
     ) {
@@ -113,8 +109,7 @@ export function tomanToUsd(
     return Number(
 
         (
-            numericToman /
-            rate
+            value / rate
 
         ).toFixed(8)
 
@@ -124,16 +119,8 @@ export function tomanToUsd(
 
 
 // =====================================
-// Convert Toman To USD
-// Compatibility Alias:: M
-// =====================================
-//
-// routes/currency.js expects:
-//
-// convertTomanToUsd
-//
-// Keep this alias so all existing
-// project files remain compatible.
+// Compatibility Alias
+// convertTomanToUsd:: M
 // =====================================
 
 export function convertTomanToUsd(
@@ -148,8 +135,8 @@ export function convertTomanToUsd(
 
 
 // =====================================
-// Convert USD To Toman
-// Compatibility Alias:: M
+// Compatibility Alias
+// convertUsdToToman:: M
 // =====================================
 
 export function convertUsdToToman(
@@ -159,6 +146,38 @@ export function convertUsdToToman(
     return usdToToman(
         usd
     );
+
+}
+
+
+// =====================================
+// Format USD:: M
+// =====================================
+
+export function formatUSD(
+    usd
+) {
+
+    const value =
+        Number(usd);
+
+
+    if (
+        !Number.isFinite(value)
+    ) {
+
+        return "$0.00";
+
+    }
+
+
+    return new Intl.NumberFormat(
+        "en-US",
+        {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 8
+        }
+    ).format(value);
 
 }
 
@@ -219,6 +238,11 @@ export function getWalletDisplayValues({
                 numericBalance.toFixed(8)
             ),
 
+        balanceUSDFormatted:
+            formatUSD(
+                numericBalance
+            ),
+
         balanceToman:
             usdToToman(
                 numericBalance
@@ -229,9 +253,15 @@ export function getWalletDisplayValues({
                 numericBalance
             ),
 
+
         totalProfitUSD:
             Number(
                 numericTotalProfit.toFixed(8)
+            ),
+
+        totalProfitUSDFormatted:
+            formatUSD(
+                numericTotalProfit
             ),
 
         totalProfitToman:
@@ -244,9 +274,15 @@ export function getWalletDisplayValues({
                 numericTotalProfit
             ),
 
+
         withdrawableUSD:
             Number(
                 numericWithdrawable.toFixed(8)
+            ),
+
+        withdrawableUSDFormatted:
+            formatUSD(
+                numericWithdrawable
             ),
 
         withdrawableToman:
@@ -258,6 +294,7 @@ export function getWalletDisplayValues({
             formatToman(
                 numericWithdrawable
             ),
+
 
         usdToTomanRate:
             getUsdToTomanRate(),
@@ -287,6 +324,8 @@ export default {
     convertTomanToUsd,
 
     convertUsdToToman,
+
+    formatUSD,
 
     formatToman,
 
