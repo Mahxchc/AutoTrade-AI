@@ -10,6 +10,48 @@ import User from "../models/User.js";
 
 
 // =====================================
+// Normalize Amount
+// =====================================
+
+function normalizeAmount(
+    amount,
+    fieldName = "Amount"
+) {
+
+    const numericAmount =
+        Number(amount);
+
+
+    if (
+        !Number.isFinite(
+            numericAmount
+        )
+    ) {
+
+        throw new Error(
+            `${fieldName} is invalid`
+        );
+
+    }
+
+
+    if (
+        numericAmount <= 0
+    ) {
+
+        throw new Error(
+            `${fieldName} must be greater than zero`
+        );
+
+    }
+
+
+    return numericAmount;
+
+}
+
+
+// =====================================
 // Get Or Create Wallet
 // =====================================
 
@@ -51,9 +93,7 @@ export async function getWallet(
 
     let wallet =
         await Wallet.findOne({
-
             userId
-
         });
 
 
@@ -63,44 +103,177 @@ export async function getWallet(
 
     if (!wallet) {
 
-        wallet =
-            await Wallet.create({
+        try {
 
-                userId,
+            wallet =
+                await Wallet.create({
 
-                balance: 0,
+                    userId,
 
-                totalProfit: 0,
+                    balance:
+                        0,
 
-                totalTrades: 0,
+                    totalProfit:
+                        0,
 
-                withdrawable: 0,
+                    totalTrades:
+                        0,
 
-                currency: "USDT",
+                    withdrawable:
+                        0,
 
-                status: "ACTIVE"
+                    currency:
+                        "USDT",
 
-            });
+                    status:
+                        "ACTIVE"
+
+                });
+
+        }
+
+        catch (error) {
+
+            // ---------------------------------
+            // Another request may have created
+            // the wallet at the same time.
+            // ---------------------------------
+
+            if (
+                error?.code === 11000
+            ) {
+
+                wallet =
+                    await Wallet.findOne({
+                        userId
+                    });
+
+            }
+
+            else {
+
+                throw error;
+
+            }
+
+        }
 
 
         // =====================================
         // Connect Wallet To User
         // =====================================
 
-        user.walletId =
-            wallet._id;
+        if (
+            wallet &&
+            (
+                !user.walletId ||
+                String(user.walletId) !==
+                String(wallet._id)
+            )
+        ) {
 
-        await user.save();
+            user.walletId =
+                wallet._id;
+
+            await user.save();
+
+        }
 
     }
 
 
     return wallet;
+
+}
+
+
+// =====================================
+// Credit Balance
+// شارژ موجودی کیف پول
+// =====================================
+
+export async function creditBalance({
+
+    userId,
+
+    amount
+
+}) {
+
+    const numericAmount =
+        normalizeAmount(
+            amount,
+            "Credit amount"
+        );
+
+
+    // =====================================
+    // Ensure Wallet Exists
+    // =====================================
+
+    await getWallet(
+        userId
+    );
+
+
+    // =====================================
+    // Atomic Credit
+    // =====================================
+
+    const wallet =
+        await Wallet.findOneAndUpdate(
+
+            {
+                userId,
+
+                status:
+                    "ACTIVE"
+
+            },
+
+            {
+
+                $inc: {
+
+                    balance:
+                        numericAmount,
+
+                    withdrawable:
+                        numericAmount
+
+                }
+
+            },
+
+            {
+                new:
+                    true,
+
+                runValidators:
+                    true
+
+            }
+
+        );
+
+
+    if (!wallet) {
+
+        throw new Error(
+            "Wallet is not active"
+        );
+
+    }
+
+
+    return wallet;
+
 }
 
 
 // =====================================
 // Add Profit
+// ثبت سود واقعی معامله
 // =====================================
 
 export async function addProfit({
@@ -112,33 +285,66 @@ export async function addProfit({
 }) {
 
     const numericAmount =
-        Number(amount);
-
-
-    if (
-        !Number.isFinite(
-            numericAmount
-        ) ||
-        numericAmount <= 0
-    ) {
-
-        throw new Error(
-            "Profit amount must be greater than zero"
+        normalizeAmount(
+            amount,
+            "Profit amount"
         );
 
-    }
 
+    // =====================================
+    // Ensure Wallet Exists
+    // =====================================
+
+    await getWallet(
+        userId
+    );
+
+
+    // =====================================
+    // Atomic Profit Update
+    // =====================================
 
     const wallet =
-        await getWallet(
-            userId
+        await Wallet.findOneAndUpdate(
+
+            {
+                userId,
+
+                status:
+                    "ACTIVE"
+
+            },
+
+            {
+
+                $inc: {
+
+                    balance:
+                        numericAmount,
+
+                    totalProfit:
+                        numericAmount,
+
+                    withdrawable:
+                        numericAmount
+
+                }
+
+            },
+
+            {
+                new:
+                    true,
+
+                runValidators:
+                    true
+
+            }
+
         );
 
 
-    if (
-        wallet.status !==
-        "ACTIVE"
-    ) {
+    if (!wallet) {
 
         throw new Error(
             "Wallet is not active"
@@ -147,41 +353,256 @@ export async function addProfit({
     }
 
 
-    wallet.balance +=
-        numericAmount;
+    return wallet;
 
-    wallet.totalProfit +=
-        numericAmount;
-
-    wallet.withdrawable +=
-        numericAmount;
+}
 
 
-    await wallet.save();
+// =====================================
+// Register Loss
+// ثبت ضرر واقعی معامله
+// =====================================
+
+export async function registerLoss({
+
+    userId,
+
+    amount
+
+}) {
+
+    const numericAmount =
+        normalizeAmount(
+            amount,
+            "Loss amount"
+        );
+
+
+    // =====================================
+    // Ensure Wallet Exists
+    // =====================================
+
+    await getWallet(
+        userId
+    );
+
+
+    // =====================================
+    // Atomic Loss Update
+    // =====================================
+
+    const wallet =
+        await Wallet.findOneAndUpdate(
+
+            {
+                userId,
+
+                status:
+                    "ACTIVE",
+
+                balance: {
+                    $gte:
+                        numericAmount
+                }
+
+            },
+
+            {
+
+                $inc: {
+
+                    balance:
+                        -numericAmount,
+
+                    totalProfit:
+                        -numericAmount,
+
+                    withdrawable:
+                        -numericAmount
+
+                }
+
+            },
+
+            {
+                new:
+                    true,
+
+                runValidators:
+                    true
+
+            }
+
+        );
+
+
+    if (!wallet) {
+
+        throw new Error(
+            "Insufficient wallet balance or wallet is not active"
+        );
+
+    }
 
 
     return wallet;
+
+}
+
+
+// =====================================
+// Apply Trade Result
+// اعمال نتیجه معامله
+//
+// Profit > 0  => سود
+// Profit < 0  => ضرر
+// Profit = 0  => بدون تغییر موجودی
+// =====================================
+
+export async function applyTradeResult({
+
+    userId,
+
+    profit
+
+}) {
+
+    const numericProfit =
+        Number(profit);
+
+
+    if (
+        !Number.isFinite(
+            numericProfit
+        )
+    ) {
+
+        throw new Error(
+            "Trade profit is invalid"
+        );
+
+    }
+
+
+    // =====================================
+    // Zero Result
+    // =====================================
+
+    if (
+        numericProfit === 0
+    ) {
+
+        return await getWallet(
+            userId
+        );
+
+    }
+
+
+    // =====================================
+    // Profit
+    // =====================================
+
+    if (
+        numericProfit > 0
+    ) {
+
+        return await addProfit({
+
+            userId,
+
+            amount:
+                numericProfit
+
+        });
+
+    }
+
+
+    // =====================================
+    // Loss
+    // =====================================
+
+    return await registerLoss({
+
+        userId,
+
+        amount:
+            Math.abs(
+                numericProfit
+            )
+
+    });
+
 }
 
 
 // =====================================
 // Register Trade
+// افزایش تعداد معاملات
 // =====================================
 
 export async function registerTrade(
     userId
 ) {
 
+    if (!userId) {
+
+        throw new Error(
+            "User ID is required"
+        );
+
+    }
+
+
+    // =====================================
+    // Ensure Wallet Exists
+    // =====================================
+
+    await getWallet(
+        userId
+    );
+
+
+    // =====================================
+    // Atomic Trade Counter
+    // =====================================
+
     const wallet =
-        await getWallet(
-            userId
+        await Wallet.findOneAndUpdate(
+
+            {
+                userId,
+
+                status:
+                    "ACTIVE"
+
+            },
+
+            {
+
+                $inc: {
+
+                    totalTrades:
+                        1
+
+                }
+
+            },
+
+            {
+                new:
+                    true,
+
+                runValidators:
+                    true
+
+            }
+
         );
 
 
-    if (
-        wallet.status !==
-        "ACTIVE"
-    ) {
+    if (!wallet) {
 
         throw new Error(
             "Wallet is not active"
@@ -190,19 +611,14 @@ export async function registerTrade(
     }
 
 
-    wallet.totalTrades +=
-        1;
-
-
-    await wallet.save();
-
-
     return wallet;
+
 }
 
 
 // =====================================
 // Withdraw
+// برداشت از موجودی قابل برداشت
 // =====================================
 
 export async function withdraw({
@@ -214,64 +630,83 @@ export async function withdraw({
 }) {
 
     const numericAmount =
-        Number(amount);
-
-
-    if (
-        !Number.isFinite(
-            numericAmount
-        ) ||
-        numericAmount <= 0
-    ) {
-
-        throw new Error(
-            "Withdrawal amount must be greater than zero"
+        normalizeAmount(
+            amount,
+            "Withdrawal amount"
         );
 
-    }
 
+    // =====================================
+    // Ensure Wallet Exists
+    // =====================================
+
+    await getWallet(
+        userId
+    );
+
+
+    // =====================================
+    // Atomic Withdrawal
+    // =====================================
 
     const wallet =
-        await getWallet(
-            userId
+        await Wallet.findOneAndUpdate(
+
+            {
+                userId,
+
+                status:
+                    "ACTIVE",
+
+                balance: {
+                    $gte:
+                        numericAmount
+                },
+
+                withdrawable: {
+                    $gte:
+                        numericAmount
+                }
+
+            },
+
+            {
+
+                $inc: {
+
+                    balance:
+                        -numericAmount,
+
+                    withdrawable:
+                        -numericAmount
+
+                }
+
+            },
+
+            {
+                new:
+                    true,
+
+                runValidators:
+                    true
+
+            }
+
         );
 
 
-    if (
-        wallet.status !==
-        "ACTIVE"
-    ) {
+    if (!wallet) {
 
         throw new Error(
-            "Wallet is not active"
+            "Insufficient withdrawable balance or wallet is not active"
         );
 
     }
-
-
-    if (
-        numericAmount >
-        wallet.withdrawable
-    ) {
-
-        throw new Error(
-            "Insufficient withdrawable balance"
-        );
-
-    }
-
-
-    wallet.balance -=
-        numericAmount;
-
-    wallet.withdrawable -=
-        numericAmount;
-
-
-    await wallet.save();
 
 
     return wallet;
+
 }
 
 
@@ -297,6 +732,7 @@ export async function lockWallet(
 
 
     return wallet;
+
 }
 
 
@@ -322,4 +758,54 @@ export async function unlockWallet(
 
 
     return wallet;
+
+}
+
+
+// =====================================
+// Get Wallet Summary
+// خلاصه موجودی برای Mini App
+// =====================================
+
+export async function getWalletSummary(
+    userId
+) {
+
+    const wallet =
+        await getWallet(
+            userId
+        );
+
+
+    return {
+
+        id:
+            wallet._id,
+
+        userId:
+            wallet.userId,
+
+        balance:
+            wallet.balance,
+
+        withdrawable:
+            wallet.withdrawable,
+
+        totalProfit:
+            wallet.totalProfit,
+
+        totalTrades:
+            wallet.totalTrades,
+
+        currency:
+            wallet.currency,
+
+        status:
+            wallet.status,
+
+        updatedAt:
+            wallet.updatedAt
+
+    };
+
 }
