@@ -1,8 +1,8 @@
 // =====================================
 // AutoTrade AI
 // Payment Routes:: M
-// مسیرهای تأیید پرداخت
-// File: backend/routes/Payment.js
+// مسیرهای تأیید و وضعیت پرداخت
+// File: backend/routes/payment.js
 // =====================================
 
 import express from "express";
@@ -13,22 +13,79 @@ import {
     getPaymentStatus
 } from "../services/paymentVerificationService.js";
 
+import User from "../models/User.js";
+
+import {
+    requiredTelegramUser,
+    requiredAdmin
+} from "../middleware/auth.js";
+
 
 const router =
     express.Router();
 
 
 // =====================================
-// GET PAYMENT STATUS:: M
-// دریافت وضعیت پرداخت
+// Helper: Get Authenticated User:: M
+// دریافت کاربر احراز هویت‌شده
+// =====================================
+
+async function getAuthenticatedUser(req) {
+
+    const telegramId =
+        req.telegramId ||
+        req.telegramUser?.id ||
+        req.user?.telegramId;
+
+
+    if (!telegramId) {
+
+        throw new Error(
+            "Telegram user is not authenticated"
+        );
+
+    }
+
+
+    const user =
+        await User.findOne({
+
+            telegramId:
+                String(telegramId)
+
+        });
+
+
+    if (!user) {
+
+        throw new Error(
+            "User not found"
+        );
+
+    }
+
+
+    return user;
+
+}
+
+
+// =====================================
+// GET MY PAYMENT STATUS:: M
+// دریافت وضعیت پرداخت خود کاربر
 // GET /api/payment/:depositId
 // =====================================
 
 router.get(
     "/:depositId",
+    requiredTelegramUser,
     async (req, res) => {
 
         try {
+
+            const user =
+                await getAuthenticatedUser(req);
+
 
             const {
                 depositId
@@ -59,12 +116,13 @@ router.get(
 
 
             // =====================================
-            // دریافت وضعیت:: M
+            // دریافت وضعیت پرداخت:: M
             // =====================================
 
             const payment =
                 await getPaymentStatus(
-                    depositId
+                    depositId,
+                    user._id
                 );
 
 
@@ -87,7 +145,7 @@ router.get(
             );
 
 
-            return res.status(500).json({
+            return res.status(400).json({
 
                 success:
                     false,
@@ -110,15 +168,22 @@ router.get(
 // POST /api/payment/verify
 // =====================================
 //
-// این مسیر نباید توسط Mini App به‌عنوان
-// مرجع اعتماد برای تأیید پرداخت استفاده شود.
+// این endpoint فقط برای Admin است.
 //
-// درگاه واقعی باید پرداخت را تأیید کند
-// و سپس این endpoint را فراخوانی کند.
+// Mini App نباید بتواند:
+//
+// verified: true
+//
+// ارسال کند و Wallet را شارژ کند.
+//
+// تأیید واقعی باید توسط درگاه یا
+// سیستم پرداخت انجام شود.
 // =====================================
 
 router.post(
     "/verify",
+    requiredTelegramUser,
+    requiredAdmin,
     async (req, res) => {
 
         try {
@@ -133,7 +198,7 @@ router.post(
 
 
             // =====================================
-            // بررسی اطلاعات:: M
+            // بررسی شناسه واریز:: M
             // =====================================
 
             if (
@@ -152,10 +217,6 @@ router.post(
 
             }
 
-
-            // =====================================
-            // بررسی شناسه:: M
-            // =====================================
 
             if (
                 !mongoose.Types.ObjectId.isValid(
@@ -177,7 +238,7 @@ router.post(
 
 
             // =====================================
-            // بررسی تأیید درگاه:: M
+            // بررسی تأیید پرداخت:: M
             // =====================================
 
             if (
@@ -190,7 +251,7 @@ router.post(
                         false,
 
                     message:
-                        "پرداخت توسط درگاه تأیید نشده است"
+                        "پرداخت تأیید نشده است"
 
                 });
 
@@ -207,19 +268,26 @@ router.post(
                     depositId,
 
                     paymentId:
-                        paymentId || null,
+                        paymentId ||
+                        null,
 
                     transactionId:
-                        transactionId || null,
+                        transactionId ||
+                        null,
 
                     gateway:
-                        gateway || null,
+                        gateway ||
+                        null,
 
                     verified:
                         true
 
                 });
 
+
+            // =====================================
+            // نتیجه:: M
+            // =====================================
 
             return res.status(200).json({
 
@@ -237,7 +305,8 @@ router.post(
                     result.deposit,
 
                 wallet:
-                    result.wallet || null
+                    result.wallet ||
+                    null
 
             });
 
@@ -270,7 +339,6 @@ router.post(
 
 // =====================================
 // EXPORT ROUTER:: M
-// خروجی مسیرها
 // =====================================
 
 export default router;
