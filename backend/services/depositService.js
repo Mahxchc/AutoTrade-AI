@@ -1,6 +1,6 @@
 // =====================================
 // AutoTrade AI
-// Deposit Service:: M
+// Deposit Service :: M
 // سرویس مدیریت واریز
 // File: backend/services/depositService.js
 // =====================================
@@ -10,10 +10,70 @@ import mongoose from "mongoose";
 import Deposit from "../models/Deposit.js";
 import Wallet from "../models/Wallet.js";
 
+import {
+    getUsdIrrRate
+} from "./currencyService.js";
+
 
 // =====================================
-// Create Deposit:: M
+// Helpers :: M
+// =====================================
+
+function toPositiveNumber(
+    value,
+    message
+) {
+
+    const number =
+        Number(value);
+
+
+    if (
+        !Number.isFinite(number) ||
+        number <= 0
+    ) {
+
+        throw new Error(
+            message
+        );
+
+    }
+
+
+    return number;
+
+}
+
+
+// =====================================
+// Round Money :: M
+// =====================================
+
+function round8(
+    value
+) {
+
+    return Number(
+        Number(value).toFixed(8)
+    );
+
+}
+
+
+// =====================================
+// Create Deposit :: M
 // ایجاد درخواست واریز
+// =====================================
+//
+// تومان
+//   ↓
+// نرخ واقعی سرور
+//   ↓
+// USD
+//   ↓
+// USDT
+//
+// Wallet در این مرحله شارژ نمی‌شود.
 // =====================================
 
 export async function createDeposit({
@@ -22,7 +82,7 @@ export async function createDeposit({
 
     amountToman,
 
-    exchangeRate,
+    exchangeRate = null,
 
     method = "GATEWAY",
 
@@ -31,7 +91,7 @@ export async function createDeposit({
 }) {
 
     // =====================================
-    // بررسی شناسه کاربر:: M
+    // Validate User ID :: M
     // =====================================
 
     if (
@@ -48,59 +108,153 @@ export async function createDeposit({
 
 
     // =====================================
-    // بررسی مبلغ:: M
+    // Validate Amount :: M
     // =====================================
 
     const toman =
-        Number(amountToman);
-
-
-    if (
-        !Number.isFinite(toman) ||
-        toman <= 0
-    ) {
-
-        throw new Error(
+        toPositiveNumber(
+            amountToman,
             "مبلغ واریز نامعتبر است"
         );
 
+
+    // =====================================
+    // Get Server Exchange Rate :: M
+    // =====================================
+    //
+    // اگر نرخ از Mini App ارسال شود،
+    // به آن اعتماد نمی‌کنیم.
+    //
+    // نرخ معتبر از سرور دریافت می‌شود.
+    // =====================================
+
+    let rate;
+
+
+    try {
+
+        rate =
+            await getUsdIrrRate();
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "[DEPOSIT] Currency rate error:",
+            error.message
+        );
+
+
+        // ---------------------------------
+        // فقط برای سازگاری داخلی
+        // ---------------------------------
+
+        if (
+            exchangeRate !== null &&
+            Number.isFinite(
+                Number(exchangeRate)
+            ) &&
+            Number(exchangeRate) > 0
+        ) {
+
+            rate =
+                Number(exchangeRate);
+
+        }
+
+        else {
+
+            throw new Error(
+                "نرخ تبدیل دلار در دسترس نیست"
+            );
+
+        }
+
     }
 
 
-    // =====================================
-    // بررسی نرخ دلار:: M
-    // =====================================
-
-    const rate =
-        Number(exchangeRate);
-
-
-    if (
-        !Number.isFinite(rate) ||
-        rate <= 0
-    ) {
-
-        throw new Error(
+    rate =
+        toPositiveNumber(
+            rate,
             "نرخ دلار نامعتبر است"
         );
 
+
+    // =====================================
+    // Validate Payment Method :: M
+    // =====================================
+
+    const allowedMethods = [
+
+        "BANK",
+
+        "GATEWAY",
+
+        "OTHER"
+
+    ];
+
+
+    const normalizedMethod =
+        String(method)
+            .toUpperCase()
+            .trim();
+
+
+    if (
+        !allowedMethods.includes(
+            normalizedMethod
+        )
+    ) {
+
+        throw new Error(
+            "روش پرداخت نامعتبر است"
+        );
+
     }
 
 
     // =====================================
-    // محاسبه معادل دلار:: M
+    // Calculate USD :: M
     // =====================================
 
     const amountUSD =
-        Number(
-            (
-                toman / rate
-            ).toFixed(8)
+        round8(
+            toman / rate
+        );
+
+
+    if (
+        !Number.isFinite(amountUSD) ||
+        amountUSD <= 0
+    ) {
+
+        throw new Error(
+            "مبلغ معادل دلار نامعتبر است"
+        );
+
+    }
+
+
+    // =====================================
+    // USDT = USD :: M
+    // =====================================
+    //
+    // در سیستم فعلی:
+    //
+    // 1 USD = 1 USDT
+    //
+    // =====================================
+
+    const amountUSDT =
+        round8(
+            amountUSD
         );
 
 
     // =====================================
-    // ایجاد درخواست واریز:: M
+    // Create Deposit :: M
     // =====================================
 
     const deposit =
@@ -113,18 +267,27 @@ export async function createDeposit({
 
             amountUSD,
 
+            amountUSDT,
+
             exchangeRate:
                 rate,
 
-            method,
+            method:
+                normalizedMethod,
 
-            gateway,
+            gateway:
+                gateway
+                    ? String(gateway)
+                    : null,
 
             status:
                 "PENDING",
 
             walletCredited:
-                false
+                false,
+
+            confirmedAt:
+                null
 
         });
 
@@ -135,14 +298,19 @@ export async function createDeposit({
 
 
 // =====================================
-// Confirm Deposit:: M
-// تأیید و شارژ کیف پول
+// Confirm Deposit :: M
+// تأیید واقعی و شارژ کیف پول
 // =====================================
 //
-// مهم:
+// هشدار:
 //
-// این تابع فقط بعد از تأیید واقعی پرداخت
-// توسط درگاه باید فراخوانی شود.
+// این تابع نباید مستقیماً توسط Mini App
+// قابل دسترسی باشد.
+//
+// فقط Webhook / Callback معتبر درگاه
+// یا سیستم داخلی مورد اعتماد باید آن را
+// فراخوانی کند.
+//
 // =====================================
 
 export async function confirmDeposit({
@@ -158,7 +326,7 @@ export async function confirmDeposit({
 }) {
 
     // =====================================
-    // بررسی شناسه واریز:: M
+    // Validate Deposit ID :: M
     // =====================================
 
     if (
@@ -175,7 +343,7 @@ export async function confirmDeposit({
 
 
     // =====================================
-    // پیدا کردن واریز:: M
+    // Find Deposit :: M
     // =====================================
 
     const deposit =
@@ -194,7 +362,7 @@ export async function confirmDeposit({
 
 
     // =====================================
-    // جلوگیری از شارژ دوباره:: M
+    // Already Credited :: M
     // =====================================
 
     if (
@@ -204,9 +372,12 @@ export async function confirmDeposit({
 
         const wallet =
             await Wallet.findOne({
+
                 userId:
                     deposit.userId
+
             });
+
 
         return {
 
@@ -215,7 +386,26 @@ export async function confirmDeposit({
             wallet,
 
             alreadyCredited:
-                true
+                true,
+
+            creditedAmountUSD:
+                Number(
+                    deposit.amountUSD || 0
+                ),
+
+            creditedAmountUSDT:
+                Number(
+                    deposit.amountUSDT ||
+                    deposit.amountUSD ||
+                    0
+                ),
+
+            newBalanceUSD:
+                wallet
+                    ? Number(
+                        wallet.balance || 0
+                    )
+                    : 0
 
         };
 
@@ -223,13 +413,54 @@ export async function confirmDeposit({
 
 
     // =====================================
-    // پیدا کردن کیف پول:: M
+    // Validate Status :: M
+    // =====================================
+
+    if (
+        deposit.status !== "PENDING" &&
+        deposit.status !== "PROCESSING"
+    ) {
+
+        throw new Error(
+            "این درخواست واریز قابل تأیید نیست"
+        );
+
+    }
+
+
+    // =====================================
+    // Validate Amount :: M
+    // =====================================
+
+    const amountUSDT =
+        Number(
+            deposit.amountUSDT ??
+            deposit.amountUSD
+        );
+
+
+    if (
+        !Number.isFinite(amountUSDT) ||
+        amountUSDT <= 0
+    ) {
+
+        throw new Error(
+            "مبلغ USDT واریز نامعتبر است"
+        );
+
+    }
+
+
+    // =====================================
+    // Find Wallet :: M
     // =====================================
 
     const wallet =
         await Wallet.findOne({
+
             userId:
                 deposit.userId
+
         });
 
 
@@ -243,70 +474,291 @@ export async function confirmDeposit({
 
 
     // =====================================
-    // شارژ کیف پول:: M
+    // Validate Wallet :: M
     // =====================================
+
+    if (
+        wallet.status !== "ACTIVE"
+    ) {
+
+        throw new Error(
+            "کیف پول کاربر فعال نیست"
+        );
+
+    }
+
+
+    const currentBalance =
+        Number(
+            wallet.balance || 0
+        );
+
+
+    const currentWithdrawable =
+        Number(
+            wallet.withdrawable || 0
+        );
+
+
+    if (
+        !Number.isFinite(
+            currentBalance
+        ) ||
+        currentBalance < 0
+    ) {
+
+        throw new Error(
+            "موجودی کیف پول نامعتبر است"
+        );
+
+    }
+
+
+    if (
+        !Number.isFinite(
+            currentWithdrawable
+        ) ||
+        currentWithdrawable < 0
+    ) {
+
+        throw new Error(
+            "موجودی قابل برداشت نامعتبر است"
+        );
+
+    }
+
+
+    // =====================================
+    // Atomic Deposit Claim :: M
+    // گرفتن مالکیت عملیات تأیید
+    // =====================================
+    //
+    // فقط اولین درخواست می‌تواند Deposit
+    // را از PENDING/PROCESSING به COMPLETED
+    // تغییر دهد.
+    //
+    // درخواست تکراری دیگر وارد شارژ Wallet
+    // نمی‌شود.
+    // =====================================
+
+    const claimedDeposit =
+        await Deposit.findOneAndUpdate(
+
+            {
+
+                _id:
+                    depositId,
+
+                walletCredited:
+                    false,
+
+                status: {
+
+                    $in: [
+
+                        "PENDING",
+
+                        "PROCESSING"
+
+                    ]
+
+                }
+
+            },
+
+            {
+
+                $set: {
+
+                    status:
+                        "COMPLETED",
+
+                    walletCredited:
+                        true,
+
+                    confirmedAt:
+                        new Date(),
+
+                    ...(paymentId
+                        ? {
+                            paymentId:
+                                String(
+                                    paymentId
+                                )
+                        }
+                        : {}),
+
+                    ...(transactionId
+                        ? {
+                            transactionId:
+                                String(
+                                    transactionId
+                                )
+                        }
+                        : {}),
+
+                    ...(gateway
+                        ? {
+                            gateway:
+                                String(
+                                    gateway
+                                )
+                        }
+                        : {})
+
+                }
+
+            },
+
+            {
+
+                returnDocument:
+                    "after",
+
+                runValidators:
+                    true
+
+            }
+
+        );
+
+
+    // =====================================
+    // Another Request Already Confirmed
+    // =====================================
+
+    if (!claimedDeposit) {
+
+        const latestDeposit =
+            await Deposit.findById(
+                depositId
+            );
+
+
+        const latestWallet =
+            await Wallet.findOne({
+
+                userId:
+                    deposit.userId
+
+            });
+
+
+        if (
+            latestDeposit &&
+            (
+                latestDeposit.walletCredited ===
+                true ||
+                latestDeposit.status ===
+                "COMPLETED"
+            )
+        ) {
+
+            return {
+
+                deposit:
+                    latestDeposit,
+
+                wallet:
+                    latestWallet,
+
+                alreadyCredited:
+                    true,
+
+                creditedAmountUSD:
+                    Number(
+                        latestDeposit.amountUSD ||
+                        0
+                    ),
+
+                creditedAmountUSDT:
+                    Number(
+                        latestDeposit.amountUSDT ??
+                        latestDeposit.amountUSD ??
+                        0
+                    ),
+
+                newBalanceUSD:
+                    latestWallet
+                        ? Number(
+                            latestWallet.balance ||
+                            0
+                        )
+                        : 0
+
+            };
+
+        }
+
+
+        throw new Error(
+            "تأیید واریز همزمان یا نامعتبر است"
+        );
+
+    }
+
+
+    // =====================================
+    // Credit Wallet :: M
+    // =====================================
+
+    const newBalance =
+        round8(
+            currentBalance +
+            amountUSDT
+        );
+
+
+    const newWithdrawable =
+        round8(
+            currentWithdrawable +
+            amountUSDT
+        );
+
 
     wallet.balance =
-        Number(wallet.balance || 0) +
-        Number(deposit.amountUSD || 0);
+        newBalance;
+
+
+    wallet.withdrawable =
+        newWithdrawable;
 
 
     // =====================================
-    // ذخیره کیف پول:: M
+    // Save Wallet :: M
     // =====================================
 
     await wallet.save();
 
 
     // =====================================
-    // تکمیل واریز:: M
+    // Result :: M
     // =====================================
-
-    deposit.status =
-        "COMPLETED";
-
-    deposit.walletCredited =
-        true;
-
-    deposit.confirmedAt =
-        new Date();
-
-
-    if (paymentId) {
-
-        deposit.paymentId =
-            paymentId;
-
-    }
-
-
-    if (transactionId) {
-
-        deposit.transactionId =
-            transactionId;
-
-    }
-
-
-    if (gateway) {
-
-        deposit.gateway =
-            gateway;
-
-    }
-
-
-    await deposit.save();
-
 
     return {
 
-        deposit,
+        deposit:
+            claimedDeposit,
 
         wallet,
 
         alreadyCredited:
-            false
+            false,
+
+        creditedAmountUSD:
+            Number(
+                claimedDeposit.amountUSD ||
+                amountUSDT
+            ),
+
+        creditedAmountUSDT:
+            amountUSDT,
+
+        newBalanceUSD:
+            newBalance,
+
+        newBalanceUSDT:
+            newBalance
 
     };
 
@@ -314,7 +766,7 @@ export async function confirmDeposit({
 
 
 // =====================================
-// Get User Deposits:: M
+// Get User Deposits :: M
 // دریافت واریزهای کاربر
 // =====================================
 
@@ -337,10 +789,15 @@ export async function getUserDeposits(
 
     const deposits =
         await Deposit.find({
+
             userId
+
         })
         .sort({
-            createdAt: -1
+
+            createdAt:
+                -1
+
         })
         .limit(100);
 
@@ -348,3 +805,460 @@ export async function getUserDeposits(
     return deposits;
 
 }
+
+
+// =====================================
+// Get Deposit By ID :: M
+// دریافت یک واریز
+// =====================================
+
+export async function getDepositById({
+
+    depositId,
+
+    userId = null
+
+}) {
+
+    if (
+        !mongoose.Types.ObjectId.isValid(
+            depositId
+        )
+    ) {
+
+        throw new Error(
+            "شناسه واریز نامعتبر است"
+        );
+
+    }
+
+
+    const query = {
+
+        _id:
+            depositId
+
+    };
+
+
+    // =====================================
+    // User Ownership :: M
+    // =====================================
+
+    if (
+        userId !== null
+    ) {
+
+        if (
+            !mongoose.Types.ObjectId.isValid(
+                userId
+            )
+        ) {
+
+            throw new Error(
+                "شناسه کاربر نامعتبر است"
+            );
+
+        }
+
+
+        query.userId =
+            userId;
+
+    }
+
+
+    const deposit =
+        await Deposit.findOne(
+            query
+        );
+
+
+    if (!deposit) {
+
+        throw new Error(
+            "واریز پیدا نشد"
+        );
+
+    }
+
+
+    return deposit;
+
+}
+
+
+// =====================================
+// Mark Deposit Processing :: M
+// انتقال به پردازش
+// =====================================
+
+export async function markDepositProcessing({
+
+    depositId
+
+}) {
+
+    if (
+        !mongoose.Types.ObjectId.isValid(
+            depositId
+        )
+    ) {
+
+        throw new Error(
+            "شناسه واریز نامعتبر است"
+        );
+
+    }
+
+
+    const deposit =
+        await Deposit.findOneAndUpdate(
+
+            {
+
+                _id:
+                    depositId,
+
+                status:
+                    "PENDING",
+
+                walletCredited:
+                    false
+
+            },
+
+            {
+
+                $set: {
+
+                    status:
+                        "PROCESSING"
+
+                }
+
+            },
+
+            {
+
+                returnDocument:
+                    "after",
+
+                runValidators:
+                    true
+
+            }
+
+        );
+
+
+    if (!deposit) {
+
+        const existing =
+            await Deposit.findById(
+                depositId
+            );
+
+
+        if (!existing) {
+
+            throw new Error(
+                "واریز پیدا نشد"
+            );
+
+        }
+
+
+        if (
+            existing.walletCredited === true ||
+            existing.status === "PROCESSING"
+        ) {
+
+            return existing;
+
+        }
+
+
+        throw new Error(
+            "این واریز در وضعیت قابل پردازش نیست"
+        );
+
+    }
+
+
+    return deposit;
+
+}
+
+
+// =====================================
+// Fail Deposit :: M
+// ناموفق کردن واریز
+// =====================================
+
+export async function failDeposit({
+
+    depositId,
+
+    description = ""
+
+}) {
+
+    if (
+        !mongoose.Types.ObjectId.isValid(
+            depositId
+        )
+    ) {
+
+        throw new Error(
+            "شناسه واریز نامعتبر است"
+        );
+
+    }
+
+
+    const deposit =
+        await Deposit.findOneAndUpdate(
+
+            {
+
+                _id:
+                    depositId,
+
+                walletCredited:
+                    false,
+
+                status: {
+
+                    $in: [
+
+                        "PENDING",
+
+                        "PROCESSING"
+
+                    ]
+
+                }
+
+            },
+
+            {
+
+                $set: {
+
+                    status:
+                        "FAILED",
+
+                    ...(description
+                        ? {
+                            description:
+                                String(
+                                    description
+                                )
+                        }
+                        : {})
+
+                }
+
+            },
+
+            {
+
+                returnDocument:
+                    "after",
+
+                runValidators:
+                    true
+
+            }
+
+        );
+
+
+    if (!deposit) {
+
+        const existing =
+            await Deposit.findById(
+                depositId
+            );
+
+
+        if (!existing) {
+
+            throw new Error(
+                "واریز پیدا نشد"
+            );
+
+        }
+
+
+        if (
+            existing.walletCredited === true ||
+            existing.status === "COMPLETED"
+        ) {
+
+            throw new Error(
+                "واریز تکمیل شده را نمی‌توان ناموفق کرد"
+            );
+
+        }
+
+
+        throw new Error(
+            "این واریز قابل ناموفق کردن نیست"
+        );
+
+    }
+
+
+    return deposit;
+
+}
+
+
+// =====================================
+// Cancel Deposit :: M
+// لغو واریز
+// =====================================
+
+export async function cancelDeposit({
+
+    depositId,
+
+    description = ""
+
+}) {
+
+    if (
+        !mongoose.Types.ObjectId.isValid(
+            depositId
+        )
+    ) {
+
+        throw new Error(
+            "شناسه واریز نامعتبر است"
+        );
+
+    }
+
+
+    const deposit =
+        await Deposit.findOneAndUpdate(
+
+            {
+
+                _id:
+                    depositId,
+
+                walletCredited:
+                    false,
+
+                status: {
+
+                    $in: [
+
+                        "PENDING",
+
+                        "PROCESSING"
+
+                    ]
+
+                }
+
+            },
+
+            {
+
+                $set: {
+
+                    status:
+                        "CANCELLED",
+
+                    ...(description
+                        ? {
+                            description:
+                                String(
+                                    description
+                                )
+                        }
+                        : {})
+
+                }
+
+            },
+
+            {
+
+                returnDocument:
+                    "after",
+
+                runValidators:
+                    true
+
+            }
+
+        );
+
+
+    if (!deposit) {
+
+        const existing =
+            await Deposit.findById(
+                depositId
+            );
+
+
+        if (!existing) {
+
+            throw new Error(
+                "واریز پیدا نشد"
+            );
+
+        }
+
+
+        if (
+            existing.walletCredited === true ||
+            existing.status === "COMPLETED"
+        ) {
+
+            throw new Error(
+                "واریز تکمیل شده را نمی‌توان لغو کرد"
+            );
+
+        }
+
+
+        throw new Error(
+            "این واریز قابل لغو کردن نیست"
+        );
+
+    }
+
+
+    return deposit;
+
+}
+
+
+// =====================================
+// Default Export :: M
+// =====================================
+
+export default {
+
+    createDeposit,
+
+    confirmDeposit,
+
+    getUserDeposits,
+
+    getDepositById,
+
+    markDepositProcessing,
+
+    failDeposit,
+
+    cancelDeposit
+
+};
