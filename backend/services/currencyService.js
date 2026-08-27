@@ -45,7 +45,7 @@ export function getUsdToTomanRate() {
 
 
 // =====================================
-// Convert USD to Toman:: M
+// Convert USD To Toman:: M
 // =====================================
 
 export function usdToToman(
@@ -81,7 +81,7 @@ export function usdToToman(
 
 
 // =====================================
-// Convert Toman to USD:: M
+// Convert Toman To USD:: M
 // =====================================
 
 export function tomanToUsd(
@@ -124,6 +124,46 @@ export function tomanToUsd(
 
 
 // =====================================
+// Convert Toman To USD
+// Compatibility Alias:: M
+// =====================================
+//
+// routes/currency.js expects:
+//
+// convertTomanToUsd
+//
+// Keep this alias so all existing
+// project files remain compatible.
+// =====================================
+
+export function convertTomanToUsd(
+    toman
+) {
+
+    return tomanToUsd(
+        toman
+    );
+
+}
+
+
+// =====================================
+// Convert USD To Toman
+// Compatibility Alias:: M
+// =====================================
+
+export function convertUsdToToman(
+    usd
+) {
+
+    return usdToToman(
+        usd
+    );
+
+}
+
+
+// =====================================
 // Format Toman:: M
 // =====================================
 
@@ -148,14 +188,6 @@ export function formatToman(
 
 // =====================================
 // Get Wallet Display Values:: M
-// =====================================
-//
-// This function is required by:
-//
-// backend/routes/wallet.js
-//
-// It provides the wallet values in both
-// USD and Toman for the Mini App.
 // =====================================
 
 export function getWalletDisplayValues({
@@ -251,6 +283,10 @@ export default {
     usdToToman,
 
     tomanToUsd,
+
+    convertTomanToUsd,
+
+    convertUsdToToman,
 
     formatToman,
 
