@@ -22,7 +22,10 @@ import {
 // Helpers
 // =====================================
 
-function toNumber(value, fallback = 0) {
+function toNumber(
+    value,
+    fallback = 0
+) {
 
     const number =
         Number(value);
@@ -58,7 +61,7 @@ export async function openTrade({
 }) {
 
     // =====================================
-    // Validate User ID
+    // Validate User
     // =====================================
 
     if (
@@ -111,11 +114,14 @@ export async function openTrade({
     // =====================================
 
     const numericEntryPrice =
-        toNumber(entryPrice);
-
+        toNumber(
+            entryPrice
+        );
 
     const numericStopLossPrice =
-        toNumber(stopLossPrice);
+        toNumber(
+            stopLossPrice
+        );
 
 
     if (
@@ -229,7 +235,7 @@ export async function openTrade({
 
 
     // =====================================
-    // Check Bot Status
+    // Check Bot
     // =====================================
 
     if (
@@ -248,9 +254,24 @@ export async function openTrade({
     // Check Consecutive Losses
     // =====================================
 
+    const consecutiveLosses =
+        toNumber(
+            bot.consecutiveLosses
+        );
+
+    const maxConsecutiveLosses =
+        Math.max(
+            1,
+            toNumber(
+                bot.maxConsecutiveLosses,
+                2
+            )
+        );
+
+
     if (
-        toNumber(bot.consecutiveLosses) >=
-        toNumber(bot.maxConsecutiveLosses)
+        consecutiveLosses >=
+        maxConsecutiveLosses
     ) {
 
         bot.status =
@@ -295,22 +316,31 @@ export async function openTrade({
     }
 
 
+    if (
+        wallet.status !== "ACTIVE"
+    ) {
+
+        throw new Error(
+            "Wallet is not active"
+        );
+
+    }
+
+
     // =====================================
-    // Current Wallet Balance
+    // Current Capital
     // =====================================
     //
-    // IMPORTANT:
+    // موجودی فعلی مبنای معامله بعدی است.
     //
-    // Wallet balance is stored in USDT/USD.
+    // مثال:
     //
-    // Deposit:
-    // Toman -> USDT
+    // 2 USDT
+    // +0.5 profit
+    // = 2.5 USDT
     //
-    // Profit:
-    // added back to wallet.balance
-    //
-    // Therefore the next trade automatically
-    // uses the new compounded balance.
+    // معامله بعدی بر اساس 2.5 USDT
+    // محاسبه می‌شود.
     //
     // =====================================
 
@@ -332,7 +362,7 @@ export async function openTrade({
 
 
     // =====================================
-    // Check Open Trades
+    // Open Trades
     // =====================================
 
     const activeTrades =
@@ -423,22 +453,6 @@ export async function openTrade({
     // =====================================
     // Calculate Position Size
     // =====================================
-    //
-    // This is where compounding happens.
-    //
-    // If balance increases:
-    //
-    // 100 USDT
-    //   ↓
-    // 120 USDT
-    //   ↓
-    // 150 USDT
-    //
-    // calculatePositionSize() receives the
-    // NEW balance and therefore the next
-    // position can become larger.
-    //
-    // =====================================
 
     const position =
         calculatePositionSize({
@@ -528,18 +542,14 @@ export async function openTrade({
     bot.openTrades =
         activeTrades + 1;
 
-
     bot.lastRun =
         new Date();
-
 
     bot.lastHeartbeat =
         new Date();
 
-
     bot.lastSignal =
         side;
-
 
     bot.lastSignalAt =
         new Date();
@@ -547,10 +557,6 @@ export async function openTrade({
 
     await bot.save();
 
-
-    // =====================================
-    // Return Trade
-    // =====================================
 
     return trade;
 
@@ -594,7 +600,9 @@ export async function closeTrade({
     // =====================================
 
     const numericExitPrice =
-        toNumber(exitPrice);
+        toNumber(
+            exitPrice
+        );
 
 
     if (
@@ -639,7 +647,7 @@ export async function closeTrade({
 
 
     // =====================================
-    // Calculate Profit / Loss
+    // Calculate P/L
     // =====================================
 
     const entryPrice =
@@ -647,11 +655,22 @@ export async function closeTrade({
             trade.entryPrice
         );
 
-
     const quantity =
         toNumber(
             trade.quantity
         );
+
+
+    if (
+        entryPrice <= 0 ||
+        quantity <= 0
+    ) {
+
+        throw new Error(
+            "Invalid trade data"
+        );
+
+    }
 
 
     let difference;
@@ -688,34 +707,7 @@ export async function closeTrade({
 
 
     // =====================================
-    // Update Trade
-    // =====================================
-
-    trade.exitPrice =
-        numericExitPrice;
-
-
-    trade.profit =
-        finalProfit;
-
-
-    trade.status =
-        "CLOSED";
-
-
-    trade.externalStatus =
-        externalStatus;
-
-
-    trade.closedAt =
-        new Date();
-
-
-    await trade.save();
-
-
-    // =====================================
-    // Find Wallet
+    // Find Wallet BEFORE updating trade
     // =====================================
 
     const wallet =
@@ -736,34 +728,19 @@ export async function closeTrade({
     }
 
 
+    if (
+        wallet.status !== "ACTIVE"
+    ) {
+
+        throw new Error(
+            "Wallet is not active"
+        );
+
+    }
+
+
     // =====================================
-    // COMPOUNDING
-    // =====================================
-    //
-    // This is the most important part.
-    //
-    // Example:
-    //
-    // Initial:
-    // 100 USDT
-    //
-    // Profit:
-    // +20 USDT
-    //
-    // New balance:
-    // 120 USDT
-    //
-    // Next trade uses:
-    // 120 USDT
-    //
-    // Next profit:
-    // +30 USDT
-    //
-    // New balance:
-    // 150 USDT
-    //
-    // And so on.
-    //
+    // Current Capital
     // =====================================
 
     const oldBalance =
@@ -784,353 +761,33 @@ export async function closeTrade({
         );
 
 
-    const newBalance =
-        Number(
-            (
-                oldBalance +
-                finalProfit
-            ).toFixed(8)
-        );
-
-
-    const newTotalProfit =
-        Number(
-            (
-                oldTotalProfit +
-                finalProfit
-            ).toFixed(8)
-        );
-
-
-    wallet.balance =
-        newBalance;
-
-
-    wallet.totalProfit =
-        newTotalProfit;
-
-
-    wallet.totalTrades =
-        toNumber(
-            wallet.totalTrades
-        ) + 1;
-
-
-    // =====================================
-    // Withdrawable Profit
-    // =====================================
-
     if (
-        finalProfit > 0
-    ) {
-
-        wallet.withdrawable =
-            Number(
-                (
-                    oldWithdrawable +
-                    finalProfit
-                ).toFixed(8)
-            );
-
-    }
-
-
-    await wallet.save();
-
-
-    // =====================================
-    // Find Bot
-    // =====================================
-
-    const bot =
-        await Bot.findOne({
-
-            userId:
-                trade.userId
-
-        });
-
-
-    if (!bot) {
-
-        throw new Error(
-            "Bot not found"
-        );
-
-    }
-
-
-    // =====================================
-    // Decrease Open Trades
-    // =====================================
-
-    bot.openTrades =
-        Math.max(
-
-            0,
-
-            toNumber(
-                bot.openTrades
-            ) - 1
-
-        );
-
-
-    // =====================================
-    // Trade Statistics
-    // =====================================
-
-    bot.lastTradeProfitUSD =
-        finalProfit;
-
-
-    bot.lastTradeAt =
-        new Date();
-
-
-    bot.lastHeartbeat =
-        new Date();
-
-
-    bot.totalProfitUSD =
-        Number(
-
-            (
-                toNumber(
-                    bot.totalProfitUSD
-                ) +
-                finalProfit
-
-            ).toFixed(8)
-
-        );
-
-
-    // =====================================
-    // Winning Trade
-    // =====================================
-
-    if (
-        finalProfit > 0
-    ) {
-
-        bot.winningTrades =
-            toNumber(
-                bot.winningTrades
-            ) + 1;
-
-
-        bot.consecutiveLosses =
-            0;
-
-
-        bot.stopReason =
-            "";
-
-    }
-
-
-    // =====================================
-    // Losing Trade
-    // =====================================
-
-    else if (
-        finalProfit < 0
-    ) {
-
-        bot.losingTrades =
-            toNumber(
-                bot.losingTrades
-            ) + 1;
-
-
-        bot.consecutiveLosses =
-            toNumber(
-                bot.consecutiveLosses
-            ) + 1;
-
-
-        // =====================================
-        // Auto Pause
-        // =====================================
-
-        const maxLosses =
-            Math.max(
-
-                1,
-
-                toNumber(
-                    bot.maxConsecutiveLosses,
-                    2
-                )
-
-            );
-
-
-        if (
-            bot.consecutiveLosses >=
-            maxLosses
-        ) {
-
-            bot.status =
-                "PAUSED";
-
-
-            bot.enabled =
-                false;
-
-
-            bot.stopReason =
-                "Maximum consecutive losses reached";
-
-        }
-
-    }
-
-
-    // =====================================
-    // Save Bot
-    // =====================================
-
-    await bot.save();
-
-
-    // =====================================
-    // Return Result
-    // =====================================
-
-    return {
-
-        trade,
-
-        profitUSD:
-            finalProfit,
-
-        previousBalanceUSD:
-            oldBalance,
-
-        newBalanceUSD:
-            newBalance,
-
-        totalProfitUSD:
-            newTotalProfit,
-
-        compounded:
-            finalProfit > 0,
-
-        botStatus:
-            bot.status,
-
-        consecutiveLosses:
-            bot.consecutiveLosses,
-
-        openTrades:
-            bot.openTrades
-
-    };
-
-}
-
-
-// =====================================
-// Reactivate Bot
-// فعال‌سازی مجدد ربات
-// =====================================
-
-export async function reactivateBot({
-
-    userId
-
-}) {
-
-    // =====================================
-    // Validate User ID
-    // =====================================
-
-    if (
-        !mongoose.Types.ObjectId.isValid(
-            userId
-        )
+        oldBalance < 0
     ) {
 
         throw new Error(
-            "Invalid user ID"
+            "Wallet balance is invalid"
         );
 
     }
 
 
     // =====================================
-    // Find Bot
+    // New Capital
+    // =====================================
+    //
+    // سود:
+    //
+    // 2.00000000
+    // +0.50000000
+    // =2.50000000
+    //
+    // ضرر:
+    //
+    // 2.50000000
+    // -0.20000000
+    // =2.30000000
+    //
     // =====================================
 
-    const bot =
-        await Bot.findOne({
-
-            userId
-
-        });
-
-
-    if (!bot) {
-
-        throw new Error(
-            "Bot not found"
-        );
-
-    }
-
-
-    // =====================================
-    // Reactivate
-    // =====================================
-
-    bot.consecutiveLosses =
-        0;
-
-
-    bot.status =
-        "ACTIVE";
-
-
-    bot.enabled =
-        true;
-
-
-    bot.stopReason =
-        "";
-
-
-    bot.lastError =
-        "";
-
-
-    bot.lastHeartbeat =
-        new Date();
-
-
-    bot.lastRun =
-        new Date();
-
-
-    await bot.save();
-
-
-    return bot;
-
-}
-
-
-// =====================================
-// Default Export
-// =====================================
-
-export default {
-
-    openTrade,
-
-    closeTrade,
-
-    reactivateBot
-
-};
+    const raw
