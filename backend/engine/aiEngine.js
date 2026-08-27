@@ -280,4 +280,269 @@ export function analyzeMarket({
 
         confidence:
             Number(
-                confidence.to
+                confidence.toFixed(2)
+            ),
+
+        priceChange:
+            roundedPriceChange,
+
+        currentPrice,
+
+        previousPrice,
+
+        reason,
+
+        timestamp:
+            new Date()
+
+    };
+
+}
+
+
+// =====================================
+// Validate Signal:: M
+// اعتبارسنجی سیگنال
+// =====================================
+
+export function validateSignal({
+
+    action,
+
+    confidence,
+
+    minimumConfidence = 70
+
+}) {
+
+    // =====================================
+    // Validate Action:: M
+    // =====================================
+
+    if (
+
+        action !== "BUY" &&
+
+        action !== "SELL"
+
+    ) {
+
+        return false;
+
+    }
+
+
+    // =====================================
+    // Validate Confidence:: M
+    // =====================================
+
+    const numericConfidence =
+        Number(
+            confidence
+        );
+
+
+    if (
+        !Number.isFinite(
+            numericConfidence
+        )
+    ) {
+
+        return false;
+
+    }
+
+
+    // =====================================
+    // Validate Minimum Confidence:: M
+    // =====================================
+
+    const minimum =
+        Number(
+            minimumConfidence
+        );
+
+
+    if (
+
+        !Number.isFinite(
+            minimum
+        ) ||
+
+        minimum < 0 ||
+
+        minimum > 100
+
+    ) {
+
+        return false;
+
+    }
+
+
+    return (
+        numericConfidence >=
+        minimum
+    );
+
+}
+
+
+// =====================================
+// Convert AI Signal:: M
+// تبدیل خروجی AI به سیگنال معاملاتی
+// =====================================
+
+export function getTradingSignal({
+
+    analysis,
+
+    minimumConfidence = 70
+
+}) {
+
+    if (
+        !analysis ||
+        typeof analysis !== "object"
+    ) {
+
+        return {
+
+            signal:
+                "WAIT",
+
+            confidence:
+                0,
+
+            approved:
+                false,
+
+            reason:
+                "Invalid AI analysis"
+
+        };
+
+    }
+
+
+    const action =
+        String(
+            analysis.action || "HOLD"
+        )
+        .toUpperCase();
+
+
+    const confidence =
+        Number(
+            analysis.confidence || 0
+        );
+
+
+    // =====================================
+    // HOLD → WAIT:: M
+    // =====================================
+
+    if (
+        action === "HOLD"
+    ) {
+
+        return {
+
+            signal:
+                "WAIT",
+
+            confidence:
+                Number(
+                    confidence.toFixed(2)
+                ),
+
+            approved:
+                false,
+
+            reason:
+                analysis.reason ||
+                "AI decided to wait"
+
+        };
+
+    }
+
+
+    // =====================================
+    // Validate BUY / SELL:: M
+    // =====================================
+
+    const valid =
+        validateSignal({
+
+            action,
+
+            confidence,
+
+            minimumConfidence
+
+        });
+
+
+    if (!valid) {
+
+        return {
+
+            signal:
+                "WAIT",
+
+            confidence:
+                Number(
+                    confidence.toFixed(2)
+                ),
+
+            approved:
+                false,
+
+            reason:
+                "AI confidence is below minimum threshold"
+
+        };
+
+    }
+
+
+    // =====================================
+    // Approved Signal:: M
+    // =====================================
+
+    return {
+
+        signal:
+            action,
+
+        confidence:
+            Number(
+                confidence.toFixed(2)
+            ),
+
+        approved:
+            true,
+
+        reason:
+            analysis.reason ||
+            "AI signal approved"
+
+    };
+
+}
+
+
+// =====================================
+// Default Export:: M
+// =====================================
+
+export default {
+
+    analyzeMarket,
+
+    validateSignal,
+
+    getTradingSignal
+
+};
