@@ -2,7 +2,7 @@
 // AutoTrade AI
 // Deposit Routes:: M
 // مسیرهای واریز برای Mini App
-// File: backend/routes/Deposit.js
+// File: backend/routes/deposit.js
 // =====================================
 
 import express from "express";
@@ -21,7 +21,7 @@ const router =
 
 
 // =====================================
-// CREATE DEPOSIT:: M
+// CREATE DEPOSIT
 // ایجاد درخواست واریز
 // POST /api/deposit
 // =====================================
@@ -48,12 +48,61 @@ router.post(
 
 
             // =====================================
-            // بررسی اطلاعات:: M
+            // بررسی اطلاعات
             // =====================================
 
+            if (!userId) {
+
+                return res.status(400).json({
+
+                    success:
+                        false,
+
+                    message:
+                        "شناسه کاربر ارسال نشده است"
+
+                });
+
+            }
+
+
             if (
-                !userId ||
-                amountToman == null ||
+                !mongoose.Types.ObjectId.isValid(
+                    userId
+                )
+            ) {
+
+                return res.status(400).json({
+
+                    success:
+                        false,
+
+                    message:
+                        "شناسه کاربر نامعتبر است"
+
+                });
+
+            }
+
+
+            if (
+                amountToman == null
+            ) {
+
+                return res.status(400).json({
+
+                    success:
+                        false,
+
+                    message:
+                        "مبلغ واریز مشخص نشده است"
+
+                });
+
+            }
+
+
+            if (
                 exchangeRate == null
             ) {
 
@@ -63,7 +112,7 @@ router.post(
                         false,
 
                     message:
-                        "اطلاعات واریز کامل نیست"
+                        "نرخ تبدیل دلار مشخص نشده است"
 
                 });
 
@@ -71,7 +120,7 @@ router.post(
 
 
             // =====================================
-            // ایجاد درخواست واریز:: M
+            // ایجاد درخواست واریز
             // =====================================
 
             const deposit =
@@ -94,15 +143,51 @@ router.post(
                 });
 
 
+            // =====================================
+            // پاسخ
+            // =====================================
+
             return res.status(201).json({
 
                 success:
                     true,
 
                 message:
-                    "درخواست واریز ایجاد شد",
+                    "درخواست واریز با موفقیت ایجاد شد",
 
-                deposit
+                deposit: {
+
+                    id:
+                        deposit._id,
+
+                    userId:
+                        deposit.userId,
+
+                    amountToman:
+                        deposit.amountToman,
+
+                    amountUSD:
+                        deposit.amountUSD,
+
+                    exchangeRate:
+                        deposit.exchangeRate,
+
+                    method:
+                        deposit.method,
+
+                    gateway:
+                        deposit.gateway,
+
+                    status:
+                        deposit.status,
+
+                    walletCredited:
+                        deposit.walletCredited,
+
+                    createdAt:
+                        deposit.createdAt
+
+                }
 
             });
 
@@ -134,7 +219,7 @@ router.post(
 
 
 // =====================================
-// GET USER DEPOSITS:: M
+// GET USER DEPOSITS
 // دریافت لیست واریزهای کاربر
 // GET /api/deposit/user/:userId
 // =====================================
@@ -151,7 +236,7 @@ router.get(
 
 
             // =====================================
-            // بررسی شناسه کاربر:: M
+            // بررسی شناسه کاربر
             // =====================================
 
             if (
@@ -174,7 +259,7 @@ router.get(
 
 
             // =====================================
-            // دریافت واریزها:: M
+            // دریافت واریزها
             // =====================================
 
             const deposits =
@@ -183,10 +268,17 @@ router.get(
                 );
 
 
+            // =====================================
+            // پاسخ
+            // =====================================
+
             return res.status(200).json({
 
                 success:
                     true,
+
+                count:
+                    deposits.length,
 
                 deposits
 
@@ -220,7 +312,7 @@ router.get(
 
 
 // =====================================
-// GET DEPOSIT STATUS:: M
+// GET DEPOSIT STATUS
 // دریافت وضعیت یک واریز
 // GET /api/deposit/:depositId
 // =====================================
@@ -237,7 +329,7 @@ router.get(
 
 
             // =====================================
-            // بررسی شناسه واریز:: M
+            // بررسی شناسه واریز
             // =====================================
 
             if (
@@ -260,7 +352,7 @@ router.get(
 
 
             // =====================================
-            // پیدا کردن واریز:: M
+            // پیدا کردن واریز
             // =====================================
 
             const deposit =
@@ -284,12 +376,60 @@ router.get(
             }
 
 
+            // =====================================
+            // پاسخ وضعیت
+            // =====================================
+
             return res.status(200).json({
 
                 success:
                     true,
 
-                deposit
+                deposit: {
+
+                    id:
+                        deposit._id,
+
+                    userId:
+                        deposit.userId,
+
+                    amountToman:
+                        deposit.amountToman,
+
+                    amountUSD:
+                        deposit.amountUSD,
+
+                    exchangeRate:
+                        deposit.exchangeRate,
+
+                    method:
+                        deposit.method,
+
+                    gateway:
+                        deposit.gateway,
+
+                    paymentId:
+                        deposit.paymentId,
+
+                    transactionId:
+                        deposit.transactionId,
+
+                    status:
+                        deposit.status,
+
+                    walletCredited:
+                        deposit.walletCredited,
+
+                    confirmedAt:
+                        deposit.confirmedAt,
+
+                    createdAt:
+                        deposit.createdAt,
+
+                    updatedAt:
+                        deposit.updatedAt
+
+                }
 
             });
 
@@ -320,8 +460,7 @@ router.get(
 
 
 // =====================================
-// EXPORT ROUTER:: M
-// خروجی مسیرهای واریز
+// EXPORT ROUTER
 // =====================================
 
 export default router;
