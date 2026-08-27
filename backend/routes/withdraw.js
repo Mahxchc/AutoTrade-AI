@@ -1,11 +1,12 @@
 // =====================================
 // Withdraw Routes:: M
 // AutoTrade AI
-// مسیرهای برداشت
+// مسیرهای امن برداشت
 // File: backend/routes/withdraw.js
 // =====================================
 
 import express from "express";
+import mongoose from "mongoose";
 
 import {
     createWithdrawRequest,
@@ -13,8 +14,60 @@ import {
     cancelWithdrawRequest
 } from "../services/withdrawService.js";
 
+import User from "../models/User.js";
 
-const router = express.Router();
+import {
+    requiredTelegramUser
+} from "../middleware/auth.js";
+
+
+const router =
+    express.Router();
+
+
+// =====================================
+// Helper: Get Authenticated User:: M
+// دریافت کاربر احراز هویت‌شده
+// =====================================
+
+async function getAuthenticatedUser(req) {
+
+    const telegramId =
+        req.telegramId ||
+        req.telegramUser?.id ||
+        req.user?.telegramId;
+
+
+    if (!telegramId) {
+
+        throw new Error(
+            "Telegram user is not authenticated"
+        );
+
+    }
+
+
+    const user =
+        await User.findOne({
+
+            telegramId:
+                String(telegramId)
+
+        });
+
+
+    if (!user) {
+
+        throw new Error(
+            "User not found"
+        );
+
+    }
+
+
+    return user;
+
+}
 
 
 // =====================================
@@ -22,125 +75,178 @@ const router = express.Router();
 // ایجاد درخواست برداشت
 // POST /api/withdraw
 // =====================================
+//
+// amountUSD می‌تواند:
+//
+// 10 USDT
+// 50 USDT
+// یا کل withdrawable
+//
+// باشد.
+//
+// خود withdrawService سقف موجودی را
+// کنترل می‌کند.
+// =====================================
 
-router.post("/", async (req, res) => {
+router.post(
+    "/",
+    requiredTelegramUser,
+    async (req, res) => {
 
-    try {
+        try {
 
-        const {
-
-            userId,
-
-            amountUSD,
-
-            method,
-
-            bankAccount,
-
-            accountHolderName
-
-        } = req.body;
+            const user =
+                await getAuthenticatedUser(req);
 
 
-        // =====================================
-        // بررسی اطلاعات اصلی:: M
-        // =====================================
+            const {
 
-        if (
-            !userId ||
-            amountUSD == null
-        ) {
+                amountUSD,
 
-            return res.status(400).json({
+                method,
 
-                success: false,
+                bankAccount,
+
+                accountHolderName
+
+            } = req.body;
+
+
+            // =====================================
+            // بررسی مبلغ:: M
+            // =====================================
+
+            if (
+                amountUSD == null
+            ) {
+
+                return res.status(400).json({
+
+                    success:
+                        false,
+
+                    message:
+                        "مبلغ برداشت مشخص نشده است"
+
+                });
+
+            }
+
+
+            // =====================================
+            // ایجاد درخواست برداشت:: M
+            // =====================================
+
+            const result =
+                await createWithdrawRequest({
+
+                    userId:
+                        user._id,
+
+                    amountUSD,
+
+                    method:
+                        method ||
+                        "BANK",
+
+                    bankAccount:
+                        bankAccount ||
+                        "",
+
+                    accountHolderName:
+                        accountHolderName ||
+                        ""
+
+                });
+
+
+            // =====================================
+            // پاسخ:: M
+            // =====================================
+
+            return res.status(201).json({
+
+                success:
+                    true,
 
                 message:
-                    "User ID and withdrawal amount are required"
+                    "درخواست برداشت با موفقیت ایجاد شد",
+
+                withdrawal:
+                    result
 
             });
 
         }
 
+        catch (error) {
 
-        // =====================================
-        // ایجاد درخواست برداشت:: M
-        // =====================================
+            console.error(
+                "Create Withdraw Error:",
+                error
+            );
 
-        const result =
-            await createWithdrawRequest({
 
-                userId,
+            return res.status(400).json({
 
-                amountUSD,
+                success:
+                    false,
 
-                method:
-                    method || "BANK",
-
-                bankAccount:
-                    bankAccount || "",
-
-                accountHolderName:
-                    accountHolderName || ""
+                message:
+                    error.message ||
+                    "ایجاد درخواست برداشت ناموفق بود"
 
             });
 
-
-        return res.status(201).json({
-
-            success: true,
-
-            message:
-                "Withdrawal request created successfully",
-
-            withdrawal:
-                result
-
-        });
-
-
-    } catch (error) {
-
-        console.error(
-            "Create Withdraw Error:",
-            error
-        );
-
-
-        return res.status(400).json({
-
-            success: false,
-
-            message:
-                error.message ||
-                "Failed to create withdrawal request"
-
-        });
+        }
 
     }
-
-});
+);
 
 
 // =====================================
-// GET WITHDRAW STATUS:: M
-// دریافت وضعیت برداشت
-// GET /api/withdraw/:userId/:requestId
+// GET MY WITHDRAW STATUS:: M
+// دریافت وضعیت برداشت خود کاربر
+// GET /api/withdraw/:requestId
 // =====================================
 
 router.get(
-    "/:userId/:requestId",
+    "/:requestId",
+    requiredTelegramUser,
     async (req, res) => {
 
         try {
 
+            const user =
+                await getAuthenticatedUser(req);
+
+
             const {
-
-                userId,
-
                 requestId
-
             } = req.params;
+
+
+            // =====================================
+            // Validate Request ID:: M
+            // =====================================
+
+            if (
+                !mongoose.Types.ObjectId.isValid(
+                    requestId
+                )
+            ) {
+
+                return res.status(400).json({
+
+                    success:
+                        false,
+
+                    message:
+                        "شناسه درخواست برداشت نامعتبر است"
+
+                });
+
+            }
 
 
             // =====================================
@@ -150,24 +256,31 @@ router.get(
             const result =
                 await getWithdrawStatus({
 
-                    userId,
+                    userId:
+                        user._id,
 
                     requestId
 
                 });
 
 
+            // =====================================
+            // پاسخ:: M
+            // =====================================
+
             return res.status(200).json({
 
-                success: true,
+                success:
+                    true,
 
                 withdrawal:
                     result
 
             });
 
+        }
 
-        } catch (error) {
+        catch (error) {
 
             console.error(
                 "Get Withdraw Status Error:",
@@ -175,13 +288,23 @@ router.get(
             );
 
 
-            return res.status(400).json({
+            const statusCode =
+                error.message ===
+                "Withdrawal request not found"
+                    ? 404
+                    : 400;
 
-                success: false,
+
+            return res.status(
+                statusCode
+            ).json({
+
+                success:
+                    false,
 
                 message:
                     error.message ||
-                    "Failed to get withdrawal status"
+                    "دریافت وضعیت برداشت ناموفق بود"
 
             });
 
@@ -194,22 +317,53 @@ router.get(
 // =====================================
 // CANCEL WITHDRAW:: M
 // لغو درخواست برداشت
-// POST /api/withdraw/cancel/:userId/:requestId
+// POST /api/withdraw/cancel/:requestId
+// =====================================
+//
+// فقط PENDING قابل لغو است.
+//
+// مبلغ رزروشده نیز توسط
+// withdrawService به withdrawable
+// برگردانده می‌شود.
 // =====================================
 
 router.post(
-    "/cancel/:userId/:requestId",
+    "/cancel/:requestId",
+    requiredTelegramUser,
     async (req, res) => {
 
         try {
 
+            const user =
+                await getAuthenticatedUser(req);
+
+
             const {
-
-                userId,
-
                 requestId
-
             } = req.params;
+
+
+            // =====================================
+            // Validate Request ID:: M
+            // =====================================
+
+            if (
+                !mongoose.Types.ObjectId.isValid(
+                    requestId
+                )
+            ) {
+
+                return res.status(400).json({
+
+                    success:
+                        false,
+
+                    message:
+                        "شناسه درخواست برداشت نامعتبر است"
+
+                });
+
+            }
 
 
             // =====================================
@@ -219,27 +373,34 @@ router.post(
             const result =
                 await cancelWithdrawRequest({
 
-                    userId,
+                    userId:
+                        user._id,
 
                     requestId
 
                 });
 
 
+            // =====================================
+            // پاسخ:: M
+            // =====================================
+
             return res.status(200).json({
 
-                success: true,
+                success:
+                    true,
 
                 message:
-                    "Withdrawal request cancelled successfully",
+                    "درخواست برداشت با موفقیت لغو شد",
 
                 withdrawal:
                     result
 
             });
 
+        }
 
-        } catch (error) {
+        catch (error) {
 
             console.error(
                 "Cancel Withdraw Error:",
@@ -249,11 +410,12 @@ router.post(
 
             return res.status(400).json({
 
-                success: false,
+                success:
+                    false,
 
                 message:
                     error.message ||
-                    "Failed to cancel withdrawal request"
+                    "لغو درخواست برداشت ناموفق بود"
 
             });
 
@@ -265,7 +427,6 @@ router.post(
 
 // =====================================
 // EXPORT ROUTER:: M
-// خروجی مسیرهای برداشت
 // =====================================
 
 export default router;
