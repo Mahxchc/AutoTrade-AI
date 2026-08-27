@@ -790,4 +790,381 @@ export async function closeTrade({
     //
     // =====================================
 
-    const raw
+    const rawNewBalance =
+        oldBalance +
+        finalProfit;
+
+
+    const newBalance =
+        Number(
+            rawNewBalance.toFixed(8)
+        );
+
+
+    // =====================================
+    // Prevent Negative Capital
+    // =====================================
+
+    if (
+        newBalance < 0
+    ) {
+
+        throw new Error(
+            "Trade loss exceeds available wallet balance"
+        );
+
+    }
+
+
+    // =====================================
+    // Total Profit / Loss
+    // =====================================
+
+    const newTotalProfit =
+        Number(
+            (
+                oldTotalProfit +
+                finalProfit
+            ).toFixed(8)
+        );
+
+
+    // =====================================
+    // New Withdrawable
+    // =====================================
+    //
+    // موجودی قابل برداشت با سرمایه واقعی
+    // هماهنگ می‌ماند.
+    //
+    // سود -> افزایش
+    // ضرر -> کاهش
+    //
+    // =====================================
+
+    const rawWithdrawable =
+        oldWithdrawable +
+        finalProfit;
+
+
+    const newWithdrawable =
+        Number(
+            Math.max(
+                0,
+                rawWithdrawable
+            ).toFixed(8)
+        );
+
+
+    // =====================================
+    // Update Wallet
+    // =====================================
+
+    wallet.balance =
+        newBalance;
+
+    wallet.totalProfit =
+        newTotalProfit;
+
+    wallet.totalTrades =
+        toNumber(
+            wallet.totalTrades
+        ) + 1;
+
+    wallet.withdrawable =
+        Math.min(
+            newBalance,
+            newWithdrawable
+        );
+
+
+    await wallet.save();
+
+
+    // =====================================
+    // Update Trade
+    // =====================================
+
+    trade.exitPrice =
+        numericExitPrice;
+
+    trade.profit =
+        finalProfit;
+
+    trade.status =
+        "CLOSED";
+
+    trade.externalStatus =
+        externalStatus;
+
+    trade.closedAt =
+        new Date();
+
+
+    await trade.save();
+
+
+    // =====================================
+    // Find Bot
+    // =====================================
+
+    const bot =
+        await Bot.findOne({
+
+            userId:
+                trade.userId
+
+        });
+
+
+    if (!bot) {
+
+        throw new Error(
+            "Bot not found"
+        );
+
+    }
+
+
+    // =====================================
+    // Open Trades
+    // =====================================
+
+    bot.openTrades =
+        Math.max(
+
+            0,
+
+            toNumber(
+                bot.openTrades
+            ) - 1
+
+        );
+
+
+    // =====================================
+    // Trade Statistics
+    // =====================================
+
+    bot.lastTradeProfitUSD =
+        finalProfit;
+
+    bot.lastTradeAt =
+        new Date();
+
+    bot.lastHeartbeat =
+        new Date();
+
+    bot.totalProfitUSD =
+        Number(
+
+            (
+                toNumber(
+                    bot.totalProfitUSD
+                ) +
+                finalProfit
+
+            ).toFixed(8)
+
+        );
+
+
+    // =====================================
+    // Winning Trade
+    // =====================================
+
+    if (
+        finalProfit > 0
+    ) {
+
+        bot.winningTrades =
+            toNumber(
+                bot.winningTrades
+            ) + 1;
+
+        bot.consecutiveLosses =
+            0;
+
+        bot.stopReason =
+            "";
+
+    }
+
+
+    // =====================================
+    // Losing Trade
+    // =====================================
+
+    else if (
+        finalProfit < 0
+    ) {
+
+        bot.losingTrades =
+            toNumber(
+                bot.losingTrades
+            ) + 1;
+
+        bot.consecutiveLosses =
+            toNumber(
+                bot.consecutiveLosses
+            ) + 1;
+
+
+        const maxLosses =
+            Math.max(
+
+                1,
+
+                toNumber(
+                    bot.maxConsecutiveLosses,
+                    2
+                )
+
+            );
+
+
+        if (
+            bot.consecutiveLosses >=
+            maxLosses
+        ) {
+
+            bot.status =
+                "PAUSED";
+
+            bot.enabled =
+                false;
+
+            bot.stopReason =
+                "Maximum consecutive losses reached";
+
+        }
+
+    }
+
+
+    await bot.save();
+
+
+    // =====================================
+    // Result
+    // =====================================
+
+    return {
+
+        trade,
+
+        profitUSD:
+            finalProfit,
+
+        previousBalanceUSD:
+            oldBalance,
+
+        newBalanceUSD:
+            newBalance,
+
+        totalProfitUSD:
+            newTotalProfit,
+
+        withdrawableUSD:
+            wallet.withdrawable,
+
+        compounded:
+            finalProfit > 0,
+
+        botStatus:
+            bot.status,
+
+        consecutiveLosses:
+            bot.consecutiveLosses,
+
+        openTrades:
+            bot.openTrades
+
+    };
+
+}
+
+
+// =====================================
+// Reactivate Bot
+// فعال‌سازی مجدد ربات
+// =====================================
+
+export async function reactivateBot({
+
+    userId
+
+}) {
+
+    if (
+        !mongoose.Types.ObjectId.isValid(
+            userId
+        )
+    ) {
+
+        throw new Error(
+            "Invalid user ID"
+        );
+
+    }
+
+
+    const bot =
+        await Bot.findOne({
+
+            userId
+
+        });
+
+
+    if (!bot) {
+
+        throw new Error(
+            "Bot not found"
+        );
+
+    }
+
+
+    bot.consecutiveLosses =
+        0;
+
+    bot.status =
+        "ACTIVE";
+
+    bot.enabled =
+        true;
+
+    bot.stopReason =
+        "";
+
+    bot.lastError =
+        "";
+
+    bot.lastHeartbeat =
+        new Date();
+
+    bot.lastRun =
+        new Date();
+
+
+    await bot.save();
+
+
+    return bot;
+
+}
+
+
+// =====================================
+// Default Export
+// =====================================
+
+export default {
+
+    openTrade,
+
+    closeTrade,
+
+    reactivateBot
+
+};
