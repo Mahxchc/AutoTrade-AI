@@ -1,10 +1,9 @@
 // =====================================
-// Trading Engine:: M
+// Trading Engine :: M
 // AutoTrade AI
 // موتور اصلی مدیریت معاملات
 // File: backend/engine/tradingEngine.js
 // =====================================
-
 
 import mongoose from "mongoose";
 
@@ -13,15 +12,30 @@ import Wallet from "../models/Wallet.js";
 import User from "../models/User.js";
 import Bot from "../models/Bot.js";
 
-
 import {
-  checkTradePermission,
-  calculatePositionSize
+    checkTradePermission,
+    calculatePositionSize
 } from "./riskManager.js";
 
 
 // =====================================
-// Open Trade:: M
+// Helpers
+// =====================================
+
+function toNumber(value, fallback = 0) {
+
+    const number =
+        Number(value);
+
+    return Number.isFinite(number)
+        ? number
+        : fallback;
+
+}
+
+
+// =====================================
+// Open Trade
 // باز کردن معامله
 // =====================================
 
@@ -43,9 +57,8 @@ export async function openTrade({
 
 }) {
 
-
     // =====================================
-    // بررسی شناسه کاربر:: M
+    // Validate User ID
     // =====================================
 
     if (
@@ -62,10 +75,13 @@ export async function openTrade({
 
 
     // =====================================
-    // بررسی اطلاعات معامله:: M
+    // Validate Symbol
     // =====================================
 
-    if (!symbol) {
+    if (
+        typeof symbol !== "string" ||
+        !symbol.trim()
+    ) {
 
         throw new Error(
             "Symbol is required"
@@ -73,6 +89,10 @@ export async function openTrade({
 
     }
 
+
+    // =====================================
+    // Validate Side
+    // =====================================
 
     if (
         side !== "BUY" &&
@@ -86,18 +106,19 @@ export async function openTrade({
     }
 
 
+    // =====================================
+    // Validate Prices
+    // =====================================
+
     const numericEntryPrice =
-        Number(entryPrice);
+        toNumber(entryPrice);
 
 
     const numericStopLossPrice =
-        Number(stopLossPrice);
+        toNumber(stopLossPrice);
 
 
     if (
-        !Number.isFinite(
-            numericEntryPrice
-        ) ||
         numericEntryPrice <= 0
     ) {
 
@@ -109,9 +130,6 @@ export async function openTrade({
 
 
     if (
-        !Number.isFinite(
-            numericStopLossPrice
-        ) ||
         numericStopLossPrice <= 0
     ) {
 
@@ -123,7 +141,7 @@ export async function openTrade({
 
 
     // =====================================
-    // بررسی صحیح بودن حد ضرر:: M
+    // Validate Stop Loss
     // =====================================
 
     if (
@@ -153,11 +171,13 @@ export async function openTrade({
 
 
     // =====================================
-    // بررسی کاربر:: M
+    // Find User
     // =====================================
 
     const user =
-        await User.findById(userId);
+        await User.findById(
+            userId
+        );
 
 
     if (!user) {
@@ -169,16 +189,15 @@ export async function openTrade({
     }
 
 
+    // =====================================
+    // Trading Permission
+    // =====================================
+
     if (
-
         user.approvalStatus !== "APPROVED" ||
-
         user.accessEnabled !== true ||
-
         user.botAccess !== true ||
-
         user.status !== "ACTIVE"
-
     ) {
 
         throw new Error(
@@ -189,7 +208,7 @@ export async function openTrade({
 
 
     // =====================================
-    // دریافت ربات:: M
+    // Find Bot
     // =====================================
 
     const bot =
@@ -210,15 +229,12 @@ export async function openTrade({
 
 
     // =====================================
-    // بررسی فعال بودن ربات:: M
+    // Check Bot Status
     // =====================================
 
     if (
-
         bot.enabled !== true ||
-
         bot.status !== "ACTIVE"
-
     ) {
 
         throw new Error(
@@ -229,35 +245,27 @@ export async function openTrade({
 
 
     // =====================================
-    // بررسی ضررهای متوالی:: M
+    // Check Consecutive Losses
     // =====================================
 
     if (
-
-        bot.consecutiveLosses >=
-        bot.maxConsecutiveLosses
-
+        toNumber(bot.consecutiveLosses) >=
+        toNumber(bot.maxConsecutiveLosses)
     ) {
-
 
         bot.status =
             "PAUSED";
 
-
         bot.enabled =
             false;
-
 
         bot.stopReason =
             "Maximum consecutive losses reached";
 
-
         bot.lastHeartbeat =
             new Date();
 
-
         await bot.save();
-
 
         throw new Error(
             "Bot paused after maximum consecutive losses"
@@ -267,7 +275,7 @@ export async function openTrade({
 
 
     // =====================================
-    // دریافت کیف پول:: M
+    // Find Wallet
     // =====================================
 
     const wallet =
@@ -287,16 +295,33 @@ export async function openTrade({
     }
 
 
+    // =====================================
+    // Current Wallet Balance
+    // =====================================
+    //
+    // IMPORTANT:
+    //
+    // Wallet balance is stored in USDT/USD.
+    //
+    // Deposit:
+    // Toman -> USDT
+    //
+    // Profit:
+    // added back to wallet.balance
+    //
+    // Therefore the next trade automatically
+    // uses the new compounded balance.
+    //
+    // =====================================
+
     const balance =
-        Number(wallet.balance);
+        toNumber(
+            wallet.balance
+        );
 
 
     if (
-
-        !Number.isFinite(balance) ||
-
         balance <= 0
-
     ) {
 
         throw new Error(
@@ -307,7 +332,7 @@ export async function openTrade({
 
 
     // =====================================
-    // بررسی معاملات باز:: M
+    // Check Open Trades
     // =====================================
 
     const activeTrades =
@@ -315,16 +340,25 @@ export async function openTrade({
 
             userId,
 
-            status: "OPEN"
+            status:
+                "OPEN"
 
         });
 
 
+    const maxOpenTrades =
+        Math.max(
+            1,
+            toNumber(
+                bot.maxOpenTrades,
+                1
+            )
+        );
+
+
     if (
-
         activeTrades >=
-        bot.maxOpenTrades
-
+        maxOpenTrades
     ) {
 
         throw new Error(
@@ -335,7 +369,75 @@ export async function openTrade({
 
 
     // =====================================
-    // محاسبه حجم معامله:: M
+    // Risk Permission
+    // =====================================
+
+    if (
+        typeof checkTradePermission ===
+        "function"
+    ) {
+
+        const permission =
+            await checkTradePermission({
+
+                userId,
+
+                balance,
+
+                symbol,
+
+                side,
+
+                riskPercent
+
+            });
+
+
+        if (
+            permission === false
+        ) {
+
+            throw new Error(
+                "Trade permission denied by risk manager"
+            );
+
+        }
+
+
+        if (
+            permission &&
+            typeof permission === "object" &&
+            permission.allowed === false
+        ) {
+
+            throw new Error(
+                permission.reason ||
+                "Trade permission denied by risk manager"
+            );
+
+        }
+
+    }
+
+
+    // =====================================
+    // Calculate Position Size
+    // =====================================
+    //
+    // This is where compounding happens.
+    //
+    // If balance increases:
+    //
+    // 100 USDT
+    //   ↓
+    // 120 USDT
+    //   ↓
+    // 150 USDT
+    //
+    // calculatePositionSize() receives the
+    // NEW balance and therefore the next
+    // position can become larger.
+    //
     // =====================================
 
     const position =
@@ -355,15 +457,11 @@ export async function openTrade({
 
 
     if (
-
         !position ||
-
         !Number.isFinite(
             position.positionSize
         ) ||
-
         position.positionSize <= 0
-
     ) {
 
         throw new Error(
@@ -373,8 +471,14 @@ export async function openTrade({
     }
 
 
+    const quantity =
+        Number(
+            position.positionSize
+        );
+
+
     // =====================================
-    // ثبت معامله:: M
+    // Create Trade
     // =====================================
 
     const trade =
@@ -383,14 +487,15 @@ export async function openTrade({
             userId,
 
             symbol:
-                symbol.toUpperCase(),
+                symbol
+                    .trim()
+                    .toUpperCase(),
 
             market,
 
             side,
 
-            quantity:
-                position.positionSize,
+            quantity,
 
             entryPrice:
                 numericEntryPrice,
@@ -398,7 +503,8 @@ export async function openTrade({
             exitPrice:
                 null,
 
-            profit: 0,
+            profit:
+                0,
 
             status:
                 "OPEN",
@@ -416,7 +522,7 @@ export async function openTrade({
 
 
     // =====================================
-    // به‌روزرسانی وضعیت ربات:: M
+    // Update Bot
     // =====================================
 
     bot.openTrades =
@@ -442,14 +548,18 @@ export async function openTrade({
     await bot.save();
 
 
+    // =====================================
+    // Return Trade
+    // =====================================
+
     return trade;
 
 }
 
 
 // =====================================
-// Close Trade:: M
-// بستن معامله و ثبت نتیجه
+// Close Trade
+// بستن معامله
 // =====================================
 
 export async function closeTrade({
@@ -462,9 +572,8 @@ export async function closeTrade({
 
 }) {
 
-
     // =====================================
-    // بررسی شناسه معامله:: M
+    // Validate Trade ID
     // =====================================
 
     if (
@@ -480,18 +589,16 @@ export async function closeTrade({
     }
 
 
+    // =====================================
+    // Validate Exit Price
+    // =====================================
+
     const numericExitPrice =
-        Number(exitPrice);
+        toNumber(exitPrice);
 
 
     if (
-
-        !Number.isFinite(
-            numericExitPrice
-        ) ||
-
         numericExitPrice <= 0
-
     ) {
 
         throw new Error(
@@ -502,7 +609,7 @@ export async function closeTrade({
 
 
     // =====================================
-    // پیدا کردن معامله:: M
+    // Find Trade
     // =====================================
 
     const trade =
@@ -532,28 +639,46 @@ export async function closeTrade({
 
 
     // =====================================
-    // محاسبه سود یا ضرر:: M
+    // Calculate Profit / Loss
     // =====================================
 
-    const difference =
+    const entryPrice =
+        toNumber(
+            trade.entryPrice
+        );
 
+
+    const quantity =
+        toNumber(
+            trade.quantity
+        );
+
+
+    let difference;
+
+
+    if (
         trade.side === "BUY"
+    ) {
 
-            ?
+        difference =
+            numericExitPrice -
+            entryPrice;
 
-        numericExitPrice -
-        trade.entryPrice
+    }
 
-            :
+    else {
 
-        trade.entryPrice -
-        numericExitPrice;
+        difference =
+            entryPrice -
+            numericExitPrice;
+
+    }
 
 
     const profit =
-
         difference *
-        trade.quantity;
+        quantity;
 
 
     const finalProfit =
@@ -563,7 +688,7 @@ export async function closeTrade({
 
 
     // =====================================
-    // ثبت نتیجه معامله:: M
+    // Update Trade
     // =====================================
 
     trade.exitPrice =
@@ -590,7 +715,7 @@ export async function closeTrade({
 
 
     // =====================================
-    // دریافت کیف پول:: M
+    // Find Wallet
     // =====================================
 
     const wallet =
@@ -612,30 +737,100 @@ export async function closeTrade({
 
 
     // =====================================
-    // به‌روزرسانی کیف پول:: M
+    // COMPOUNDING
+    // =====================================
+    //
+    // This is the most important part.
+    //
+    // Example:
+    //
+    // Initial:
+    // 100 USDT
+    //
+    // Profit:
+    // +20 USDT
+    //
+    // New balance:
+    // 120 USDT
+    //
+    // Next trade uses:
+    // 120 USDT
+    //
+    // Next profit:
+    // +30 USDT
+    //
+    // New balance:
+    // 150 USDT
+    //
+    // And so on.
+    //
     // =====================================
 
-    wallet.balance =
-        Number(
+    const oldBalance =
+        toNumber(
             wallet.balance
-        ) + finalProfit;
+        );
+
+
+    const oldTotalProfit =
+        toNumber(
+            wallet.totalProfit
+        );
+
+
+    const oldWithdrawable =
+        toNumber(
+            wallet.withdrawable
+        );
+
+
+    const newBalance =
+        Number(
+            (
+                oldBalance +
+                finalProfit
+            ).toFixed(8)
+        );
+
+
+    const newTotalProfit =
+        Number(
+            (
+                oldTotalProfit +
+                finalProfit
+            ).toFixed(8)
+        );
+
+
+    wallet.balance =
+        newBalance;
 
 
     wallet.totalProfit =
-        Number(
-            wallet.totalProfit
-        ) + finalProfit;
+        newTotalProfit;
 
 
-    wallet.totalTrades += 1;
+    wallet.totalTrades =
+        toNumber(
+            wallet.totalTrades
+        ) + 1;
 
 
-    if (finalProfit > 0) {
+    // =====================================
+    // Withdrawable Profit
+    // =====================================
+
+    if (
+        finalProfit > 0
+    ) {
 
         wallet.withdrawable =
             Number(
-                wallet.withdrawable
-            ) + finalProfit;
+                (
+                    oldWithdrawable +
+                    finalProfit
+                ).toFixed(8)
+            );
 
     }
 
@@ -644,7 +839,7 @@ export async function closeTrade({
 
 
     // =====================================
-    // دریافت ربات:: M
+    // Find Bot
     // =====================================
 
     const bot =
@@ -666,7 +861,7 @@ export async function closeTrade({
 
 
     // =====================================
-    // کاهش معاملات باز:: M
+    // Decrease Open Trades
     // =====================================
 
     bot.openTrades =
@@ -674,7 +869,7 @@ export async function closeTrade({
 
             0,
 
-            Number(
+            toNumber(
                 bot.openTrades
             ) - 1
 
@@ -682,7 +877,7 @@ export async function closeTrade({
 
 
     // =====================================
-    // ثبت آمار معامله:: M
+    // Trade Statistics
     // =====================================
 
     bot.lastTradeProfitUSD =
@@ -699,19 +894,30 @@ export async function closeTrade({
 
     bot.totalProfitUSD =
         Number(
-            bot.totalProfitUSD
-        ) + finalProfit;
+
+            (
+                toNumber(
+                    bot.totalProfitUSD
+                ) +
+                finalProfit
+
+            ).toFixed(8)
+
+        );
 
 
     // =====================================
-    // معامله سودده:: M
-    // صفر کردن ضررهای متوالی
+    // Winning Trade
     // =====================================
 
-    if (finalProfit > 0) {
+    if (
+        finalProfit > 0
+    ) {
 
-
-        bot.winningTrades += 1;
+        bot.winningTrades =
+            toNumber(
+                bot.winningTrades
+            ) + 1;
 
 
         bot.consecutiveLosses =
@@ -725,30 +931,46 @@ export async function closeTrade({
 
 
     // =====================================
-    // معامله ضررده:: M
-    // افزایش ضررهای متوالی
+    // Losing Trade
     // =====================================
 
-    else if (finalProfit < 0) {
+    else if (
+        finalProfit < 0
+    ) {
+
+        bot.losingTrades =
+            toNumber(
+                bot.losingTrades
+            ) + 1;
 
 
-        bot.losingTrades += 1;
-
-
-        bot.consecutiveLosses += 1;
+        bot.consecutiveLosses =
+            toNumber(
+                bot.consecutiveLosses
+            ) + 1;
 
 
         // =====================================
-        // توقف خودکار بعد از ۲ ضرر:: M
+        // Auto Pause
         // =====================================
+
+        const maxLosses =
+            Math.max(
+
+                1,
+
+                toNumber(
+                    bot.maxConsecutiveLosses,
+                    2
+                )
+
+            );
+
 
         if (
-
             bot.consecutiveLosses >=
-            bot.maxConsecutiveLosses
-
+            maxLosses
         ) {
-
 
             bot.status =
                 "PAUSED";
@@ -761,21 +983,20 @@ export async function closeTrade({
             bot.stopReason =
                 "Maximum consecutive losses reached";
 
-
         }
 
     }
 
 
     // =====================================
-    // ذخیره وضعیت نهایی ربات:: M
+    // Save Bot
     // =====================================
 
     await bot.save();
 
 
     // =====================================
-    // نتیجه نهایی:: M
+    // Return Result
     // =====================================
 
     return {
@@ -784,6 +1005,18 @@ export async function closeTrade({
 
         profitUSD:
             finalProfit,
+
+        previousBalanceUSD:
+            oldBalance,
+
+        newBalanceUSD:
+            newBalance,
+
+        totalProfitUSD:
+            newTotalProfit,
+
+        compounded:
+            finalProfit > 0,
 
         botStatus:
             bot.status,
@@ -800,8 +1033,8 @@ export async function closeTrade({
 
 
 // =====================================
-// Reactivate Bot:: M
-// فعال‌سازی مجدد بعد از توقف
+// Reactivate Bot
+// فعال‌سازی مجدد ربات
 // =====================================
 
 export async function reactivateBot({
@@ -810,9 +1043,8 @@ export async function reactivateBot({
 
 }) {
 
-
     // =====================================
-    // بررسی شناسه کاربر:: M
+    // Validate User ID
     // =====================================
 
     if (
@@ -829,7 +1061,7 @@ export async function reactivateBot({
 
 
     // =====================================
-    // دریافت ربات:: M
+    // Find Bot
     // =====================================
 
     const bot =
@@ -850,7 +1082,7 @@ export async function reactivateBot({
 
 
     // =====================================
-    // فعال‌سازی مجدد:: M
+    // Reactivate
     // =====================================
 
     bot.consecutiveLosses =
@@ -886,4 +1118,19 @@ export async function reactivateBot({
 
     return bot;
 
-            }
+}
+
+
+// =====================================
+// Default Export
+// =====================================
+
+export default {
+
+    openTrade,
+
+    closeTrade,
+
+    reactivateBot
+
+};
