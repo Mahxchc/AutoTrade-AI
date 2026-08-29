@@ -1,23 +1,30 @@
-<!DOCTYPE html>
 <!-- =====================================
-AutoTrade AI Mini App:: M
-File: index.html
+..M AutoTrade AI
+Mini App
+File: MiniApp/index.html
 ===================================== -->
 
-<html lang="fa" dir="rtl">
+<!DOCTYPE html>
+
+<html
+    lang="fa"
+    dir="rtl"
+>
 
 <head>
 
-    <meta charset="UTF-8">
+    <meta
+        charset="UTF-8"
+    >
 
     <meta
         name="viewport"
-        content="width=device-width, initial-scale=1, viewport-fit=cover"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     >
 
     <meta
         name="theme-color"
-        content="#050816"
+        content="#07111f"
     >
 
     <title>
@@ -35,123 +42,75 @@ File: index.html
 <body>
 
 
-    <div id="toast" class="toast"></div>
+    <!-- =====================================
+    ..M Background
+    ===================================== -->
+
+    <div class="background-glow glow-one"></div>
+
+    <div class="background-glow glow-two"></div>
+
+    <div class="background-glow glow-three"></div>
 
 
-    <main id="app">
+    <!-- =====================================
+    ..M Loading
+    ===================================== -->
 
-
-        <section
-            id="page-dashboard"
-            class="page active"
-        ></section>
-
-
-        <section
-            id="page-wallet"
-            class="page"
-        ></section>
-
-
-        <section
-            id="page-trades"
-            class="page"
-        ></section>
-
-
-        <section
-            id="page-analytics"
-            class="page"
-        ></section>
-
-
-        <section
-            id="page-profile"
-            class="page"
-        ></section>
-
-
-        <section
-            id="page-deposit"
-            class="page"
-        ></section>
-
-
-        <section
-            id="page-withdraw"
-            class="page"
-        ></section>
-
-
-    </main>
-
-
-    <nav
-        id="bottom-nav"
-        class="bottom-nav"
+    <div
+        id="loading-screen"
+        class="loading-screen"
     >
 
-        <button data-nav="dashboard">
+        <div class="loading-logo">
+            AI
+        </div>
 
-            <span>⌂</span>
+        <div class="loading-title">
+            AutoTrade AI
+        </div>
 
-            <b>
-                داشبورد
-            </b>
+        <div class="loading-text">
+            در حال آماده‌سازی مینی اپ
+        </div>
 
-        </button>
+        <div class="loading-spinner"></div>
 
-
-        <button data-nav="wallet">
-
-            <span>▣</span>
-
-            <b>
-                کیف پول
-            </b>
-
-        </button>
+    </div>
 
 
-        <button data-nav="trades">
+    <!-- =====================================
+    ..M Main App
+    ===================================== -->
 
-            <span>↕</span>
-
-            <b>
-                معاملات
-            </b>
-
-        </button>
-
-
-        <button data-nav="analytics">
-
-            <span>◔</span>
-
-            <b>
-                آمار
-            </b>
-
-        </button>
+    <main
+        id="app"
+        class="app-container"
+    ></main>
 
 
-        <button data-nav="profile">
+    <!-- =====================================
+    ..M Toast
+    ===================================== -->
 
-            <span>◉</span>
+    <div
+        id="toast"
+        class="toast"
+    ></div>
 
-            <b>
-                پروفایل
-            </b>
 
-        </button>
-
-    </nav>
-
+    <!-- =====================================
+    ..M Telegram WebApp
+    ===================================== -->
 
     <script
         src="https://telegram.org/js/telegram-web-app.js"
     ></script>
 
+
+    <!-- =====================================
+    ..M Application
+    ===================================== -->
 
     <script
         src="app.js"
