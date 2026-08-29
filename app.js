@@ -2,22 +2,22 @@
 // AutoTrade AI Mini App:: M
 // File: app.js
 // نسخه تکمیلی
-// اعداد صفر، بدون خط فاصله، دکمه‌های فعال
-// پشتیبانی: @mehdi2510l
+// پشتیبانی فقط: @mehdi2410l
 // =====================================
-
 
 const BACKEND_URL =
     "https://autotrade-backend-02cc.onrender.com";
 
-
 const SUPPORT_USERNAME =
-    "@mehdi2510l";
-
+    "@mehdi2410l";
 
 const tg =
     window.Telegram?.WebApp;
 
+
+// =====================================
+// TELEGRAM
+// =====================================
 
 if (tg) {
 
@@ -27,17 +27,11 @@ if (tg) {
 
     try {
 
-        tg.setHeaderColor(
-            "#050816"
-        );
+        tg.setHeaderColor("#050816");
 
-        tg.setBackgroundColor(
-            "#050816"
-        );
+        tg.setBackgroundColor("#050816");
 
-    }
-
-    catch (_) {}
+    } catch (_) {}
 
 }
 
@@ -48,61 +42,45 @@ if (tg) {
 
 const state = {
 
-    page:
-        "dashboard",
+    page: "dashboard",
 
-    user:
-        null,
+    user: null,
 
-    backendUser:
-        null,
+    backendUser: null,
 
     wallet: {
 
-        balance:
-            0,
+        balance: 0,
 
-        totalProfit:
-            0,
+        totalProfit: 0,
 
-        totalTrades:
-            0,
+        totalTrades: 0,
 
-        withdrawable:
-            0,
+        withdrawable: 0,
 
-        currency:
-            "USDT"
+        currency: "USDT"
 
     },
 
     bot: {
 
-        status:
-            "STOPPED",
+        status: "STOPPED",
 
-        strategy:
-            "AI Scalping",
+        strategy: "AI Scalping",
 
-        accuracy:
-            0,
+        accuracy: 0,
 
-        confidence:
-            0,
+        confidence: 0,
 
-        lastSignal:
-            "WAIT"
+        lastSignal: "WAIT"
 
     },
 
-    trades:
-        [],
+    trades: [],
 
-    deposits:
-        [],
+    deposits: [],
 
-    exchangeRate:
-        0
+    exchangeRate: 0
 
 };
 
@@ -126,19 +104,13 @@ function money(
     const number =
         Number(value);
 
-
     if (
         !Number.isFinite(number)
     ) {
 
-        return (
-            0
-        ).toFixed(
-            digits
-        );
+        return (0).toFixed(digits);
 
     }
-
 
     return number.toLocaleString(
         "en-US",
@@ -159,7 +131,6 @@ function percent(value) {
     const number =
         Number(value);
 
-
     if (
         !Number.isFinite(number)
     ) {
@@ -167,7 +138,6 @@ function percent(value) {
         return "0.00%";
 
     }
-
 
     return (
         number.toFixed(2)
@@ -183,7 +153,6 @@ function toman(value) {
     const number =
         Number(value);
 
-
     if (
         !Number.isFinite(number)
     ) {
@@ -192,11 +161,8 @@ function toman(value) {
 
     }
 
-
     return (
-        number.toLocaleString(
-            "fa-IR"
-        )
+        number.toLocaleString("fa-IR")
         +
         " تومان"
     );
@@ -212,20 +178,15 @@ function esc(value) {
         /[&<>"']/g,
         character => ({
 
-            "&":
-                "&amp;",
+            "&": "&amp;",
 
-            "<":
-                "&lt;",
+            "<": "&lt;",
 
-            ">":
-                "&gt;",
+            ">": "&gt;",
 
-            '"':
-                "&quot;",
+            '"': "&quot;",
 
-            "'":
-                "&#039;"
+            "'": "&#039;"
 
         }[character])
     );
@@ -236,91 +197,9 @@ function esc(value) {
 function apiUrl(path) {
 
     return (
-        BACKEND_URL
-        +
+        BACKEND_URL +
         path
     );
-
-}
-
-
-// =====================================
-// API
-// =====================================
-
-async function api(
-    path,
-    options = {}
-) {
-
-    const headers = {
-
-        "Content-Type":
-            "application/json"
-
-    };
-
-
-    const initData =
-        tg?.initData || "";
-
-
-    if (initData) {
-
-        headers[
-            "X-Telegram-Init-Data"
-        ] =
-            initData;
-
-    }
-
-
-    const response =
-        await fetch(
-            apiUrl(path),
-            {
-                ...options,
-
-                headers: {
-
-                    ...headers,
-
-                    ...(options.headers || {})
-
-                }
-
-            }
-        );
-
-
-    let data =
-        {};
-
-
-    try {
-
-        data =
-            await response.json();
-
-    }
-
-    catch (_) {}
-
-
-    if (!response.ok) {
-
-        throw new Error(
-
-            data.message
-            ||
-            "ارتباط با سرور ناموفق بود"
-
-        );
-
-    }
-
-
-    return data;
 
 }
 
@@ -334,15 +213,18 @@ function toast(message) {
     const element =
         $("toast");
 
+    if (!element) {
+
+        return;
+
+    }
 
     element.textContent =
         message;
 
-
     element.classList.add(
         "show"
     );
-
 
     setTimeout(
         () => {
@@ -367,27 +249,21 @@ function telegramUser() {
     const user =
         tg?.initDataUnsafe?.user;
 
-
     if (!user) {
 
         return {
 
-            telegramId:
-                "",
+            telegramId: "",
 
-            username:
-                "",
+            username: "",
 
-            firstName:
-                "کاربر",
+            firstName: "کاربر",
 
-            lastName:
-                ""
+            lastName: ""
 
         };
 
     }
-
 
     return {
 
@@ -398,12 +274,84 @@ function telegramUser() {
             user.username || "",
 
         firstName:
-            user.first_name || "کاربر",
+            user.first_name ||
+            "کاربر",
 
         lastName:
             user.last_name || ""
 
     };
+
+}
+
+
+// =====================================
+// API
+// =====================================
+
+async function api(
+    path,
+    options = {}
+) {
+
+    const headers = {
+
+        "Content-Type":
+            "application/json"
+
+    };
+
+    const initData =
+        tg?.initData || "";
+
+    if (initData) {
+
+        headers[
+            "X-Telegram-Init-Data"
+        ] =
+            initData;
+
+    }
+
+    const response =
+        await fetch(
+            apiUrl(path),
+            {
+
+                ...options,
+
+                headers: {
+
+                    ...headers,
+
+                    ...(options.headers || {})
+
+                }
+
+            }
+        );
+
+    let data = {};
+
+    try {
+
+        data =
+            await response.json();
+
+    } catch (_) {}
+
+    if (!response.ok) {
+
+        throw new Error(
+
+            data.message ||
+            "ارتباط با سرور ناموفق بود"
+
+        );
+
+    }
+
+    return data;
 
 }
 
@@ -417,7 +365,6 @@ async function authenticate() {
     state.user =
         telegramUser();
 
-
     if (
         !state.user.telegramId
     ) {
@@ -425,7 +372,6 @@ async function authenticate() {
         return;
 
     }
-
 
     try {
 
@@ -441,22 +387,18 @@ async function authenticate() {
                         JSON.stringify({
 
                             initData:
-                                tg.initData
+                                tg?.initData || ""
 
                         })
 
                 }
             );
 
-
         state.backendUser =
-            data.user
-            ||
+            data.user ||
             data;
 
-    }
-
-    catch (error) {
+    } catch (error) {
 
         console.warn(
             "Telegram Auth:",
@@ -481,29 +423,18 @@ async function loadExchangeRate() {
                 "/api/currency/exchange-rate"
             );
 
-
         state.exchangeRate =
-
             Number(
-                data.rate
-                ??
-                data.exchangeRate
-                ??
-                data.usdToToman
-                ??
-                data.usdToIrr
-                ??
+                data.rate ??
+                data.exchangeRate ??
+                data.usdToToman ??
+                data.usdToIrr ??
                 0
-            )
-            ||
-            0;
+            ) || 0;
 
-    }
+    } catch (_) {
 
-    catch (_) {
-
-        state.exchangeRate =
-            0;
+        state.exchangeRate = 0;
 
     }
 
@@ -517,11 +448,8 @@ async function loadExchangeRate() {
 async function loadWallet() {
 
     const userId =
-
-        state.backendUser?._id
-        ||
+        state.backendUser?._id ||
         state.backendUser?.id;
-
 
     if (!userId) {
 
@@ -529,92 +457,63 @@ async function loadWallet() {
 
     }
 
-
     try {
 
         const data =
             await api(
-                "/api/wallet/"
-                +
+                "/api/wallet/" +
                 encodeURIComponent(
                     userId
                 )
             );
 
-
         const wallet =
-            data.wallet
-            ||
+            data.wallet ||
             data;
-
 
         state.wallet = {
 
             balance:
                 Number(
-                    wallet.balance
-                    ??
-                    0
-                )
-                ||
-                0,
+                    wallet.balance ?? 0
+                ) || 0,
 
             totalProfit:
                 Number(
-                    wallet.totalProfit
-                    ??
-                    0
-                )
-                ||
-                0,
+                    wallet.totalProfit ?? 0
+                ) || 0,
 
             totalTrades:
                 Number(
-                    wallet.totalTrades
-                    ??
-                    0
-                )
-                ||
-                0,
+                    wallet.totalTrades ?? 0
+                ) || 0,
 
             withdrawable:
                 Number(
-                    wallet.withdrawable
-                    ??
-                    wallet.balance
-                    ??
+                    wallet.withdrawable ??
+                    wallet.balance ??
                     0
-                )
-                ||
-                0,
+                ) || 0,
 
             currency:
-                wallet.currency
-                ||
+                wallet.currency ||
                 "USDT"
 
         };
 
-    }
-
-    catch (_) {
+    } catch (_) {
 
         state.wallet = {
 
-            balance:
-                0,
+            balance: 0,
 
-            totalProfit:
-                0,
+            totalProfit: 0,
 
-            totalTrades:
-                0,
+            totalTrades: 0,
 
-            withdrawable:
-                0,
+            withdrawable: 0,
 
-            currency:
-                "USDT"
+            currency: "USDT"
 
         };
 
@@ -630,11 +529,8 @@ async function loadWallet() {
 async function loadBot() {
 
     const userId =
-
-        state.backendUser?._id
-        ||
+        state.backendUser?._id ||
         state.backendUser?.id;
-
 
     if (!userId) {
 
@@ -642,65 +538,47 @@ async function loadBot() {
 
     }
 
-
     try {
 
         const data =
             await api(
-                "/api/bot/"
-                +
+                "/api/bot/" +
                 encodeURIComponent(
                     userId
                 )
             );
 
-
         const bot =
-            data.bot
-            ||
+            data.bot ||
             data;
-
 
         state.bot = {
 
             status:
-                bot.status
-                ||
+                bot.status ||
                 "STOPPED",
 
             strategy:
-                bot.strategy
-                ||
+                bot.strategy ||
                 "AI Scalping",
 
             accuracy:
                 Number(
-                    bot.accuracy
-                    ??
-                    0
-                )
-                ||
-                0,
+                    bot.accuracy ?? 0
+                ) || 0,
 
             confidence:
                 Number(
-                    bot.confidence
-                    ??
-                    0
-                )
-                ||
-                0,
+                    bot.confidence ?? 0
+                ) || 0,
 
             lastSignal:
-                bot.lastSignal
-                ||
+                bot.lastSignal ||
                 "WAIT"
 
         };
 
-    }
-
-    catch (_) {}
+    } catch (_) {}
 
 }
 
@@ -712,11 +590,8 @@ async function loadBot() {
 async function loadTrades() {
 
     const userId =
-
-        state.backendUser?._id
-        ||
+        state.backendUser?._id ||
         state.backendUser?.id;
-
 
     if (!userId) {
 
@@ -724,37 +599,29 @@ async function loadTrades() {
 
     }
 
-
     try {
 
         const data =
             await api(
-                "/api/trades/"
-                +
+                "/api/trades/" +
                 encodeURIComponent(
                     userId
                 )
             );
 
-
         state.trades =
-
             Array.isArray(data)
             ?
             data
             :
             (
-                data.trades
-                ||
+                data.trades ||
                 []
             );
 
-    }
+    } catch (_) {
 
-    catch (_) {
-
-        state.trades =
-            [];
+        state.trades = [];
 
     }
 
@@ -768,11 +635,8 @@ async function loadTrades() {
 async function loadDeposits() {
 
     const userId =
-
-        state.backendUser?._id
-        ||
+        state.backendUser?._id ||
         state.backendUser?.id;
-
 
     if (!userId) {
 
@@ -780,30 +644,23 @@ async function loadDeposits() {
 
     }
 
-
     try {
 
         const data =
             await api(
-                "/api/deposit/user/"
-                +
+                "/api/deposit/user/" +
                 encodeURIComponent(
                     userId
                 )
             );
 
-
         state.deposits =
-            data.deposits
-            ||
+            data.deposits ||
             [];
 
-    }
+    } catch (_) {
 
-    catch (_) {
-
-        state.deposits =
-            [];
+        state.deposits = [];
 
     }
 
@@ -819,22 +676,20 @@ function nav(page) {
     state.page =
         page;
 
-
     document
-        .querySelectorAll(
-            ".page"
-        )
+        .querySelectorAll(".page")
         .forEach(
-            element =>
+            element => {
+
                 element.classList.remove(
                     "active"
-                )
-        );
+                );
 
+            }
+        );
 
     const pageElement =
         $("page-" + page);
-
 
     if (pageElement) {
 
@@ -843,7 +698,6 @@ function nav(page) {
         );
 
     }
-
 
     document
         .querySelectorAll(
@@ -856,8 +710,7 @@ function nav(page) {
 
                     "active",
 
-                    button.dataset.nav
-                    ===
+                    button.dataset.nav ===
                     page
 
                 );
@@ -865,36 +718,27 @@ function nav(page) {
             }
         );
 
+    if (
+        page === "deposit" ||
+        page === "withdraw"
+    ) {
 
-    $("bottom-nav").style.display =
+        $("bottom-nav").style.display =
+            "none";
 
-        (
-            page === "deposit"
-            ||
-            page === "withdraw"
-        )
+    } else {
 
-        ?
+        $("bottom-nav").style.display =
+            "grid";
 
-        "none"
+    }
 
-        :
-
-        "grid";
-
-
-    renderPage(
-        page
-    );
-
+    renderPage(page);
 
     window.scrollTo(
         {
-            top:
-                0,
-
-            behavior:
-                "smooth"
+            top: 0,
+            behavior: "smooth"
         }
     );
 
@@ -934,7 +778,6 @@ function header(
 
             </div>
 
-
             <button
                 class="icon-btn"
                 data-action="refresh"
@@ -958,16 +801,11 @@ function dashboard() {
     const wallet =
         state.wallet;
 
-
     const bot =
         state.bot;
 
-
     const botActive =
-        bot.status
-        ===
-        "ACTIVE";
-
+        bot.status === "ACTIVE";
 
     return `
 
@@ -975,7 +813,6 @@ function dashboard() {
             "AutoTrade AI",
             "مدیریت هوشمند سرمایه و معاملات"
         )}
-
 
         <div class="card balance-card">
 
@@ -991,15 +828,11 @@ function dashboard() {
 
             </div>
 
-
             <div class="balance">
-
                 $${money(
                     wallet.balance
                 )}
-
             </div>
-
 
             <div class="sub-balance">
 
@@ -1009,8 +842,7 @@ function dashboard() {
                     ?
 
                     toman(
-                        wallet.balance
-                        *
+                        wallet.balance *
                         state.exchangeRate
                     )
 
@@ -1022,7 +854,6 @@ function dashboard() {
 
             </div>
 
-
             <div class="actions">
 
                 <button
@@ -1031,7 +862,6 @@ function dashboard() {
                 >
                     واریز
                 </button>
-
 
                 <button
                     class="btn"
@@ -1043,7 +873,6 @@ function dashboard() {
             </div>
 
         </div>
-
 
         <div class="grid">
 
@@ -1063,7 +892,6 @@ function dashboard() {
 
             </div>
 
-
             <div class="stat">
 
                 <span class="label">
@@ -1082,7 +910,6 @@ function dashboard() {
 
             </div>
 
-
             <div class="stat">
 
                 <span class="label">
@@ -1098,7 +925,6 @@ function dashboard() {
                 </div>
 
             </div>
-
 
             <div class="stat">
 
@@ -1120,7 +946,6 @@ function dashboard() {
             </div>
 
         </div>
-
 
         <div class="section-title">
 
@@ -1150,7 +975,6 @@ function dashboard() {
 
         </div>
 
-
         <div class="card">
 
             <div class="info-row row">
@@ -1167,7 +991,6 @@ function dashboard() {
 
             </div>
 
-
             <div class="info-row row">
 
                 <span class="label">
@@ -1182,13 +1005,11 @@ function dashboard() {
 
             </div>
 
-
             <div class="progress">
 
                 <i
                     style="
-                        width:
-                        ${
+                        width:${
                             Math.max(
                                 0,
                                 Math.min(
@@ -1202,7 +1023,6 @@ function dashboard() {
 
             </div>
 
-
             <div class="info-row row">
 
                 <span class="label">
@@ -1212,9 +1032,7 @@ function dashboard() {
                 <b>
 
                     ${
-                        bot.lastSignal
-                        ===
-                        "BUY"
+                        bot.lastSignal === "BUY"
 
                         ?
 
@@ -1222,9 +1040,7 @@ function dashboard() {
 
                         :
 
-                        bot.lastSignal
-                        ===
-                        "SELL"
+                        bot.lastSignal === "SELL"
 
                         ?
 
@@ -1240,7 +1056,6 @@ function dashboard() {
 
             </div>
 
-
             <button
                 class="btn ${
                     botActive
@@ -1255,21 +1070,15 @@ function dashboard() {
 
                 ${
                     botActive
-
                     ?
-
                     "توقف معامله‌گری هوش مصنوعی"
-
                     :
-
                     "شروع معامله‌گری هوش مصنوعی"
-
                 }
 
             </button>
 
         </div>
-
 
         <div class="section-title">
 
@@ -1285,7 +1094,6 @@ function dashboard() {
             </button>
 
         </div>
-
 
         <div class="card">
 
@@ -1307,14 +1115,12 @@ function wallet() {
     const w =
         state.wallet;
 
-
     return `
 
         ${header(
             "کیف پول",
             "موجودی و تراکنش‌های حساب"
         )}
-
 
         <div class="card balance-card">
 
@@ -1330,11 +1136,9 @@ function wallet() {
 
             </div>
 
-
             <div class="balance">
                 $${money(w.balance)}
             </div>
-
 
             <div class="sub-balance">
 
@@ -1347,7 +1151,6 @@ function wallet() {
 
         </div>
 
-
         <div class="actions">
 
             <button
@@ -1356,7 +1159,6 @@ function wallet() {
             >
                 واریز
             </button>
-
 
             <button
                 class="btn"
@@ -1367,7 +1169,6 @@ function wallet() {
 
         </div>
 
-
         <div class="section-title">
 
             <h2>
@@ -1375,7 +1176,6 @@ function wallet() {
             </h2>
 
         </div>
-
 
         <div class="card">
 
@@ -1393,7 +1193,6 @@ function wallet() {
 
             </div>
 
-
             <div class="info-row row">
 
                 <span class="label">
@@ -1405,7 +1204,6 @@ function wallet() {
                 </b>
 
             </div>
-
 
             <div class="info-row row">
 
@@ -1420,7 +1218,6 @@ function wallet() {
                 </b>
 
             </div>
-
 
             <div class="info-row row">
 
@@ -1438,7 +1235,6 @@ function wallet() {
 
         </div>
 
-
         <div class="section-title">
 
             <h2>
@@ -1446,7 +1242,6 @@ function wallet() {
             </h2>
 
         </div>
-
 
         <div class="card">
 
@@ -1478,7 +1273,7 @@ function depositList() {
                 </strong>
 
                 <span>
-                    مبلغ واریز فعلی شما:
+                    مبلغ واریز فعلی:
                     0 تومان
                 </span>
 
@@ -1487,7 +1282,6 @@ function depositList() {
         `;
 
     }
-
 
     return state.deposits
         .slice(0, 6)
@@ -1499,19 +1293,16 @@ function depositList() {
                     <span>
 
                         ${toman(
-                            deposit.amountToman
-                            ??
+                            deposit.amountToman ??
                             0
                         )}
 
                     </span>
 
-
                     <b>
 
                         ${
-                            deposit.status
-                            ===
+                            deposit.status ===
                             "CONFIRMED"
 
                             ?
@@ -1520,8 +1311,7 @@ function depositList() {
 
                             :
 
-                            deposit.status
-                            ===
+                            deposit.status ===
                             "FAILED"
 
                             ?
@@ -1566,7 +1356,8 @@ function tradeList(
                 </strong>
 
                 <span>
-                    تعداد معاملات: 0
+                    تعداد معاملات:
+                    0
                 </span>
 
             </div>
@@ -1574,7 +1365,6 @@ function tradeList(
         `;
 
     }
-
 
     return state.trades
         .slice(0, limit)
@@ -1587,8 +1377,7 @@ function tradeList(
 
                         <b
                             class="${
-                                trade.type
-                                ===
+                                trade.type ===
                                 "BUY"
                                 ?
                                 "buy"
@@ -1598,8 +1387,7 @@ function tradeList(
                         >
 
                             ${
-                                trade.type
-                                ===
+                                trade.type ===
                                 "BUY"
                                 ?
                                 "خرید"
@@ -1608,19 +1396,16 @@ function tradeList(
                             }
 
                             ${esc(
-                                trade.symbol
-                                ||
+                                trade.symbol ||
                                 ""
                             )}
 
                         </b>
 
-
                         <span>
 
                             ${
-                                trade.status
-                                ===
+                                trade.status ===
                                 "OPEN"
                                 ?
                                 "باز"
@@ -1631,7 +1416,6 @@ function tradeList(
                         </span>
 
                     </div>
-
 
                     <div
                         class="row"
@@ -1646,7 +1430,6 @@ function tradeList(
                             )}
 
                         </span>
-
 
                         <span class="label">
 
@@ -1669,7 +1452,7 @@ function tradeList(
 
 
 // =====================================
-// TRADES PAGE
+// TRADES
 // =====================================
 
 function trades() {
@@ -1680,7 +1463,6 @@ function trades() {
             "معاملات",
             "فهرست معاملات ثبت‌شده"
         )}
-
 
         <div class="card">
 
@@ -1702,14 +1484,12 @@ function analytics() {
     const w =
         state.wallet;
 
-
     return `
 
         ${header(
             "آمار",
-            "نمایش ساده و قابل فهم عملکرد"
+            "عملکرد حساب"
         )}
-
 
         <div class="grid">
 
@@ -1727,7 +1507,6 @@ function analytics() {
 
             </div>
 
-
             <div class="stat">
 
                 <span class="label">
@@ -1741,7 +1520,6 @@ function analytics() {
                 </div>
 
             </div>
-
 
             <div class="stat">
 
@@ -1758,7 +1536,6 @@ function analytics() {
 
             </div>
 
-
             <div class="stat">
 
                 <span class="label">
@@ -1773,33 +1550,6 @@ function analytics() {
 
         </div>
 
-
-        <div class="section-title">
-
-            <h2>
-                سرمایه معاملاتی
-            </h2>
-
-        </div>
-
-
-        <div class="card">
-
-            <p class="note">
-
-                ربات حجم معامله را بر اساس
-                موجودی فعلی حساب محاسبه می‌کند.
-
-                سرمایه فعلی:
-
-                $${money(
-                    w.balance
-                )}
-
-            </p>
-
-        </div>
-
     `;
 
 }
@@ -1807,15 +1557,14 @@ function analytics() {
 
 // =====================================
 // PROFILE
+// فقط پشتیبانی
 // =====================================
 
 function profile() {
 
     const user =
-        state.user
-        ||
+        state.user ||
         telegramUser();
-
 
     const name =
 
@@ -1828,7 +1577,6 @@ function profile() {
         ||
         "کاربر";
 
-
     return `
 
         ${header(
@@ -1836,20 +1584,17 @@ function profile() {
             "اطلاعات حساب کاربری"
         )}
 
-
         <div class="card profile-head">
 
             <div class="avatar">
                 👤
             </div>
 
-
             <div>
 
                 <b>
                     ${esc(name)}
                 </b>
-
 
                 <div class="label">
 
@@ -1858,8 +1603,7 @@ function profile() {
 
                         ?
 
-                        "@"
-                        +
+                        "@" +
                         esc(
                             user.username
                         )
@@ -1876,77 +1620,17 @@ function profile() {
 
         </div>
 
-
-        <div class="card menu">
+        <div class="card">
 
             <button
+                class="btn primary"
+                style="width:100%"
                 data-action="support"
             >
 
-                💬
                 پشتیبانی
 
             </button>
-
-
-            <button
-                data-action="refreshAll"
-            >
-
-                ↻
-                به‌روزرسانی اطلاعات
-
-            </button>
-
-
-            <button
-                data-action="about"
-            >
-
-                ℹ️
-                درباره AutoTrade AI
-
-            </button>
-
-        </div>
-
-
-        <div class="card">
-
-            <div class="info-row row">
-
-                <span class="label">
-                    شناسه تلگرام
-                </span>
-
-                <b>
-
-                    ${
-                        user.telegramId
-                        ?
-                        esc(
-                            user.telegramId
-                        )
-                        :
-                        "0"
-                    }
-
-                </b>
-
-            </div>
-
-
-            <div class="info-row row">
-
-                <span class="label">
-                    پشتیبانی
-                </span>
-
-                <b>
-                    ${SUPPORT_USERNAME}
-                </b>
-
-            </div>
 
         </div>
 
@@ -1956,7 +1640,7 @@ function profile() {
 
 
 // =====================================
-// DEPOSIT PAGE
+// DEPOSIT
 // =====================================
 
 function depositPage() {
@@ -1968,7 +1652,6 @@ function depositPage() {
             "ایجاد درخواست واریز"
         )}
 
-
         <div class="card">
 
             <div class="form-group">
@@ -1977,17 +1660,16 @@ function depositPage() {
                     مبلغ واریز به تومان
                 </label>
 
-
                 <input
                     id="deposit-amount"
                     class="input"
                     type="number"
                     min="1000"
+                    value="0"
                     placeholder="0"
                 >
 
             </div>
-
 
             <div class="info-row row">
 
@@ -2019,7 +1701,6 @@ function depositPage() {
 
             </div>
 
-
             <div class="info-row row">
 
                 <span class="label">
@@ -2032,19 +1713,13 @@ function depositPage() {
 
             </div>
 
-
             <p class="note">
 
                 پس از ایجاد درخواست،
-                پرداخت باید از مسیر رسمی
-                درگاه انجام شود.
-
-                شارژ کیف پول فقط بعد از
-                تأیید واقعی پرداخت توسط
-                سرور انجام می‌شود.
+                پرداخت از مسیر رسمی درگاه
+                انجام می‌شود.
 
             </p>
-
 
             <button
                 class="btn primary"
@@ -2064,7 +1739,7 @@ function depositPage() {
 
 
 // =====================================
-// WITHDRAW PAGE
+// WITHDRAW
 // =====================================
 
 function withdrawPage() {
@@ -2075,7 +1750,6 @@ function withdrawPage() {
             "برداشت",
             "ثبت درخواست برداشت"
         )}
-
 
         <div class="card">
 
@@ -2093,7 +1767,6 @@ function withdrawPage() {
 
             </div>
 
-
             <div
                 class="form-group"
                 style="margin-top:16px"
@@ -2102,7 +1775,6 @@ function withdrawPage() {
                 <label>
                     مبلغ برداشت USDT
                 </label>
-
 
                 <input
                     id="withdraw-amount"
@@ -2115,13 +1787,11 @@ function withdrawPage() {
 
             </div>
 
-
             <div class="form-group">
 
                 <label>
                     شبکه انتقال
                 </label>
-
 
                 <select
                     id="withdraw-network"
@@ -2148,13 +1818,11 @@ function withdrawPage() {
 
             </div>
 
-
             <div class="form-group">
 
                 <label>
                     آدرس کیف پول
                 </label>
-
 
                 <input
                     id="withdraw-address"
@@ -2164,7 +1832,6 @@ function withdrawPage() {
                 >
 
             </div>
-
 
             <div class="info-row row">
 
@@ -2178,7 +1845,6 @@ function withdrawPage() {
 
             </div>
 
-
             <div class="info-row row">
 
                 <span class="label">
@@ -2190,17 +1856,6 @@ function withdrawPage() {
                 </b>
 
             </div>
-
-
-            <p class="note">
-
-                تا زمانی که مسیر برداشت
-                در Backend فعال نشده باشد،
-                هیچ موجودی از کیف پول کم
-                نمی‌شود.
-
-            </p>
-
 
             <button
                 class="btn primary"
@@ -2245,16 +1900,12 @@ function renderPage(page) {
 
     };
 
-
     const renderFunction =
-        pages[page]
-        ||
+        pages[page] ||
         dashboard;
-
 
     const element =
         $("page-" + page);
-
 
     if (!element) {
 
@@ -2262,19 +1913,17 @@ function renderPage(page) {
 
     }
 
-
     element.innerHTML =
         renderFunction();
 
 
+    // محاسبه خودکار مبلغ واریز
     if (
-        page ===
-        "deposit"
+        page === "deposit"
     ) {
 
         const input =
             $("deposit-amount");
-
 
         if (input) {
 
@@ -2285,10 +1934,7 @@ function renderPage(page) {
                     const amount =
                         Number(
                             input.value
-                        )
-                        ||
-                        0;
-
+                        ) || 0;
 
                     const usd =
 
@@ -2296,24 +1942,20 @@ function renderPage(page) {
 
                         ?
 
-                        amount
-                        /
+                        amount /
                         state.exchangeRate
 
                         :
 
                         0;
 
-
                     const output =
                         $("deposit-usd");
-
 
                     if (output) {
 
                         output.textContent =
-                            "$"
-                            +
+                            "$" +
                             money(usd);
 
                     }
@@ -2326,14 +1968,13 @@ function renderPage(page) {
     }
 
 
+    // محاسبه مبلغ برداشت
     if (
-        page ===
-        "withdraw"
+        page === "withdraw"
     ) {
 
         const input =
             $("withdraw-amount");
-
 
         if (input) {
 
@@ -2344,20 +1985,15 @@ function renderPage(page) {
                     const amount =
                         Number(
                             input.value
-                        )
-                        ||
-                        0;
-
+                        ) || 0;
 
                     const output =
                         $("withdraw-receive");
 
-
                     if (output) {
 
                         output.textContent =
-                            "$"
-                            +
+                            "$" +
                             money(
                                 Math.max(
                                     0,
@@ -2384,11 +2020,8 @@ function renderPage(page) {
 async function toggleBot() {
 
     const userId =
-
-        state.backendUser?._id
-        ||
+        state.backendUser?._id ||
         state.backendUser?.id;
-
 
     if (!userId) {
 
@@ -2400,36 +2033,31 @@ async function toggleBot() {
 
     }
 
-
     try {
 
         if (
-            state.bot.status
-            ===
+            state.bot.status ===
             "ACTIVE"
         ) {
 
             toast(
-                "برای توقف امن، مسیر توقف ربات باید در Backend فعال باشد."
+                "توقف ربات از طریق Backend مدیریت می‌شود"
             );
 
             return;
 
         }
 
-
         await api(
 
-            "/api/bot/start/"
-            +
+            "/api/bot/start/" +
             encodeURIComponent(
                 userId
             ),
 
             {
 
-                method:
-                    "POST",
+                method: "POST",
 
                 body:
                     JSON.stringify({})
@@ -2438,22 +2066,17 @@ async function toggleBot() {
 
         );
 
-
         await loadBot();
-
 
         renderPage(
             state.page
         );
 
-
         toast(
             "ربات هوش مصنوعی فعال شد"
         );
 
-    }
-
-    catch (error) {
+    } catch (error) {
 
         toast(
             error.message
@@ -2473,17 +2096,11 @@ async function createDeposit() {
     const amount =
         Number(
             $("deposit-amount")?.value
-        )
-        ||
-        0;
-
+        ) || 0;
 
     const userId =
-
-        state.backendUser?._id
-        ||
+        state.backendUser?._id ||
         state.backendUser?.id;
-
 
     if (!userId) {
 
@@ -2494,7 +2111,6 @@ async function createDeposit() {
         return;
 
     }
-
 
     if (
         amount <= 0
@@ -2507,7 +2123,6 @@ async function createDeposit() {
         return;
 
     }
-
 
     try {
 
@@ -2528,8 +2143,7 @@ async function createDeposit() {
                                 amount,
 
                             exchangeRate:
-                                state.exchangeRate
-                                ||
+                                state.exchangeRate ||
                                 0,
 
                             method:
@@ -2543,26 +2157,18 @@ async function createDeposit() {
                 }
             );
 
-
         toast(
 
-            data.message
-            ||
+            data.message ||
             "درخواست واریز ایجاد شد"
 
         );
 
-
         await loadDeposits();
 
+        nav("wallet");
 
-        nav(
-            "wallet"
-        );
-
-    }
-
-    catch (error) {
+    } catch (error) {
 
         toast(
             error.message
@@ -2580,34 +2186,24 @@ async function createDeposit() {
 async function withdrawSubmit() {
 
     const userId =
-
-        state.backendUser?._id
-        ||
+        state.backendUser?._id ||
         state.backendUser?.id;
-
 
     const amount =
         Number(
             $("withdraw-amount")?.value
-        )
-        ||
-        0;
-
+        ) || 0;
 
     const network =
         $("withdraw-network")
-        ?.value
-        ||
+        ?.value ||
         "";
-
 
     const address =
         $("withdraw-address")
         ?.value
-        ?.trim()
-        ||
+        ?.trim() ||
         "";
-
 
     if (!userId) {
 
@@ -2618,7 +2214,6 @@ async function withdrawSubmit() {
         return;
 
     }
-
 
     if (
         amount <= 0
@@ -2631,7 +2226,6 @@ async function withdrawSubmit() {
         return;
 
     }
-
 
     if (
         amount >
@@ -2646,10 +2240,8 @@ async function withdrawSubmit() {
 
     }
 
-
     if (
-        !network
-        ||
+        !network ||
         !address
     ) {
 
@@ -2660,7 +2252,6 @@ async function withdrawSubmit() {
         return;
 
     }
-
 
     try {
 
@@ -2687,28 +2278,63 @@ async function withdrawSubmit() {
             }
         );
 
-
         toast(
             "درخواست برداشت ثبت شد"
         );
 
-
         await loadWallet();
 
+        nav("wallet");
 
-        nav(
-            "wallet"
-        );
-
-    }
-
-    catch (error) {
+    } catch (error) {
 
         toast(
             error.message
         );
 
     }
+
+}
+
+
+// =====================================
+// SUPPORT
+// فقط @mehdi2410l
+// =====================================
+
+function openSupport() {
+
+    const username =
+        SUPPORT_USERNAME.replace(
+            "@",
+            ""
+        );
+
+    const url =
+        "https://t.me/" +
+        username;
+
+    try {
+
+        if (
+            tg?.openTelegramLink
+        ) {
+
+            tg.openTelegramLink(
+                url
+            );
+
+            return;
+
+        }
+
+    } catch (_) {}
+
+
+    window.open(
+        url,
+        "_blank"
+    );
 
 }
 
@@ -2733,7 +2359,6 @@ async function refreshAll() {
 
     ]);
 
-
     renderPage(
         state.page
     );
@@ -2754,17 +2379,14 @@ document.addEventListener(
                 "[data-nav],[data-action]"
             );
 
-
         if (!button) {
 
             return;
 
         }
 
-
         const navigation =
             button.dataset.nav;
-
 
         const action =
             button.dataset.action;
@@ -2782,44 +2404,34 @@ document.addEventListener(
 
 
         if (
-            action ===
-            "deposit"
+            action === "deposit"
         ) {
 
-            nav(
-                "deposit"
-            );
+            nav("deposit");
 
         }
 
 
         else if (
-            action ===
-            "withdraw"
+            action === "withdraw"
         ) {
 
-            nav(
-                "withdraw"
-            );
+            nav("withdraw");
 
         }
 
 
         else if (
-            action ===
-            "trades"
+            action === "trades"
         ) {
 
-            nav(
-                "trades"
-            );
+            nav("trades");
 
         }
 
 
         else if (
-            action ===
-            "toggleBot"
+            action === "toggleBot"
         ) {
 
             await toggleBot();
@@ -2828,8 +2440,7 @@ document.addEventListener(
 
 
         else if (
-            action ===
-            "createDeposit"
+            action === "createDeposit"
         ) {
 
             await createDeposit();
@@ -2838,8 +2449,7 @@ document.addEventListener(
 
 
         else if (
-            action ===
-            "withdrawSubmit"
+            action === "withdrawSubmit"
         ) {
 
             await withdrawSubmit();
@@ -2848,8 +2458,7 @@ document.addEventListener(
 
 
         else if (
-            action ===
-            "refresh"
+            action === "refresh"
         ) {
 
             await refreshAll();
@@ -2862,64 +2471,10 @@ document.addEventListener(
 
 
         else if (
-            action ===
-            "refreshAll"
+            action === "support"
         ) {
 
-            await refreshAll();
-
-            toast(
-                "اطلاعات به‌روزرسانی شد"
-            );
-
-        }
-
-
-        else if (
-            action ===
-            "support"
-        ) {
-
-            const url =
-                "https://t.me/"
-                +
-                SUPPORT_USERNAME
-                    .replace(
-                        "@",
-                        ""
-                    );
-
-
-            if (
-                tg?.openTelegramLink
-            ) {
-
-                tg.openTelegramLink(
-                    url
-                );
-
-            }
-
-            else {
-
-                window.open(
-                    url,
-                    "_blank"
-                );
-
-            }
-
-        }
-
-
-        else if (
-            action ===
-            "about"
-        ) {
-
-            toast(
-                "AutoTrade AI — سامانه مدیریت و معامله‌گری خودکار"
-            );
+            openSupport();
 
         }
 
@@ -2933,16 +2488,16 @@ document.addEventListener(
 
 async function init() {
 
+    state.user =
+        telegramUser();
+
     renderPage(
         "dashboard"
     );
 
-
     await authenticate();
 
-
     await refreshAll();
-
 
     renderPage(
         "dashboard"
