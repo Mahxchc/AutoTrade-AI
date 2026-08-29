@@ -2,6 +2,7 @@
 // ..M AutoTrade AI
 // Mini App Application
 // File: MiniApp/app.js
+// نسخه کامل و اصلاح‌شده
 // =====================================
 
 
@@ -60,7 +61,7 @@ const state = {
         0,
 
     loginTime:
-        new Date(),
+        null,
 
     loading:
         true
@@ -79,6 +80,7 @@ function numberValue(
     const number =
         Number(value);
 
+
     if (
         !Number.isFinite(number)
     ) {
@@ -86,6 +88,7 @@ function numberValue(
         return 0;
 
     }
+
 
     return number;
 
@@ -201,11 +204,13 @@ function initializeTelegram() {
 
     }
 
+
     try {
 
         tg.ready();
 
         tg.expand();
+
 
         if (
             typeof tg.setHeaderColor ===
@@ -217,6 +222,7 @@ function initializeTelegram() {
             );
 
         }
+
 
         if (
             typeof tg.setBackgroundColor ===
@@ -390,9 +396,25 @@ async function authenticateTelegram() {
             error
         );
 
+
         return null;
 
     }
+
+}
+
+
+// =====================================
+// Get Backend User ID :: M
+// =====================================
+
+function getBackendUserId() {
+
+    return (
+        state.backendUser?._id ||
+        state.backendUser?.id ||
+        null
+    );
 
 }
 
@@ -403,9 +425,11 @@ async function authenticateTelegram() {
 
 async function loadWallet() {
 
-    if (
-        !state.backendUser?._id
-    ) {
+    const userId =
+        getBackendUserId();
+
+
+    if (!userId) {
 
         state.wallet =
             null;
@@ -421,7 +445,7 @@ async function loadWallet() {
             await apiRequest(
 
                 "/api/wallet/" +
-                state.backendUser._id
+                userId
 
             );
 
@@ -443,6 +467,7 @@ async function loadWallet() {
             error
         );
 
+
         state.wallet =
             null;
 
@@ -457,9 +482,11 @@ async function loadWallet() {
 
 async function loadBot() {
 
-    if (
-        !state.backendUser?._id
-    ) {
+    const userId =
+        getBackendUserId();
+
+
+    if (!userId) {
 
         state.bot =
             null;
@@ -475,7 +502,7 @@ async function loadBot() {
             await apiRequest(
 
                 "/api/bot/" +
-                state.backendUser._id
+                userId
 
             );
 
@@ -497,6 +524,7 @@ async function loadBot() {
             error
         );
 
+
         state.bot =
             null;
 
@@ -511,9 +539,11 @@ async function loadBot() {
 
 async function loadTrades() {
 
-    if (
-        !state.backendUser?._id
-    ) {
+    const userId =
+        getBackendUserId();
+
+
+    if (!userId) {
 
         state.trades =
             [];
@@ -529,7 +559,7 @@ async function loadTrades() {
             await apiRequest(
 
                 "/api/trades/" +
-                state.backendUser._id
+                userId
 
             );
 
@@ -553,6 +583,7 @@ async function loadTrades() {
             "Trades error:",
             error
         );
+
 
         state.trades =
             [];
@@ -631,6 +662,13 @@ function renderAccessPage() {
         );
 
 
+    if (!app) {
+
+        return;
+
+    }
+
+
     app.innerHTML = `
 
         <div class="page">
@@ -681,6 +719,7 @@ function renderAccessPage() {
 
 
                 <button
+                    type="button"
                     class="support-button"
                     onclick="openSupport()"
                 >
@@ -784,6 +823,13 @@ function renderDashboard() {
         );
 
 
+    if (!app) {
+
+        return;
+
+    }
+
+
     app.innerHTML = `
 
         <div class="page">
@@ -829,6 +875,7 @@ function renderDashboard() {
                 <div class="action-row">
 
                     <button
+                        type="button"
                         class="primary-button"
                         onclick="goTo('wallet')"
                     >
@@ -836,6 +883,7 @@ function renderDashboard() {
                     </button>
 
                     <button
+                        type="button"
                         class="secondary-button"
                         onclick="goTo('withdraw')"
                     >
@@ -1006,6 +1054,7 @@ function renderDashboard() {
 
 
                 <button
+                    type="button"
                     class="primary-button"
                     style="width:100%"
                     onclick="startBot()"
@@ -1069,6 +1118,7 @@ function renderHeader() {
 
     const firstName =
         user.first_name ||
+        state.backendUser?.firstName ||
         "کاربر";
 
 
@@ -1102,6 +1152,7 @@ function renderHeader() {
             <div class="header-actions">
 
                 <button
+                    type="button"
                     class="icon-button"
                     onclick="goTo('profile')"
                 >
@@ -1143,6 +1194,13 @@ function renderWallet() {
         document.getElementById(
             "app"
         );
+
+
+    if (!app) {
+
+        return;
+
+    }
 
 
     app.innerHTML = `
@@ -1191,6 +1249,7 @@ function renderWallet() {
                 <div class="action-row">
 
                     <button
+                        type="button"
                         class="primary-button"
                         onclick="showToast('بخش واریز به زودی متصل می‌شود')"
                     >
@@ -1198,6 +1257,7 @@ function renderWallet() {
                     </button>
 
                     <button
+                        type="button"
                         class="secondary-button"
                         onclick="goTo('withdraw')"
                     >
@@ -1299,6 +1359,13 @@ function renderTrades() {
         );
 
 
+    if (!app) {
+
+        return;
+
+    }
+
+
     const trades =
         Array.isArray(
             state.trades
@@ -1307,7 +1374,8 @@ function renderTrades() {
             : [];
 
 
-    let content = "";
+    let content =
+        "";
 
 
     if (
@@ -1340,57 +1408,58 @@ function renderTrades() {
 
     else {
 
-        content = trades
-            .slice(
-                0,
-                20
-            )
-            .map(
-                trade => {
+        content =
+            trades
+                .slice(
+                    0,
+                    20
+                )
+                .map(
+                    trade => {
 
-                    const profit =
-                        numberValue(
-                            trade.profit
-                        );
+                        const profit =
+                            numberValue(
+                                trade.profit
+                            );
 
 
-                    return `
+                        return `
 
-                        <div
-                            class="glass-card stat-card"
-                            style="margin-bottom:10px"
-                        >
+                            <div
+                                class="glass-card stat-card"
+                                style="margin-bottom:10px"
+                            >
 
-                            <div class="stat-label">
-                                ${escapeHtml(
-                                    trade.symbol ||
-                                    "نامشخص"
-                                )}
-                            </div>
+                                <div class="stat-label">
+                                    ${escapeHtml(
+                                        trade.symbol ||
+                                        "نامشخص"
+                                    )}
+                                </div>
 
-                            <div class="stat-value ${
-                                profit >= 0
-                                    ? "green"
-                                    : ""
-                            }">
-
-                                ${
+                                <div class="stat-value ${
                                     profit >= 0
-                                        ? "+"
+                                        ? "green"
                                         : ""
-                                }$${formatNumber(
-                                    profit
-                                )}
+                                }">
+
+                                    ${
+                                        profit >= 0
+                                            ? "+"
+                                            : ""
+                                    }$${formatNumber(
+                                        profit
+                                    )}
+
+                                </div>
 
                             </div>
 
-                        </div>
+                        `;
 
-                    `;
-
-                }
-            )
-            .join("");
+                    }
+                )
+                .join("");
 
     }
 
@@ -1442,6 +1511,13 @@ function renderWithdraw() {
         );
 
 
+    if (!app) {
+
+        return;
+
+    }
+
+
     app.innerHTML = `
 
         <div class="page">
@@ -1449,6 +1525,7 @@ function renderWithdraw() {
             <div class="page-header">
 
                 <button
+                    type="button"
                     class="icon-button"
                     onclick="goTo('wallet')"
                 >
@@ -1503,6 +1580,7 @@ function renderWithdraw() {
                 </p>
 
                 <button
+                    type="button"
                     class="primary-button"
                     style="width:100%"
                     onclick="showToast('فرم برداشت در مرحله اتصال نهایی فعال می‌شود')"
@@ -1524,21 +1602,34 @@ function renderWithdraw() {
 
 // =====================================
 // Profile :: M
+// فقط دو بخش:
+// 1. پروفایل من
+// 2. پشتیبانی
 // =====================================
 
 function renderProfile() {
 
-    const user =
+    const telegramUser =
         state.telegramUser || {};
 
 
+    const backendUser =
+        state.backendUser || {};
+
+
+    // =================================
+    // Name :: M
+    // =================================
+
     const firstName =
-        user.first_name ||
+        telegramUser.first_name ||
+        backendUser.firstName ||
         "";
 
 
     const lastName =
-        user.last_name ||
+        telegramUser.last_name ||
+        backendUser.lastName ||
         "";
 
 
@@ -1547,23 +1638,139 @@ function renderProfile() {
             firstName +
             " " +
             lastName
-        ).trim() ||
-        "کاربر Telegram";
+        )
+        .trim() ||
+        "کاربر";
 
+
+    // =================================
+    // Username :: M
+    // =================================
 
     const username =
-        user.username
-            ? "@" + user.username
-            : "بدون آیدی";
+        telegramUser.username
+            ? "@" +
+              telegramUser.username
 
+            : (
+                backendUser.username
+                    ? (
+                        String(
+                            backendUser.username
+                        )
+                        .startsWith("@")
+                            ? backendUser.username
+                            : "@" +
+                              backendUser.username
+                    )
+
+                    : "بدون آیدی"
+            );
+
+
+    // =================================
+    // Telegram ID :: M
+    // =================================
 
     const telegramId =
-        user.id ||
-        "0";
+        telegramUser.id ||
+        backendUser.telegramId ||
+        0;
 
+
+    // =================================
+    // Phone :: M
+    // =================================
+
+    const phoneNumber =
+        backendUser.phoneNumber ||
+        backendUser.phone ||
+        backendUser.mobile ||
+        telegramUser.phone_number ||
+        "ثبت نشده";
+
+
+    // =================================
+    // Registration Date :: M
+    // =================================
+
+    const registrationDate =
+        backendUser.createdAt ||
+        backendUser.registeredAt ||
+        backendUser.created_at ||
+        backendUser.createdDate ||
+        null;
+
+
+    // =================================
+    // Login Date :: M
+    // =================================
+
+    const loginDate =
+        state.loginTime ||
+        new Date();
+
+
+    // =================================
+    // Access Status :: M
+    // =================================
+
+    let accessText =
+        "فعال";
+
+
+    let accessClass =
+        "active";
+
+
+    if (
+        backendUser.status ===
+        "PENDING"
+    ) {
+
+        accessText =
+            "در انتظار تأیید";
+
+        accessClass =
+            "pending";
+
+    }
+
+
+    if (
+        backendUser.status ===
+        "BLOCKED"
+    ) {
+
+        accessText =
+            "مسدود";
+
+        accessClass =
+            "stopped";
+
+    }
+
+
+    if (
+        backendUser.accessEnabled ===
+        false
+    ) {
+
+        accessText =
+            "در انتظار تأیید";
+
+        accessClass =
+            "pending";
+
+    }
+
+
+    // =================================
+    // Avatar :: M
+    // =================================
 
     const photoUrl =
-        user.photo_url ||
+        telegramUser.photo_url ||
         "";
 
 
@@ -1579,14 +1786,33 @@ function renderProfile() {
                 >
             `
 
-            : "AI";
+            : `
+                <span>
+                    AI
+                </span>
+            `;
 
+
+    // =================================
+    // App Element :: M
+    // =================================
 
     const app =
         document.getElementById(
             "app"
         );
 
+
+    if (!app) {
+
+        return;
+
+    }
+
+
+    // =================================
+    // Profile Page :: M
+    // =================================
 
     app.innerHTML = `
 
@@ -1601,7 +1827,13 @@ function renderProfile() {
             </div>
 
 
-            <div class="glass-card profile-card">
+            <!-- =========================
+                 Profile Main Card :: M
+                 ========================= -->
+
+            <div
+                class="glass-card profile-card"
+            >
 
                 <div class="profile-main">
 
@@ -1638,6 +1870,9 @@ function renderProfile() {
 
                 <div class="profile-details">
 
+
+                    <!-- نام -->
+
                     <div class="detail-row">
 
                         <span class="detail-label">
@@ -1645,14 +1880,18 @@ function renderProfile() {
                         </span>
 
                         <span class="detail-value">
+
                             ${escapeHtml(
                                 firstName ||
                                 "ثبت نشده"
                             )}
+
                         </span>
 
                     </div>
 
+
+                    <!-- نام خانوادگی -->
 
                     <div class="detail-row">
 
@@ -1661,14 +1900,37 @@ function renderProfile() {
                         </span>
 
                         <span class="detail-value">
+
                             ${escapeHtml(
                                 lastName ||
                                 "ثبت نشده"
                             )}
+
                         </span>
 
                     </div>
 
+
+                    <!-- آیدی -->
+
+                    <div class="detail-row">
+
+                        <span class="detail-label">
+                            آیدی تلگرام
+                        </span>
+
+                        <span class="detail-value">
+
+                            ${escapeHtml(
+                                username
+                            )}
+
+                        </span>
+
+                    </div>
+
+
+                    <!-- شناسه -->
 
                     <div class="detail-row">
 
@@ -1677,13 +1939,59 @@ function renderProfile() {
                         </span>
 
                         <span class="detail-value">
+
                             ${escapeHtml(
                                 telegramId
                             )}
+
                         </span>
 
                     </div>
 
+
+                    <!-- شماره -->
+
+                    <div class="detail-row">
+
+                        <span class="detail-label">
+                            شماره تلفن
+                        </span>
+
+                        <span class="detail-value">
+
+                            ${escapeHtml(
+                                phoneNumber
+                            )}
+
+                        </span>
+
+                    </div>
+
+
+                    <!-- ثبت نام -->
+
+                    <div class="detail-row">
+
+                        <span class="detail-label">
+                            زمان ثبت‌نام
+                        </span>
+
+                        <span class="detail-value">
+
+                            ${
+                                registrationDate
+                                    ? formatDateTime(
+                                        registrationDate
+                                    )
+                                    : "ثبت نشده"
+                            }
+
+                        </span>
+
+                    </div>
+
+
+                    <!-- ورود -->
 
                     <div class="detail-row">
 
@@ -1692,9 +2000,28 @@ function renderProfile() {
                         </span>
 
                         <span class="detail-value">
+
                             ${formatDateTime(
-                                state.loginTime
+                                loginDate
                             )}
+
+                        </span>
+
+                    </div>
+
+
+                    <!-- وضعیت دسترسی -->
+
+                    <div class="detail-row">
+
+                        <span class="detail-label">
+                            وضعیت دسترسی
+                        </span>
+
+                        <span
+                            class="status ${accessClass}"
+                        >
+                            ${accessText}
                         </span>
 
                     </div>
@@ -1703,6 +2030,11 @@ function renderProfile() {
 
             </div>
 
+
+            <!-- =========================
+                 Support Card :: M
+                 فقط پشتیبانی
+                 ========================= -->
 
             <div class="section-title">
 
@@ -1713,15 +2045,19 @@ function renderProfile() {
             </div>
 
 
-            <div class="glass-card support-card">
+            <div
+                class="glass-card support-card"
+            >
 
                 <div class="support-icon">
                     💬
                 </div>
 
+
                 <h2>
                     پشتیبانی AutoTrade AI
                 </h2>
+
 
                 <p>
                     برای ارتباط مستقیم با پشتیبانی
@@ -1735,6 +2071,7 @@ function renderProfile() {
 
 
                 <button
+                    type="button"
                     class="support-button"
                     onclick="openSupport()"
                 >
@@ -1754,7 +2091,8 @@ function renderProfile() {
 
 
 // =====================================
-// Navigation :: M
+// Bottom Navigation :: M
+// پروفایل آخرین گزینه
 // =====================================
 
 function renderBottomNavigation() {
@@ -1763,7 +2101,11 @@ function renderBottomNavigation() {
 
         <nav class="bottom-nav">
 
+
+            <!-- داشبورد -->
+
             <button
+                type="button"
                 class="nav-button ${
                     state.currentPage ===
                     "dashboard"
@@ -1784,7 +2126,10 @@ function renderBottomNavigation() {
             </button>
 
 
+            <!-- کیف پول -->
+
             <button
+                type="button"
                 class="nav-button ${
                     state.currentPage ===
                     "wallet"
@@ -1805,7 +2150,10 @@ function renderBottomNavigation() {
             </button>
 
 
+            <!-- معاملات -->
+
             <button
+                type="button"
                 class="nav-button ${
                     state.currentPage ===
                     "trades"
@@ -1826,7 +2174,10 @@ function renderBottomNavigation() {
             </button>
 
 
+            <!-- آمار -->
+
             <button
+                type="button"
                 class="nav-button ${
                     state.currentPage ===
                     "analytics"
@@ -1847,7 +2198,10 @@ function renderBottomNavigation() {
             </button>
 
 
+            <!-- پروفایل - آخرین گزینه -->
+
             <button
+                type="button"
                 class="nav-button ${
                     state.currentPage ===
                     "profile"
@@ -1888,6 +2242,13 @@ function renderAnalytics() {
         document.getElementById(
             "app"
         );
+
+
+    if (!app) {
+
+        return;
+
+    }
 
 
     app.innerHTML = `
@@ -2095,12 +2456,25 @@ function goTo(
 
 async function startBot() {
 
-    if (
-        !state.backendUser?._id
-    ) {
+    const userId =
+        getBackendUserId();
+
+
+    if (!userId) {
 
         showToast(
             "کاربر هنوز احراز نشده است"
+        );
+
+        return;
+
+    }
+
+
+    if (!isAccessAllowed()) {
+
+        showToast(
+            "دسترسی شما هنوز تأیید نشده است"
         );
 
         return;
@@ -2118,7 +2492,7 @@ async function startBot() {
         await apiRequest(
 
             "/api/bot/start/" +
-            state.backendUser._id,
+            userId,
 
             {
 
@@ -2249,7 +2623,14 @@ function showToast(
     setTimeout(
         () => {
 
-            toast.remove();
+            if (
+                toast &&
+                toast.parentNode
+            ) {
+
+                toast.remove();
+
+            }
 
         },
         3000
@@ -2265,6 +2646,13 @@ function showToast(
 function formatDateTime(
     date
 ) {
+
+    if (!date) {
+
+        return "ثبت نشده";
+
+    }
+
 
     const value =
         new Date(date);
@@ -2367,7 +2755,9 @@ async function initializeApp() {
 
         await authenticateTelegram();
 
+
         await loadExchangeRate();
+
 
         await loadData();
 
@@ -2406,7 +2796,30 @@ async function initializeApp() {
 
 
 // =====================================
-// Start
+// Global Functions :: M
+// =====================================
+//
+// برای onclick های HTML
+// =====================================
+
+window.goTo =
+    goTo;
+
+
+window.openSupport =
+    openSupport;
+
+
+window.startBot =
+    startBot;
+
+
+window.showToast =
+    showToast;
+
+
+// =====================================
+// Start :: M
 // =====================================
 
 document.addEventListener(
