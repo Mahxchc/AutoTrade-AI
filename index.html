@@ -1,1213 +1,163 @@
 <!DOCTYPE html>
+<!-- =====================================
+AutoTrade AI Mini App:: M
+File: index.html
+===================================== -->
+
 <html lang="fa" dir="rtl">
 
 <head>
+
     <meta charset="UTF-8">
 
     <meta
         name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+        content="width=device-width, initial-scale=1, viewport-fit=cover"
     >
-
-    <meta name="theme-color" content="#020817">
 
     <meta
-        name="description"
-        content="AutoTrade AI - داشبورد معاملات هوشمند"
+        name="theme-color"
+        content="#050816"
     >
 
-    <title>AutoTrade AI</title>
+    <title>
+        AutoTrade AI
+    </title>
 
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
 
-    <link rel="stylesheet" href="style.css">
 </head>
+
 
 <body>
 
-<div id="app">
 
-    <!-- HEADER -->
-
-    <header class="top-header">
-
-        <div class="header-right">
-
-            <button
-                id="header-back"
-                class="icon-button hidden"
-                type="button"
-                aria-label="بازگشت"
-            >
-                ←
-            </button>
-
-            <div class="brand">
-
-                <div class="brand-title">
-                    AutoTrade AI
-                </div>
-
-                <div
-                    id="page-title"
-                    class="page-title"
-                >
-                    داشبورد
-                </div>
-
-            </div>
-
-        </div>
-
-        <div class="header-left">
-
-            <button
-                id="notification-button"
-                class="icon-button"
-                type="button"
-                aria-label="اعلان‌ها"
-            >
-                <span class="notification-icon">
-                    ♧
-                </span>
-
-                <span
-                    id="notification-badge"
-                    class="notification-badge hidden"
-                >
-                    0
-                </span>
-            </button>
-
-        </div>
-
-    </header>
+    <div id="toast" class="toast"></div>
 
 
-    <!-- MAIN -->
+    <main id="app">
 
-    <main id="main-content">
-
-        <!-- ================= DASHBOARD ================= -->
 
         <section
             id="page-dashboard"
             class="page active"
-        >
+        ></section>
 
-            <div class="glass-card balance-card">
-
-                <div class="balance-top">
-
-                    <div>
-
-                        <div class="label">
-                            موجودی کل
-                        </div>
-
-                        <div class="balance-usd">
-                            <span>$</span>
-
-                            <span id="dashboard-balance-usd">
-                                —
-                            </span>
-                        </div>
-
-                        <div
-                            id="dashboard-balance-irr"
-                            class="balance-irr"
-                        >
-                            معادل تومان: —
-                        </div>
-
-                    </div>
-
-                    <div class="asset-badge">
-                        USDT
-                    </div>
-
-                </div>
-
-
-                <div class="balance-actions">
-
-                    <button
-                        class="primary-button"
-                        type="button"
-                        data-action="deposit"
-                    >
-                        افزایش موجودی
-                    </button>
-
-                    <button
-                        class="secondary-button"
-                        type="button"
-                        data-action="withdraw"
-                    >
-                        برداشت
-                    </button>
-
-                </div>
-
-            </div>
-
-
-            <div class="stats-grid">
-
-                <div class="glass-card stat-card">
-
-                    <span class="label">
-                        سود امروز
-                    </span>
-
-                    <strong id="today-profit-usd">
-                        —
-                    </strong>
-
-                    <small id="today-profit-irr">
-                        معادل تومان: —
-                    </small>
-
-                </div>
-
-
-                <div class="glass-card stat-card">
-
-                    <span class="label">
-                        سود کل
-                    </span>
-
-                    <strong id="total-profit-usd">
-                        —
-                    </strong>
-
-                    <small id="total-profit-irr">
-                        معادل تومان: —
-                    </small>
-
-                </div>
-
-
-                <div class="glass-card stat-card">
-
-                    <span class="label">
-                        نرخ موفقیت
-                    </span>
-
-                    <strong id="success-rate">
-                        —
-                    </strong>
-
-                </div>
-
-
-                <div class="glass-card stat-card">
-
-                    <span class="label">
-                        تعداد معاملات
-                    </span>
-
-                    <strong id="total-trades">
-                        —
-                    </strong>
-
-                </div>
-
-            </div>
-
-
-            <!-- AI -->
-
-            <div class="glass-card ai-card">
-
-                <div class="section-header">
-
-                    <div>
-
-                        <span class="label">
-                            موتور معاملات
-                        </span>
-
-                        <h2>
-                            ربات هوش مصنوعی
-                        </h2>
-
-                    </div>
-
-                    <span
-                        id="ai-status"
-                        class="status-badge"
-                    >
-                        —
-                    </span>
-
-                </div>
-
-
-                <div class="ai-info">
-
-                    <div class="info-row">
-
-                        <span>
-                            استراتژی
-                        </span>
-
-                        <strong id="ai-strategy">
-                            —
-                        </strong>
-
-                    </div>
-
-
-                    <div class="info-row">
-
-                        <span>
-                            دقت
-                        </span>
-
-                        <strong id="ai-accuracy">
-                            —
-                        </strong>
-
-                    </div>
-
-
-                    <div class="info-row">
-
-                        <span>
-                            وضعیت
-                        </span>
-
-                        <strong id="ai-mode">
-                            —
-                        </strong>
-
-                    </div>
-
-                </div>
-
-
-                <button
-                    id="ai-trading-button"
-                    class="primary-button full-width"
-                    type="button"
-                >
-                    شروع معاملات AI
-                </button>
-
-            </div>
-
-
-            <!-- RECENT TRADES -->
-
-            <div class="glass-card">
-
-                <div class="section-header">
-
-                    <h2>
-                        معاملات اخیر
-                    </h2>
-
-                    <button
-                        class="text-button"
-                        type="button"
-                        data-page="trades"
-                    >
-                        مشاهده همه
-                    </button>
-
-                </div>
-
-
-                <div
-                    id="dashboard-trades"
-                    class="empty-state"
-                >
-
-                    <div class="empty-icon">
-                        —
-                    </div>
-
-                    <p>
-                        هنوز اطلاعات معاملاتی دریافت نشده است.
-                    </p>
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-        <!-- ================= WALLET ================= -->
 
         <section
             id="page-wallet"
             class="page"
-        >
+        ></section>
 
-            <div class="glass-card wallet-main-card">
-
-                <div class="balance-top">
-
-                    <div>
-
-                        <div class="label">
-                            موجودی کل
-                        </div>
-
-                        <div class="balance-usd">
-
-                            $
-
-                            <span id="wallet-balance-usd">
-                                —
-                            </span>
-
-                        </div>
-
-                        <div
-                            id="wallet-balance-irr"
-                            class="balance-irr"
-                        >
-                            معادل تومان: —
-                        </div>
-
-                    </div>
-
-                    <div class="asset-badge">
-                        USDT
-                    </div>
-
-                </div>
-
-
-                <div class="wallet-available">
-
-                    <span>
-                        موجودی در دسترس
-                    </span>
-
-                    <strong>
-                        $
-
-                        <span id="wallet-available-usd">
-                            —
-                        </span>
-                    </strong>
-
-                    <small id="wallet-available-irr">
-                        معادل تومان: —
-                    </small>
-
-                </div>
-
-
-                <div class="wallet-actions">
-
-                    <button
-                        class="wallet-action"
-                        type="button"
-                        data-action="transfer"
-                    >
-                        <span>⇄</span>
-                        انتقال
-                    </button>
-
-                    <button
-                        class="wallet-action"
-                        type="button"
-                        data-action="withdraw"
-                    >
-                        <span>↑</span>
-                        برداشت
-                    </button>
-
-                    <button
-                        class="wallet-action"
-                        type="button"
-                        data-action="deposit"
-                    >
-                        <span>↓</span>
-                        واریز
-                    </button>
-
-                </div>
-
-            </div>
-
-
-            <div class="glass-card">
-
-                <div class="section-header">
-
-                    <h2>
-                        نمای کلی کیف پول
-                    </h2>
-
-                </div>
-
-
-                <div class="wallet-summary">
-
-                    <div class="summary-row">
-
-                        <span>
-                            موجودی اصلی
-                        </span>
-
-                        <strong id="wallet-summary-balance">
-                            $—
-                        </strong>
-
-                    </div>
-
-
-                    <div class="summary-row">
-
-                        <span>
-                            سود
-                        </span>
-
-                        <strong id="wallet-summary-profit">
-                            $—
-                        </strong>
-
-                    </div>
-
-
-                    <div class="summary-row">
-
-                        <span>
-                            ارزش کل دارایی
-                        </span>
-
-                        <strong id="wallet-summary-total">
-                            $—
-                        </strong>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <div class="glass-card">
-
-                <div class="section-header">
-
-                    <h2>
-                        تراکنش‌های اخیر
-                    </h2>
-
-                </div>
-
-                <div
-                    id="wallet-transactions"
-                    class="empty-state"
-                >
-
-                    <div class="empty-icon">
-                        —
-                    </div>
-
-                    <p>
-                        تراکنشی برای نمایش وجود ندارد.
-                    </p>
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-        <!-- ================= WITHDRAW ================= -->
-
-        <section
-            id="page-withdraw"
-            class="page"
-        >
-
-            <div class="glass-card">
-
-                <div class="section-header">
-
-                    <h2>
-                        برداشت
-                    </h2>
-
-                </div>
-
-
-                <div class="available-box">
-
-                    <span>
-                        موجودی در دسترس
-                    </span>
-
-                    <strong>
-
-                        $
-
-                        <span id="withdraw-available-usd">
-                            —
-                        </span>
-
-                    </strong>
-
-                    <small id="withdraw-available-irr">
-                        معادل تومان: —
-                    </small>
-
-                </div>
-
-
-                <form id="withdraw-form">
-
-                    <div class="form-group">
-
-                        <label for="withdraw-amount">
-                            مبلغ برداشت
-                        </label>
-
-                        <div class="input-wrapper">
-
-                            <input
-                                id="withdraw-amount"
-                                name="amount"
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                placeholder="0.00"
-                                inputmode="decimal"
-                                autocomplete="off"
-                            >
-
-                            <span>
-                                USDT
-                            </span>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="form-group">
-
-                        <label for="withdraw-network">
-                            انتخاب شبکه
-                        </label>
-
-                        <select
-                            id="withdraw-network"
-                            name="network"
-                        >
-
-                            <option value="">
-                                شبکه را انتخاب کنید
-                            </option>
-
-                            <option value="TRC20">
-                                TRC20
-                            </option>
-
-                            <option value="ERC20">
-                                ERC20
-                            </option>
-
-                            <option value="BEP20">
-                                BEP20
-                            </option>
-
-                        </select>
-
-                    </div>
-
-
-                    <div class="form-group">
-
-                        <label for="withdraw-address">
-                            آدرس کیف پول
-                        </label>
-
-                        <input
-                            id="withdraw-address"
-                            name="address"
-                            type="text"
-                            placeholder="آدرس کیف پول را وارد کنید"
-                            autocomplete="off"
-                        >
-
-                    </div>
-
-
-                    <div class="withdraw-preview">
-
-                        <div>
-
-                            <span>
-                                مبلغ دریافتی
-                            </span>
-
-                            <strong id="withdraw-receive">
-                                0.00 USDT
-                            </strong>
-
-                        </div>
-
-
-                        <div>
-
-                            <span>
-                                کارمزد شبکه
-                            </span>
-
-                            <strong id="withdraw-fee">
-                                —
-                            </strong>
-
-                        </div>
-
-
-                        <div>
-
-                            <span>
-                                مجموع
-                            </span>
-
-                            <strong id="withdraw-total">
-                                0.00 USDT
-                            </strong>
-
-                        </div>
-
-                    </div>
-
-
-                    <button
-                        class="primary-button full-width"
-                        type="submit"
-                    >
-                        درخواست برداشت
-                    </button>
-
-                </form>
-
-            </div>
-
-        </section>
-
-
-        <!-- ================= TRADES ================= -->
 
         <section
             id="page-trades"
             class="page"
-        >
+        ></section>
 
-            <div class="glass-card">
-
-                <div class="section-header">
-
-                    <h2>
-                        معاملات
-                    </h2>
-
-                    <button
-                        id="trades-filter-button"
-                        class="icon-button small"
-                        type="button"
-                    >
-                        ☰
-                    </button>
-
-                </div>
-
-
-                <div class="tabs">
-
-                    <button
-                        class="tab active"
-                        data-trade-status="open"
-                        type="button"
-                    >
-                        معاملات باز
-                    </button>
-
-                    <button
-                        class="tab"
-                        data-trade-status="closed"
-                        type="button"
-                    >
-                        معاملات بسته
-                    </button>
-
-                </div>
-
-
-                <div
-                    id="trades-list"
-                    class="trades-list"
-                >
-
-                    <div class="empty-state">
-
-                        <div class="empty-icon">
-                            —
-                        </div>
-
-                        <p>
-                            معامله‌ای برای نمایش وجود ندارد.
-                        </p>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-        <!-- ================= ANALYTICS ================= -->
 
         <section
             id="page-analytics"
             class="page"
-        >
+        ></section>
 
-            <div class="glass-card">
-
-                <div class="section-header">
-
-                    <h2>
-                        تحلیل‌ها
-                    </h2>
-
-                </div>
-
-                <div class="analytics-placeholder">
-
-                    <div class="empty-icon">
-                        —
-                    </div>
-
-                    <p>
-                        اطلاعات تحلیل پس از اتصال به سرویس واقعی نمایش داده می‌شود.
-                    </p>
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-        <!-- ================= NOTIFICATIONS ================= -->
-
-        <section
-            id="page-notifications"
-            class="page"
-        >
-
-            <div class="glass-card">
-
-                <div class="section-header">
-
-                    <h2>
-                        اعلان‌ها
-                    </h2>
-
-                    <button
-                        id="mark-notifications-read"
-                        class="text-button"
-                        type="button"
-                    >
-                        علامت همه به عنوان خوانده شده
-                    </button>
-
-                </div>
-
-
-                <div
-                    id="notifications-list"
-                    class="notifications-list"
-                >
-
-                    <div class="empty-state">
-
-                        <div class="empty-icon">
-                            —
-                        </div>
-
-                        <p>
-                            اعلان جدیدی وجود ندارد.
-                        </p>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-        <!-- ================= PROFILE ================= -->
 
         <section
             id="page-profile"
             class="page"
-        >
+        ></section>
 
-            <div class="glass-card profile-card">
 
-                <div class="profile-header">
+        <section
+            id="page-deposit"
+            class="page"
+        ></section>
 
-                    <div
-                        id="profile-avatar"
-                        class="profile-avatar"
-                    >
-                        —
-                    </div>
 
+        <section
+            id="page-withdraw"
+            class="page"
+        ></section>
 
-                    <div class="profile-info">
-
-                        <h2 id="profile-name">
-                            کاربر
-                        </h2>
-
-                        <p id="profile-username">
-                            —
-                        </p>
-
-                    </div>
-
-
-                    <span
-                        id="profile-status"
-                        class="status-badge"
-                    >
-                        —
-                    </span>
-
-                </div>
-
-            </div>
-
-
-            <!-- ACCOUNT -->
-
-            <div
-                id="profile-account-panel"
-                class="glass-card profile-subpanel hidden"
-            >
-
-                <div class="section-header">
-
-                    <h2>
-                        حساب کاربری
-                    </h2>
-
-                </div>
-
-                <div class="wallet-summary">
-
-                    <div class="summary-row">
-                        <span>
-                            نام
-                        </span>
-
-                        <strong id="account-name">
-                            —
-                        </strong>
-                    </div>
-
-                    <div class="summary-row">
-                        <span>
-                            نام کاربری
-                        </span>
-
-                        <strong id="account-username">
-                            —
-                        </strong>
-                    </div>
-
-                    <div class="summary-row">
-                        <span>
-                            شناسه Telegram
-                        </span>
-
-                        <strong id="account-telegram-id">
-                            —
-                        </strong>
-                    </div>
-
-                    <div class="summary-row">
-                        <span>
-                            وضعیت حساب
-                        </span>
-
-                        <strong id="account-status">
-                            —
-                        </strong>
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <!-- SECURITY -->
-
-            <div
-                id="profile-security-panel"
-                class="glass-card profile-subpanel hidden"
-            >
-
-                <div class="section-header">
-
-                    <h2>
-                        امنیت
-                    </h2>
-
-                </div>
-
-                <div class="wallet-summary">
-
-                    <div class="summary-row">
-
-                        <span>
-                            احراز هویت Telegram
-                        </span>
-
-                        <strong>
-                            فعال ✓
-                        </strong>
-
-                    </div>
-
-
-                    <div class="summary-row">
-
-                        <span>
-                            اتصال امن به Backend
-                        </span>
-
-                        <strong>
-                            فعال ✓
-                        </strong>
-
-                    </div>
-
-
-                    <div class="summary-row">
-
-                        <span>
-                            نشست فعلی
-                        </span>
-
-                        <strong>
-                            Telegram WebApp
-                        </strong>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <!-- SUPPORT -->
-
-            <div
-                id="profile-support-panel"
-                class="glass-card profile-subpanel hidden"
-            >
-
-                <div class="section-header">
-
-                    <h2>
-                        پشتیبانی
-                    </h2>
-
-                </div>
-
-                <p>
-                    برای ارتباط با پشتیبانی روی دکمه زیر بزنید.
-                </p>
-
-                <button
-                    id="support-button"
-                    class="primary-button full-width"
-                    type="button"
-                >
-                    ارتباط با پشتیبانی
-                </button>
-
-                <small
-                    style="display:block;margin-top:12px;text-align:center;"
-                >
-                    @mehdi2410l
-                </small>
-
-            </div>
-
-
-            <!-- PROFILE MENU -->
-
-            <div class="glass-card profile-menu">
-
-                <button
-                    type="button"
-                    data-profile-action="account"
-                >
-                    <span>
-                        حساب کاربری
-                    </span>
-
-                    <span>
-                        ‹
-                    </span>
-                </button>
-
-
-                <button
-                    type="button"
-                    data-profile-action="security"
-                >
-                    <span>
-                        امنیت
-                    </span>
-
-                    <span>
-                        ‹
-                    </span>
-                </button>
-
-
-                <button
-                    type="button"
-                    data-profile-action="support"
-                >
-                    <span>
-                        پشتیبانی
-                    </span>
-
-                    <span>
-                        ‹
-                    </span>
-                </button>
-
-            </div>
-
-
-            <button
-                id="logout-button"
-                class="danger-button full-width"
-                type="button"
-            >
-                خروج از حساب
-            </button>
-
-        </section>
 
     </main>
 
 
-    <!-- BOTTOM NAV -->
-
     <nav
-        id="bottom-navigation"
-        class="bottom-navigation"
+        id="bottom-nav"
+        class="bottom-nav"
     >
 
-        <button
-            class="nav-item active"
-            type="button"
-            data-page="dashboard"
-        >
-            <span class="nav-icon">⌂</span>
-            <small>داشبورد</small>
+        <button data-nav="dashboard">
+
+            <span>⌂</span>
+
+            <b>
+                داشبورد
+            </b>
+
         </button>
 
 
-        <button
-            class="nav-item"
-            type="button"
-            data-page="wallet"
-        >
-            <span class="nav-icon">▣</span>
-            <small>کیف پول</small>
+        <button data-nav="wallet">
+
+            <span>▣</span>
+
+            <b>
+                کیف پول
+            </b>
+
         </button>
 
 
-        <button
-            class="nav-item"
-            type="button"
-            data-page="trades"
-        >
-            <span class="nav-icon">⇄</span>
-            <small>معاملات</small>
+        <button data-nav="trades">
+
+            <span>↕</span>
+
+            <b>
+                معاملات
+            </b>
+
         </button>
 
 
-        <button
-            class="nav-item"
-            type="button"
-            data-page="analytics"
-        >
-            <span class="nav-icon">▥</span>
-            <small>تحلیل‌ها</small>
+        <button data-nav="analytics">
+
+            <span>◔</span>
+
+            <b>
+                آمار
+            </b>
+
         </button>
 
 
-        <button
-            class="nav-item"
-            type="button"
-            data-page="profile"
-        >
-            <span class="nav-icon">♙</span>
-            <small>پروفایل</small>
+        <button data-nav="profile">
+
+            <span>◉</span>
+
+            <b>
+                پروفایل
+            </b>
+
         </button>
 
     </nav>
 
-</div>
+
+    <script
+        src="https://telegram.org/js/telegram-web-app.js"
+    ></script>
 
 
-<!-- TOAST -->
+    <script
+        src="app.js"
+    ></script>
 
-<div
-    id="toast"
-    class="toast"
-    role="status"
-    aria-live="polite"
->
-    <span id="toast-message"></span>
-</div>
-
-
-<!-- LOADING -->
-
-<div
-    id="loading-screen"
-    class="loading-screen"
->
-
-    <div class="loading-spinner"></div>
-
-    <p>
-        در حال دریافت اطلاعات...
-    </p>
-
-</div>
-
-
-<script src="app.js"></script>
 
 </body>
+
 </html>
