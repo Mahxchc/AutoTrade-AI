@@ -1,19 +1,22 @@
 // =====================================
-// Withdraw Model:: M
-// AutoTrade AI
-// مدل درخواست برداشت
+// ..M AutoTrade AI
+// Withdraw Model
+// مدل برداشت تومان
 // File: backend/models/Withdraw.js
 // =====================================
 
 import mongoose from "mongoose";
 
 
-const withdrawSchema = new mongoose.Schema(
+// =====================================
+// WITHDRAW SCHEMA
+// =====================================
 
+const withdrawSchema = new mongoose.Schema(
     {
 
         // =====================================
-        // کاربر:: M
+        // کاربر
         // =====================================
 
         userId: {
@@ -34,49 +37,11 @@ const withdrawSchema = new mongoose.Schema(
 
 
         // =====================================
-        // کیف پول:: M
+        // مبلغ برداشت
+        // واحد: تومان
         // =====================================
 
-        walletId: {
-
-            type:
-                mongoose.Schema.Types.ObjectId,
-
-            ref:
-                "Wallet",
-
-            required:
-                true,
-
-            index:
-                true
-
-        },
-
-
-        // =====================================
-        // مبلغ برداشت به دلار:: M
-        // =====================================
-
-        amountUSD: {
-
-            type:
-                Number,
-
-            required:
-                true,
-
-            min:
-                0.01
-
-        },
-
-
-        // =====================================
-        // نرخ دلار هنگام درخواست:: M
-        // =====================================
-
-        usdToTomanRate: {
+        amountToman: {
 
             type:
                 Number,
@@ -91,53 +56,31 @@ const withdrawSchema = new mongoose.Schema(
 
 
         // =====================================
-        // مبلغ معادل به تومان:: M
+        // شماره شبا
         // =====================================
 
-        amountToman: {
+        iban: {
 
             type:
-                Number,
+                String,
 
             required:
                 true,
 
-            min:
-                0
+            trim:
+                true,
+
+            uppercase:
+                true
 
         },
 
 
         // =====================================
-        // روش برداشت:: M
+        // توضیحات کاربر
         // =====================================
 
-        method: {
-
-            type:
-                String,
-
-            enum: [
-
-                "BANK",
-
-                "CARD",
-
-                "OTHER"
-
-            ],
-
-            default:
-                "BANK"
-
-        },
-
-
-        // =====================================
-        // شماره حساب / شبا:: M
-        // =====================================
-
-        bankAccount: {
+        description: {
 
             type:
                 String,
@@ -146,31 +89,16 @@ const withdrawSchema = new mongoose.Schema(
                 "",
 
             trim:
-                true
+                true,
+
+            maxlength:
+                500
 
         },
 
 
         // =====================================
-        // نام صاحب حساب:: M
-        // =====================================
-
-        accountHolderName: {
-
-            type:
-                String,
-
-            default:
-                "",
-
-            trim:
-                true
-
-        },
-
-
-        // =====================================
-        // وضعیت درخواست:: M
+        // وضعیت برداشت
         // =====================================
 
         status: {
@@ -182,15 +110,11 @@ const withdrawSchema = new mongoose.Schema(
 
                 "PENDING",
 
-                "PROCESSING",
-
-                "COMPLETED",
+                "APPROVED",
 
                 "REJECTED",
 
-                "CANCELLED",
-
-                "FAILED"
+                "PAID"
 
             ],
 
@@ -204,10 +128,11 @@ const withdrawSchema = new mongoose.Schema(
 
 
         // =====================================
-        // شناسه پرداخت خارجی:: M
+        // شناسه تراکنش پرداخت
+        // در صورت پرداخت واقعی
         // =====================================
 
-        externalPaymentId: {
+        transactionId: {
 
             type:
                 String,
@@ -215,32 +140,53 @@ const withdrawSchema = new mongoose.Schema(
             default:
                 null,
 
-            index:
+            trim:
                 true
 
         },
 
 
         // =====================================
-        // دلیل رد یا خطا:: M
+        // دلیل رد شدن
         // =====================================
 
-        failureReason: {
+        rejectionReason: {
 
             type:
                 String,
 
             default:
-                ""
+                null,
+
+            trim:
+                true,
+
+            maxlength:
+                500
 
         },
 
 
         // =====================================
-        // زمان پردازش:: M
+        // زمان پردازش
         // =====================================
 
         processedAt: {
+
+            type:
+                Date,
+
+            default:
+                null
+
+        },
+
+
+        // =====================================
+        // زمان پرداخت واقعی
+        // =====================================
+
+        paidAt: {
 
             type:
                 Date,
@@ -254,27 +200,47 @@ const withdrawSchema = new mongoose.Schema(
 
     {
 
+        // =====================================
+        // زمان ایجاد و بروزرسانی
+        // =====================================
+
         timestamps:
             true
 
     }
-
 );
 
 
 // =====================================
-// Withdraw Model:: M
-// ساخت مدل برداشت
+// INDEX
+// جستجوی سریع برداشت‌های کاربر
+// =====================================
+
+withdrawSchema.index({
+
+    userId:
+        1,
+
+    createdAt:
+        -1
+
+});
+
+
+// =====================================
+// جلوگیری از مدل تکراری در محیط توسعه
 // =====================================
 
 const Withdraw =
+    mongoose.models.Withdraw ||
     mongoose.model(
-
         "Withdraw",
-
         withdrawSchema
-
     );
 
+
+// =====================================
+// EXPORT
+// =====================================
 
 export default Withdraw;
