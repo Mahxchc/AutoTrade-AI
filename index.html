@@ -1,8 +1,8 @@
 <!-- =====================================
-..M AutoTrade AI
-Mini App
-File: MiniApp/index.html
-===================================== -->
+     ..M AutoTrade AI
+     Mini App
+     File: MiniApp/index.html
+     ===================================== -->
 
 <!DOCTYPE html>
 
@@ -13,9 +13,7 @@ File: MiniApp/index.html
 
 <head>
 
-    <meta
-        charset="UTF-8"
-    >
+    <meta charset="UTF-8">
 
     <meta
         name="viewport"
@@ -24,7 +22,7 @@ File: MiniApp/index.html
 
     <meta
         name="theme-color"
-        content="#07111f"
+        content="#081b35"
     >
 
     <title>
@@ -41,81 +39,40 @@ File: MiniApp/index.html
 
 <body>
 
-
-    <!-- =====================================
-    ..M Background
-    ===================================== -->
-
-    <div class="background-glow glow-one"></div>
-
-    <div class="background-glow glow-two"></div>
-
-    <div class="background-glow glow-three"></div>
-
-
-    <!-- =====================================
-    ..M Loading
-    ===================================== -->
-
     <div
-        id="loading-screen"
-        class="loading-screen"
+        id="app"
+        class="app"
     >
 
-        <div class="loading-logo">
-            AI
-        </div>
+        <div class="loading-screen">
 
-        <div class="loading-title">
-            AutoTrade AI
-        </div>
+            <div class="loading-logo">
+                AI
+            </div>
 
-        <div class="loading-text">
-            در حال آماده‌سازی مینی اپ
-        </div>
+            <div class="loading-title">
+                AutoTrade AI
+            </div>
 
-        <div class="loading-spinner"></div>
+            <div class="loading-text">
+                در حال بارگذاری...
+            </div>
+
+        </div>
 
     </div>
 
 
-    <!-- =====================================
-    ..M Main App
-    ===================================== -->
-
-    <main
-        id="app"
-        class="app-container"
-    ></main>
-
-
-    <!-- =====================================
-    ..M Toast
-    ===================================== -->
-
-    <div
-        id="toast"
-        class="toast"
-    ></div>
-
-
-    <!-- =====================================
-    ..M Telegram WebApp
-    ===================================== -->
+    <!-- Telegram WebApp -->
 
     <script
         src="https://telegram.org/js/telegram-web-app.js"
     ></script>
 
 
-    <!-- =====================================
-    ..M Application
-    ===================================== -->
-
     <script
         src="app.js"
     ></script>
-
 
 </body>
 
