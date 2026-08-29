@@ -1,452 +1,316 @@
 // =====================================
 // ..M AutoTrade AI
-// Complete Mini App :: M
-// Frontend Application
+// Main Mini App
 // File: MiniApp/app.js
 // =====================================
 
 
 // =====================================
-// CONFIG :: M
+// ..M CONFIG
 // =====================================
 
 const BACKEND_URL =
     "https://autotrade-backend-02cc.onrender.com";
 
 const SUPPORT_USERNAME =
-    "@mehdi2410l";
+    "@mehdi2510l";
+
+const DEFAULT_RATE =
+    100000;
 
 
 // =====================================
-// Telegram WebApp :: M
-// =====================================
-
-const tg =
-    window.Telegram?.WebApp || null;
-
-if (tg) {
-
-    try {
-
-        tg.ready();
-        tg.expand();
-
-        if (typeof tg.setHeaderColor === "function") {
-            tg.setHeaderColor("#0b1020");
-        }
-
-        if (typeof tg.setBackgroundColor === "function") {
-            tg.setBackgroundColor("#0b1020");
-        }
-
-    } catch (error) {
-
-        console.warn(
-            "Telegram WebApp initialization error:",
-            error
-        );
-
-    }
-
-}
-
-
-// =====================================
-// Global State :: M
+// ..M STATE
 // =====================================
 
 const state = {
 
-    currentPage:
-        "dashboard",
-
-    loading:
-        false,
-
-    user:
-        null,
+    user: null,
 
     wallet: {
 
-        balance:
-            0,
+        balance: 0,
 
-        withdrawable:
-            0,
+        withdrawable: 0,
 
-        totalProfit:
-            0,
+        totalProfit: 0,
 
-        totalTrades:
-            0
+        totalTrades: 0,
+
+        currency: "USDT"
+
+    },
+
+    trades: [],
+
+    bot: {
+
+        status: "STOPPED",
+
+        strategy: "AI Scalping",
+
+        accuracy: 0,
+
+        lastSignal: "WAIT"
 
     },
 
     exchangeRate:
-        0,
+        DEFAULT_RATE,
 
-    bot: {
-
-        status:
-            "STOPPED",
-
-        strategy:
-            "AI Scalping",
-
-        accuracy:
-            0,
-
-        confidence:
-            0,
-
-        lastSignal:
-            "WAIT"
-
-    },
-
-    trades:
-        [],
-
-    deposits:
-        [],
-
-    withdrawals:
-        []
+    currentPage:
+        "dashboard"
 
 };
 
 
 // =====================================
-// Helpers :: M
+// ..M TELEGRAM
+// =====================================
+
+const tg =
+    window.Telegram &&
+    window.Telegram.WebApp
+        ? window.Telegram.WebApp
+        : null;
+
+
+if (tg) {
+
+    tg.ready();
+
+    tg.expand();
+
+}
+
+
+// =====================================
+// ..M DOM
 // =====================================
 
 function getApp() {
 
-    return document.getElementById("app");
+    return document.getElementById(
+        "app"
+    );
 
 }
 
 
 // =====================================
-// Safe Number :: M
+// ..M NUMBER
 // =====================================
 
-function safeNumber(value) {
+function number(value) {
 
-    const number =
+    const n =
         Number(value);
 
     if (
-        !Number.isFinite(number)
+        !Number.isFinite(n)
     ) {
 
         return 0;
 
     }
 
-    return number;
+    return n;
 
 }
 
 
 // =====================================
-// Persian Number :: M
-// =====================================
-
-function faNumber(value) {
-
-    const number =
-        safeNumber(value);
-
-    return number
-        .toLocaleString("fa-IR", {
-            maximumFractionDigits: 8
-        });
-
-}
-
-
-// =====================================
-// Currency Format USD :: M
+// ..M USD FORMAT
 // =====================================
 
 function formatUSD(value) {
 
-    return safeNumber(value)
-        .toLocaleString("en-US", {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 8
-        }) + " USD";
+    return number(value)
+        .toLocaleString(
+            "en-US",
+            {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }
+        ) + " USD";
 
 }
 
 
 // =====================================
-// Currency Format Toman :: M
+// ..M TOMAN FORMAT
 // =====================================
 
 function formatToman(value) {
 
-    return safeNumber(value)
-        .toLocaleString("fa-IR", {
-            maximumFractionDigits: 0
-        }) + " تومان";
+    return Math.round(
+        number(value)
+    ).toLocaleString(
+        "fa-IR"
+    ) + " تومان";
 
 }
 
 
 // =====================================
-// USD → Toman :: M
+// ..M USD TO TOMAN
 // =====================================
 
-function usdToToman(usd) {
-
-    const amount =
-        safeNumber(usd);
-
-    const rate =
-        safeNumber(
-            state.exchangeRate
-        );
-
-    if (
-        amount <= 0 ||
-        rate <= 0
-    ) {
-
-        return 0;
-
-    }
+function usdToToman(
+    usd
+) {
 
     return Math.round(
-        amount * rate
+        number(usd) *
+        number(
+            state.exchangeRate ||
+            DEFAULT_RATE
+        )
     );
 
 }
 
 
 // =====================================
-// Get Telegram User :: M
+// ..M TOAST
 // =====================================
 
-function getTelegramUser() {
+let toastTimer = null;
 
-    try {
 
-        return (
-            tg?.initDataUnsafe?.user ||
-            null
+function showToast(
+    message
+) {
+
+    const toast =
+        document.getElementById(
+            "toast"
         );
 
-    } catch (error) {
+    if (!toast) {
 
-        return null;
-
-    }
-
-}
-
-
-// =====================================
-// User Name :: M
-// =====================================
-
-function getUserName() {
-
-    const user =
-        state.user ||
-        getTelegramUser() ||
-        {};
-
-    const name =
-        [
-            user.first_name,
-            user.last_name
-        ]
-        .filter(Boolean)
-        .join(" ")
-        .trim();
-
-    return name ||
-        "کاربر AutoTrade AI";
-
-}
-
-
-// =====================================
-// Username :: M
-// =====================================
-
-function getUsername() {
-
-    const user =
-        state.user ||
-        getTelegramUser() ||
-        {};
-
-    if (
-        user.username
-    ) {
-
-        return "@" +
-            user.username;
+        return;
 
     }
 
-    return "بدون نام کاربری";
+    toast.textContent =
+        message;
 
-}
-
-
-// =====================================
-// Telegram ID :: M
-// =====================================
-
-function getTelegramId() {
-
-    const user =
-        state.user ||
-        getTelegramUser() ||
-        {};
-
-    return (
-        user.id ||
-        0
+    toast.classList.add(
+        "show"
     );
 
+    clearTimeout(
+        toastTimer
+    );
+
+    toastTimer =
+        setTimeout(
+            function () {
+
+                toast.classList.remove(
+                    "show"
+                );
+
+            },
+            2600
+        );
+
 }
 
 
 // =====================================
-// API Request :: M
+// ..M API
 // =====================================
 
-async function apiRequest(
-    endpoint,
+async function api(
+    path,
     options = {}
 ) {
 
-    try {
+    const url =
+        BACKEND_URL +
+        path;
 
-        const response =
-            await fetch(
-                BACKEND_URL + endpoint,
-                {
+    const headers = {
 
-                    method:
-                        options.method ||
-                        "GET",
+        "Content-Type":
+            "application/json"
 
-                    headers: {
+    };
 
-                        "Content-Type":
-                            "application/json",
 
-                        ...(options.headers || {})
+    if (
+        tg &&
+        tg.initData
+    ) {
 
-                    },
+        headers[
+            "X-Telegram-Init-Data"
+        ] =
+            tg.initData;
 
-                    body:
-                        options.body
-                            ? JSON.stringify(
-                                options.body
-                            )
-                            : undefined
+    }
+
+
+    const response =
+        await fetch(
+            url,
+            {
+
+                ...options,
+
+                headers: {
+
+                    ...headers,
+
+                    ...(options.headers || {})
 
                 }
-            );
 
-
-        let data = null;
-
-
-        try {
-
-            data =
-                await response.json();
-
-        } catch {
-
-            data =
-                null;
-
-        }
-
-
-        if (
-            !response.ok
-        ) {
-
-            throw new Error(
-                data?.message ||
-                "خطا در ارتباط با سرور"
-            );
-
-        }
-
-
-        return data || {};
-
-    }
-
-    catch (error) {
-
-        console.warn(
-            "API Error:",
-            endpoint,
-            error
+            }
         );
 
-        return {
 
-            success:
-                false,
+    let data = null;
 
-            error:
-                true,
 
-            message:
-                error.message
+    try {
 
-        };
+        data =
+            await response.json();
 
     }
+
+    catch {
+
+        data = null;
+
+    }
+
+
+    if (
+        !response.ok
+    ) {
+
+        throw new Error(
+
+            data?.message ||
+            data?.error ||
+            "خطا در ارتباط با سرور"
+
+        );
+
+    }
+
+
+    return data;
 
 }
 
 
 // =====================================
-// Load Exchange Rate :: M
-// =====================================
-
-async function loadExchangeRate() {
-
-    const data =
-        await apiRequest(
-            "/api/currency/exchange-rate"
-        );
-
-
-    const rate =
-        safeNumber(
-
-            data?.rate ??
-            data?.exchangeRate ??
-            data?.data?.rate ??
-            data?.data?.exchangeRate ??
-            0
-
-        );
-
-
-    state.exchangeRate =
-        rate;
-
-}
-
-
-// =====================================
-// Authenticate Telegram :: M
+// ..M AUTH
 // =====================================
 
 async function authenticateTelegram() {
@@ -456,46 +320,86 @@ async function authenticateTelegram() {
         !tg.initData
     ) {
 
-        state.user =
-            getTelegramUser();
+        state.user = {
+
+            _id:
+                localStorage.getItem(
+                    "autotrade_user_id"
+                ),
+
+            telegramId:
+                null,
+
+            firstName:
+                "کاربر",
+
+            username:
+                ""
+
+        };
 
         return;
 
     }
 
 
-    const data =
-        await apiRequest(
-            "/api/auth/telegram",
-            {
+    try {
 
-                method:
-                    "POST",
+        const data =
+            await api(
+                "/api/auth/telegram",
+                {
 
-                body: {
+                    method:
+                        "POST",
 
-                    initData:
-                        tg.initData
+                    body:
+                        JSON.stringify({
+
+                            initData:
+                                tg.initData
+
+                        })
 
                 }
+            );
 
-            }
+
+        const user =
+            data?.user ||
+            data?.data?.user ||
+            data?.data ||
+            data;
+
+
+        state.user =
+            user;
+
+
+        if (
+            user?._id
+        ) {
+
+            localStorage.setItem(
+                "autotrade_user_id",
+                user._id
+            );
+
+        }
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Telegram Auth Error:",
+            error
         );
 
 
-    if (
-        data?.success &&
-        data?.user
-    ) {
-
-        state.user =
-            data.user;
-
-    }
-    else {
-
-        state.user =
-            getTelegramUser();
+        showToast(
+            "احراز هویت انجام نشد"
+        );
 
     }
 
@@ -503,18 +407,34 @@ async function authenticateTelegram() {
 
 
 // =====================================
-// Load Wallet :: M
+// ..M USER ID
+// =====================================
+
+function getUserId() {
+
+    return (
+
+        state.user?._id ||
+
+        state.user?.id ||
+
+        localStorage.getItem(
+            "autotrade_user_id"
+        )
+
+    );
+
+}
+
+
+// =====================================
+// ..M LOAD WALLET
 // =====================================
 
 async function loadWallet() {
 
-    const telegramUser =
-        getTelegramUser();
-
     const userId =
-        state.user?._id ||
-        state.user?.id ||
-        telegramUser?.id;
+        getUserId();
 
 
     if (!userId) {
@@ -524,55 +444,47 @@ async function loadWallet() {
     }
 
 
-    const data =
-        await apiRequest(
-            "/api/wallet/" +
-            encodeURIComponent(
-                userId
-            )
+    try {
+
+        const data =
+            await api(
+                "/api/wallet/" +
+                encodeURIComponent(
+                    userId
+                )
+            );
+
+
+        const wallet =
+            data?.wallet ||
+            data?.data ||
+            data;
+
+
+        if (
+            wallet &&
+            typeof wallet ===
+                "object"
+        ) {
+
+            state.wallet = {
+
+                ...state.wallet,
+
+                ...wallet
+
+            };
+
+        }
+
+    }
+
+    catch (error) {
+
+        console.warn(
+            "Wallet:",
+            error.message
         );
-
-
-    const wallet =
-        data?.wallet ||
-        data?.data ||
-        data;
-
-
-    if (
-        wallet &&
-        !wallet.error
-    ) {
-
-        state.wallet.balance =
-            safeNumber(
-                wallet.balance ??
-                wallet.balanceUSD ??
-                0
-            );
-
-
-        state.wallet.withdrawable =
-            safeNumber(
-                wallet.withdrawable ??
-                wallet.available ??
-                wallet.balance ??
-                0
-            );
-
-
-        state.wallet.totalProfit =
-            safeNumber(
-                wallet.totalProfit ??
-                0
-            );
-
-
-        state.wallet.totalTrades =
-            safeNumber(
-                wallet.totalTrades ??
-                0
-            );
 
     }
 
@@ -580,87 +492,13 @@ async function loadWallet() {
 
 
 // =====================================
-// Load Bot :: M
-// =====================================
-
-async function loadBot() {
-
-    const telegramUser =
-        getTelegramUser();
-
-    const userId =
-        state.user?._id ||
-        state.user?.id ||
-        telegramUser?.id;
-
-
-    if (!userId) {
-
-        return;
-
-    }
-
-
-    const data =
-        await apiRequest(
-            "/api/bot/" +
-            encodeURIComponent(
-                userId
-            )
-        );
-
-
-    const bot =
-        data?.bot ||
-        data?.data ||
-        data;
-
-
-    if (
-        bot &&
-        !bot.error
-    ) {
-
-        state.bot.status =
-            bot.status ||
-            "STOPPED";
-
-        state.bot.strategy =
-            bot.strategy ||
-            "AI Scalping";
-
-        state.bot.accuracy =
-            safeNumber(
-                bot.accuracy
-            );
-
-        state.bot.confidence =
-            safeNumber(
-                bot.confidence
-            );
-
-        state.bot.lastSignal =
-            bot.lastSignal ||
-            "WAIT";
-
-    }
-
-}
-
-
-// =====================================
-// Load Trades :: M
+// ..M LOAD TRADES
 // =====================================
 
 async function loadTrades() {
 
-    const telegramUser =
-        getTelegramUser();
-
     const userId =
-        state.user?._id ||
-        state.user?.id ||
-        telegramUser?.id;
+        getUserId();
 
 
     if (!userId) {
@@ -670,151 +508,174 @@ async function loadTrades() {
     }
 
 
-    const data =
-        await apiRequest(
-            "/api/trades/" +
-            encodeURIComponent(
-                userId
-            )
-        );
+    try {
+
+        const data =
+            await api(
+                "/api/trades/" +
+                encodeURIComponent(
+                    userId
+                )
+            );
 
 
-    if (
-        Array.isArray(
-            data?.trades
-        )
-    ) {
+        const trades =
+            Array.isArray(data)
+                ? data
+                : (
+                    data?.trades ||
+                    data?.data ||
+                    []
+                );
+
 
         state.trades =
-            data.trades;
+            Array.isArray(trades)
+                ? trades
+                : [];
 
     }
-    else if (
-        Array.isArray(data)
-    ) {
 
-        state.trades =
+    catch (error) {
+
+        console.warn(
+            "Trades:",
+            error.message
+        );
+
+    }
+
+}
+
+
+// =====================================
+// ..M LOAD BOT
+// =====================================
+
+async function loadBot() {
+
+    const userId =
+        getUserId();
+
+
+    if (!userId) {
+
+        return;
+
+    }
+
+
+    try {
+
+        const data =
+            await api(
+                "/api/bot/" +
+                encodeURIComponent(
+                    userId
+                )
+            );
+
+
+        const bot =
+            data?.bot ||
+            data?.data ||
             data;
 
-    }
-    else {
 
-        state.trades =
-            [];
+        if (
+            bot &&
+            typeof bot ===
+                "object"
+        ) {
 
-    }
+            state.bot = {
 
-}
+                ...state.bot,
 
+                ...bot
 
-// =====================================
-// Load Deposits :: M
-// =====================================
+            };
 
-async function loadDeposits() {
-
-    const telegramUser =
-        getTelegramUser();
-
-    const userId =
-        state.user?._id ||
-        state.user?.id ||
-        telegramUser?.id;
-
-
-    if (!userId) {
-
-        return;
+        }
 
     }
 
+    catch (error) {
 
-    const data =
-        await apiRequest(
-            "/api/deposit/user/" +
-            encodeURIComponent(
-                userId
-            )
+        console.warn(
+            "Bot:",
+            error.message
         );
 
-
-    state.deposits =
-        Array.isArray(
-            data?.deposits
-        )
-            ? data.deposits
-            : [];
+    }
 
 }
 
 
 // =====================================
-// Load Withdrawals :: M
+// ..M LOAD EXCHANGE RATE
 // =====================================
 
-async function loadWithdrawals() {
+async function loadExchangeRate() {
 
-    const telegramUser =
-        getTelegramUser();
+    try {
 
-    const userId =
-        state.user?._id ||
-        state.user?.id ||
-        telegramUser?.id;
+        const data =
+            await api(
+                "/api/currency/exchange-rate"
+            );
 
 
-    if (!userId) {
+        const rate =
+            number(
 
-        return;
+                data?.rate ??
+
+                data?.exchangeRate ??
+
+                data?.usdToToman ??
+
+                data?.data?.rate
+
+            );
+
+
+        if (
+            rate > 0
+        ) {
+
+            state.exchangeRate =
+                rate;
+
+        }
 
     }
 
+    catch {
 
-    const data =
-        await apiRequest(
-            "/api/withdraw/user/" +
-            encodeURIComponent(
-                userId
-            )
-        );
+        state.exchangeRate =
+            DEFAULT_RATE;
 
-
-    state.withdrawals =
-        Array.isArray(
-            data?.withdrawals
-        )
-            ? data.withdrawals
-            : [];
+    }
 
 }
 
 
 // =====================================
-// Load All Data :: M
+// ..M LOAD ALL
 // =====================================
 
-async function loadAllData() {
-
-    await Promise.allSettled([
-
-        authenticateTelegram(),
-
-        loadExchangeRate()
-
-    ]);
-
+async function loadData() {
 
     await Promise.allSettled([
 
         loadWallet(),
 
-        loadBot(),
-
         loadTrades(),
 
-        loadDeposits(),
+        loadBot(),
 
-        loadWithdrawals()
+        loadExchangeRate()
 
     ]);
 
@@ -822,68 +683,101 @@ async function loadAllData() {
 
 
 // =====================================
-// Bottom Navigation :: M
+// ..M NAV
 // =====================================
 
-function renderBottomNavigation() {
+function goTo(
+    page
+) {
+
+    state.currentPage =
+        page;
+
+
+    render();
+
+}
+
+
+// =====================================
+// ..M NAV ITEM
+// =====================================
+
+function navItem(
+    page,
+    icon,
+    title
+) {
+
+    const active =
+        state.currentPage ===
+        page
+            ? "active"
+            : "";
+
+
+    return `
+
+        <button
+            class="nav-item ${active}"
+            data-page="${page}"
+            type="button"
+        >
+
+            <span class="nav-icon">
+                ${icon}
+            </span>
+
+            <span>
+                ${title}
+            </span>
+
+        </button>
+
+    `;
+
+}
+
+
+// =====================================
+// ..M BOTTOM NAV
+// =====================================
+
+function renderBottomNav() {
 
     return `
 
         <nav class="bottom-nav">
 
-            <button
-                class="nav-item ${state.currentPage === "dashboard" ? "active" : ""}"
-                onclick="navigateTo('dashboard')"
-            >
+            ${navItem(
+                "dashboard",
+                "⌂",
+                "داشبورد"
+            )}
 
-                <span>⌂</span>
-                <small>داشبورد</small>
+            ${navItem(
+                "wallet",
+                "◈",
+                "کیف پول"
+            )}
 
-            </button>
+            ${navItem(
+                "trades",
+                "↕",
+                "معاملات"
+            )}
 
+            ${navItem(
+                "stats",
+                "◔",
+                "آمار"
+            )}
 
-            <button
-                class="nav-item ${state.currentPage === "wallet" ? "active" : ""}"
-                onclick="navigateTo('wallet')"
-            >
-
-                <span>▣</span>
-                <small>کیف پول</small>
-
-            </button>
-
-
-            <button
-                class="nav-item ${state.currentPage === "trades" ? "active" : ""}"
-                onclick="navigateTo('trades')"
-            >
-
-                <span>↕</span>
-                <small>معاملات</small>
-
-            </button>
-
-
-            <button
-                class="nav-item ${state.currentPage === "analytics" ? "active" : ""}"
-                onclick="navigateTo('analytics')"
-            >
-
-                <span>◔</span>
-                <small>آمار</small>
-
-            </button>
-
-
-            <button
-                class="nav-item ${state.currentPage === "profile" ? "active" : ""}"
-                onclick="navigateTo('profile')"
-            >
-
-                <span>◉</span>
-                <small>پروفایل</small>
-
-            </button>
+            ${navItem(
+                "profile",
+                "◉",
+                "پروفایل"
+            )}
 
         </nav>
 
@@ -893,38 +787,49 @@ function renderBottomNavigation() {
 
 
 // =====================================
-// Header :: M
+// ..M HEADER
 // =====================================
 
-function renderHeader(
-    title
-) {
+function renderHeader() {
+
+    const name =
+        state.user?.firstName ||
+        "کاربر";
+
 
     return `
 
-        <div class="top-header">
+        <header class="top-header">
 
-            <div>
+            <div class="brand-area">
 
-                <div class="app-title">
-                    AutoTrade AI
+                <div class="brand-logo">
+                    AI
                 </div>
 
-                <div class="app-subtitle">
-                    ربات معامله‌گر خودکار
+                <div class="brand-text">
+
+                    <div class="brand-title">
+                        AutoTrade AI
+                    </div>
+
+                    <div class="brand-subtitle">
+                        سلام ${escapeHTML(name)}
+                    </div>
+
                 </div>
 
             </div>
 
-            <div class="header-status">
+            <button
+                class="header-button"
+                id="refreshButton"
+                type="button"
+            >
+                ↻
+            </button>
 
-                <span class="status-dot"></span>
-
-                آنلاین
-
-            </div>
-
-        </div>
+        </header>
 
     `;
 
@@ -932,228 +837,96 @@ function renderHeader(
 
 
 // =====================================
-// Dashboard :: M
+// ..M ESCAPE
+// =====================================
+
+function escapeHTML(
+    value
+) {
+
+    return String(
+        value ?? ""
+    )
+        .replaceAll(
+            "&",
+            "&amp;"
+        )
+        .replaceAll(
+            "<",
+            "&lt;"
+        )
+        .replaceAll(
+            ">",
+            "&gt;"
+        )
+        .replaceAll(
+            '"',
+            "&quot;"
+        )
+        .replaceAll(
+            "'",
+            "&#039;"
+        );
+
+}
+
+
+// =====================================
+// ..M DASHBOARD
 // =====================================
 
 function renderDashboard() {
 
     const balance =
-        state.wallet.balance;
+        number(
+            state.wallet.balance
+        );
 
     const profit =
-        state.wallet.totalProfit;
+        number(
+            state.wallet.totalProfit
+        );
 
-    const toman =
-        usdToToman(
-            balance
+    const withdrawable =
+        number(
+            state.wallet.withdrawable
         );
 
 
-    return `
-
-        <div class="page">
-
-            ${renderHeader("داشبورد")}
-
-
-            <div class="welcome-box">
-
-                <div class="welcome-small">
-                    خوش آمدید
-                </div>
-
-                <h1>
-                    ${getUserName()}
-                </h1>
-
-                <p>
-                    سیستم معامله‌گری خودکار شما آماده است.
-                </p>
-
-            </div>
-
-
-            <div class="main-balance-card">
-
-                <div class="card-label">
-                    موجودی فعلی
-                </div>
-
-                <div class="balance-usd">
-                    ${formatUSD(balance)}
-                </div>
-
-                <div class="balance-toman">
-                    ${formatToman(toman)}
-                </div>
-
-            </div>
-
-
-            <div class="stats-grid">
-
-                <div class="stat-card">
-
-                    <span>
-                        سود کل
-                    </span>
-
-                    <strong>
-                        ${formatUSD(profit)}
-                    </strong>
-
-                </div>
-
-
-                <div class="stat-card">
-
-                    <span>
-                        معاملات
-                    </span>
-
-                    <strong>
-                        ${faNumber(
-                            state.wallet.totalTrades
-                        )}
-                    </strong>
-
-                </div>
-
-
-                <div class="stat-card">
-
-                    <span>
-                        دقت AI
-                    </span>
-
-                    <strong>
-                        ${faNumber(
-                            state.bot.accuracy
-                        )}٪
-                    </strong>
-
-                </div>
-
-
-                <div class="stat-card">
-
-                    <span>
-                        وضعیت ربات
-                    </span>
-
-                    <strong>
-                        ${
-                            state.bot.status === "ACTIVE"
-                                ? "فعال"
-                                : "متوقف"
-                        }
-                    </strong>
-
-                </div>
-
-            </div>
-
-
-            <div class="section-card">
-
-                <div class="section-title">
-                    🤖 موتور هوش مصنوعی
-                </div>
-
-                <div class="info-row">
-
-                    <span>
-                        استراتژی
-                    </span>
-
-                    <strong>
-                        ${state.bot.strategy}
-                    </strong>
-
-                </div>
-
-
-                <div class="info-row">
-
-                    <span>
-                        آخرین سیگنال
-                    </span>
-
-                    <strong>
-                        ${state.bot.lastSignal}
-                    </strong>
-
-                </div>
-
-
-                <div class="info-row">
-
-                    <span>
-                        اطمینان
-                    </span>
-
-                    <strong>
-                        ${faNumber(
-                            state.bot.confidence
-                        )}٪
-                    </strong>
-
-                </div>
-
-            </div>
-
-
-            <button
-                class="primary-button"
-                onclick="toggleBot()"
-            >
-
-                ${
-                    state.bot.status === "ACTIVE"
-                        ? "⏹ توقف معاملات AI"
-                        : "▶ شروع معاملات AI"
-                }
-
-            </button>
-
-        </div>
-
-        ${renderBottomNavigation()}
-
-    `;
-
-}
-
-
-// =====================================
-// Wallet :: M
-// =====================================
-
-function renderWallet() {
-
-    const balance =
-        state.wallet.balance;
-
-    const withdrawable =
-        state.wallet.withdrawable;
+    const botActive =
+        String(
+            state.bot.status ||
+            ""
+        ).toUpperCase() ===
+        "ACTIVE";
 
 
     return `
 
         <div class="page">
 
-            ${renderHeader("کیف پول")}
+            ${renderHeader()}
 
 
-            <div class="wallet-main-card">
+            <section class="glass balance-card">
 
-                <div class="card-label">
-                    موجودی کل
+                <div class="balance-top">
+
+                    <span class="balance-label">
+                        موجودی کل
+                    </span>
+
+                    <span class="currency-badge">
+                        USDT
+                    </span>
+
                 </div>
 
-                <div class="balance-usd">
+
+                <div class="balance-value">
                     ${formatUSD(balance)}
                 </div>
+
 
                 <div class="balance-toman">
                     ${formatToman(
@@ -1161,25 +934,1121 @@ function renderWallet() {
                     )}
                 </div>
 
+
+                <div class="balance-actions">
+
+                    <button
+                        class="action-button action-secondary"
+                        id="depositButton"
+                        type="button"
+                    >
+                        واریز
+                    </button>
+
+                    <button
+                        class="action-button action-primary"
+                        id="withdrawButton"
+                        type="button"
+                    >
+                        برداشت تومان
+                    </button>
+
+                </div>
+
+            </section>
+
+
+            <section class="section">
+
+                <div class="section-title">
+
+                    <h2>
+                        وضعیت حساب
+                    </h2>
+
+                </div>
+
+
+                <div class="stats-grid">
+
+                    <div class="glass stat-card">
+
+                        <div class="stat-label">
+                            سود کل
+                        </div>
+
+                        <div class="stat-value">
+                            ${formatUSD(profit)}
+                        </div>
+
+                        <div class="stat-small">
+                            ${formatToman(
+                                usdToToman(profit)
+                            )}
+                        </div>
+
+                    </div>
+
+
+                    <div class="glass stat-card">
+
+                        <div class="stat-label">
+                            معاملات
+                        </div>
+
+                        <div class="stat-value">
+                            ${number(
+                                state.wallet.totalTrades
+                            ).toLocaleString(
+                                "fa-IR"
+                            )}
+                        </div>
+
+                        <div class="stat-small">
+                            مجموع معاملات
+                        </div>
+
+                    </div>
+
+
+                    <div class="glass stat-card">
+
+                        <div class="stat-label">
+                            قابل برداشت
+                        </div>
+
+                        <div class="stat-value">
+                            ${formatUSD(
+                                withdrawable
+                            )}
+                        </div>
+
+                        <div class="stat-small">
+                            ${formatToman(
+                                usdToToman(
+                                    withdrawable
+                                )
+                            )}
+                        </div>
+
+                    </div>
+
+
+                    <div class="glass stat-card">
+
+                        <div class="stat-label">
+                            نرخ دلار
+                        </div>
+
+                        <div class="stat-value">
+                            ${number(
+                                state.exchangeRate
+                            ).toLocaleString(
+                                "fa-IR"
+                            )}
+                        </div>
+
+                        <div class="stat-small">
+                            تومان
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <section class="section">
+
+                <div class="glass ai-card">
+
+                    <div class="ai-header">
+
+                        <div class="ai-title">
+
+                            <div class="ai-icon">
+                                🤖
+                            </div>
+
+                            <div>
+
+                                <div class="ai-name">
+                                    موتور هوش مصنوعی
+                                </div>
+
+                                <div class="ai-description">
+                                    مدیریت خودکار معاملات
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <span class="status ${
+                            botActive
+                                ? "status-active"
+                                : "status-stopped"
+                        }">
+
+                            ${
+                                botActive
+                                    ? "فعال"
+                                    : "متوقف"
+                            }
+
+                        </span>
+
+                    </div>
+
+
+                    <div class="ai-info">
+
+                        <div class="ai-info-box">
+
+                            <div class="ai-info-label">
+                                استراتژی
+                            </div>
+
+                            <div class="ai-info-value">
+                                ${escapeHTML(
+                                    state.bot.strategy ||
+                                    "AI Scalping"
+                                )}
+                            </div>
+
+                        </div>
+
+
+                        <div class="ai-info-box">
+
+                            <div class="ai-info-label">
+                                دقت
+                            </div>
+
+                            <div class="ai-info-value">
+                                ${number(
+                                    state.bot.accuracy
+                                ).toFixed(2)}%
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <button
+                        class="ai-start"
+                        id="startBotButton"
+                        type="button"
+                    >
+
+                        ${
+                            botActive
+                                ? "هوش مصنوعی فعال است"
+                                : "شروع معامله با هوش مصنوعی"
+                        }
+
+                    </button>
+
+                </div>
+
+            </section>
+
+
+            <section class="section">
+
+                <div class="section-title">
+
+                    <h2>
+                        دسترسی سریع
+                    </h2>
+
+                </div>
+
+
+                <div class="quick-grid">
+
+                    <button
+                        class="glass quick-card"
+                        data-page="wallet"
+                        type="button"
+                    >
+
+                        <div class="quick-icon">
+                            ◈
+                        </div>
+
+                        <div class="quick-title">
+                            کیف پول
+                        </div>
+
+                        <div class="quick-description">
+                            موجودی و برداشت
+                        </div>
+
+                    </button>
+
+
+                    <button
+                        class="glass quick-card"
+                        data-page="trades"
+                        type="button"
+                    >
+
+                        <div class="quick-icon">
+                            ↕
+                        </div>
+
+                        <div class="quick-title">
+                            معاملات
+                        </div>
+
+                        <div class="quick-description">
+                            مشاهده معاملات
+                        </div>
+
+                    </button>
+
+
+                    <button
+                        class="glass quick-card"
+                        data-page="stats"
+                        type="button"
+                    >
+
+                        <div class="quick-icon">
+                            ◔
+                        </div>
+
+                        <div class="quick-title">
+                            آمار
+                        </div>
+
+                        <div class="quick-description">
+                            عملکرد حساب
+                        </div>
+
+                    </button>
+
+
+                    <button
+                        class="glass quick-card"
+                        data-page="profile"
+                        type="button"
+                    >
+
+                        <div class="quick-icon">
+                            ◉
+                        </div>
+
+                        <div class="quick-title">
+                            پشتیبانی
+                        </div>
+
+                        <div class="quick-description">
+                            ارتباط با پشتیبانی
+                        </div>
+
+                    </button>
+
+                </div>
+
+            </section>
+
+
+            <section class="section">
+
+                <div class="section-title">
+
+                    <h2>
+                        آخرین معاملات
+                    </h2>
+
+                    <button
+                        class="section-link"
+                        id="viewTradesButton"
+                        type="button"
+                    >
+                        مشاهده همه
+                    </button>
+
+                </div>
+
+
+                ${
+                    state.trades.length
+                        ? renderRecentTrades()
+                        : `
+                            <div class="glass empty-card">
+
+                                <div class="empty-icon">
+                                    📊
+                                </div>
+
+                                <div class="empty-title">
+                                    هنوز معامله‌ای وجود ندارد
+                                </div>
+
+                                <div class="empty-text">
+                                    بعد از شروع فعالیت معاملات اینجا نمایش داده می‌شوند.
+                                </div>
+
+                            </div>
+                        `
+                }
+
+            </section>
+
+
+            ${renderBottomNav()}
+
+        </div>
+
+    `;
+
+}
+
+
+// =====================================
+// ..M RECENT TRADES
+// =====================================
+
+function renderRecentTrades() {
+
+    const items =
+        state.trades.slice(
+            0,
+            3
+        );
+
+
+    return `
+
+        <div class="glass empty-card">
+
+            ${items.map(
+                function (trade) {
+
+                    return `
+
+                        <div
+                            style="
+                                display:flex;
+                                justify-content:space-between;
+                                padding:10px 0;
+                                border-bottom:1px solid rgba(255,255,255,.06);
+                            "
+                        >
+
+                            <span>
+                                ${escapeHTML(
+                                    trade.symbol ||
+                                    "Trade"
+                                )}
+                            </span>
+
+                            <span>
+                                ${formatUSD(
+                                    trade.profit || 0
+                                )}
+                            </span>
+
+                        </div>
+
+                    `;
+
+                }
+            ).join("")}
+
+        </div>
+
+    `;
+
+}
+
+
+// =====================================
+// ..M WALLET
+// =====================================
+
+function renderWallet() {
+
+    const balance =
+        number(
+            state.wallet.balance
+        );
+
+    const withdrawable =
+        number(
+            state.wallet.withdrawable
+        );
+
+
+    return `
+
+        <div class="page">
+
+            <div class="page-header">
+
+                <h1>
+                    کیف پول
+                </h1>
+
             </div>
 
 
-            <div class="section-card">
+            <div class="glass balance-card">
 
-                <div class="section-title">
-                    موجودی قابل برداشت
+                <div class="balance-top">
+
+                    <span class="balance-label">
+                        موجودی کل
+                    </span>
+
+                    <span class="currency-badge">
+                        USDT
+                    </span>
+
                 </div>
 
-                <div class="big-number">
-                    ${formatUSD(
-                        withdrawable
+
+                <div class="balance-value">
+                    ${formatUSD(balance)}
+                </div>
+
+
+                <div class="balance-toman">
+                    ${formatToman(
+                        usdToToman(balance)
                     )}
                 </div>
 
-                <div class="muted">
+
+                <div class="balance-actions">
+
+                    <button
+                        class="action-button action-secondary"
+                        id="depositButton"
+                        type="button"
+                    >
+                        واریز
+                    </button>
+
+                    <button
+                        class="action-button action-primary"
+                        id="withdrawButton"
+                        type="button"
+                    >
+                        برداشت تومان
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <section class="section">
+
+                <div class="section-title">
+
+                    <h2>
+                        خلاصه کیف پول
+                    </h2>
+
+                </div>
+
+
+                <div class="stats-grid">
+
+                    <div class="glass stat-card">
+
+                        <div class="stat-label">
+                            موجودی قابل برداشت
+                        </div>
+
+                        <div class="stat-value">
+                            ${formatUSD(
+                                withdrawable
+                            )}
+                        </div>
+
+                        <div class="stat-small">
+                            ${formatToman(
+                                usdToToman(
+                                    withdrawable
+                                )
+                            )}
+                        </div>
+
+                    </div>
+
+
+                    <div class="glass stat-card">
+
+                        <div class="stat-label">
+                            سود کل
+                        </div>
+
+                        <div class="stat-value">
+                            ${formatUSD(
+                                state.wallet.totalProfit
+                            )}
+                        </div>
+
+                        <div class="stat-small">
+                            ${formatToman(
+                                usdToToman(
+                                    state.wallet.totalProfit
+                                )
+                            )}
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <section class="section">
+
+                <div class="section-title">
+
+                    <h2>
+                        عملیات کیف پول
+                    </h2>
+
+                </div>
+
+
+                <div class="quick-grid">
+
+                    <button
+                        class="glass quick-card"
+                        id="depositButton2"
+                        type="button"
+                    >
+
+                        <div class="quick-icon">
+                            ↓
+                        </div>
+
+                        <div class="quick-title">
+                            واریز
+                        </div>
+
+                        <div class="quick-description">
+                            افزایش موجودی
+                        </div>
+
+                    </button>
+
+
+                    <button
+                        class="glass quick-card"
+                        id="withdrawButton2"
+                        type="button"
+                    >
+
+                        <div class="quick-icon">
+                            ↑
+                        </div>
+
+                        <div class="quick-title">
+                            برداشت تومان
+                        </div>
+
+                        <div class="quick-description">
+                            دریافت وجه
+                        </div>
+
+                    </button>
+
+                </div>
+
+            </section>
+
+
+            ${renderBottomNav()}
+
+        </div>
+
+    `;
+
+}
+
+
+// =====================================
+// ..M TRADES
+// =====================================
+
+function renderTrades() {
+
+    return `
+
+        <div class="page">
+
+            <div class="page-header">
+
+                <h1>
+                    معاملات
+                </h1>
+
+            </div>
+
+
+            ${
+                state.trades.length
+                    ? `
+                        <div class="section">
+
+                            ${state.trades.map(
+                                function (trade) {
+
+                                    const profit =
+                                        number(
+                                            trade.profit
+                                        );
+
+                                    return `
+
+                                        <div
+                                            class="glass"
+                                            style="
+                                                padding:16px;
+                                                border-radius:20px;
+                                                margin-bottom:10px;
+                                            "
+                                        >
+
+                                            <div
+                                                style="
+                                                    display:flex;
+                                                    justify-content:space-between;
+                                                "
+                                            >
+
+                                                <strong>
+                                                    ${escapeHTML(
+                                                        trade.symbol ||
+                                                        "Unknown"
+                                                    )}
+                                                </strong>
+
+                                                <span>
+                                                    ${
+                                                        String(
+                                                            trade.type ||
+                                                            ""
+                                                        ).toUpperCase()
+                                                    }
+                                                </span>
+
+                                            </div>
+
+
+                                            <div
+                                                style="
+                                                    margin-top:12px;
+                                                    color:#89a0b7;
+                                                    font-size:11px;
+                                                "
+                                            >
+
+                                                وضعیت:
+                                                ${escapeHTML(
+                                                    trade.status ||
+                                                    "UNKNOWN"
+                                                )}
+
+                                            </div>
+
+
+                                            <div
+                                                style="
+                                                    margin-top:7px;
+                                                    color:#73ceff;
+                                                    font-weight:900;
+                                                "
+                                            >
+
+                                                سود:
+                                                ${formatUSD(
+                                                    profit
+                                                )}
+
+                                            </div>
+
+                                        </div>
+
+                                    `;
+
+                                }
+                            ).join("")}
+
+                        </div>
+                    `
+                    : `
+                        <div class="glass empty-card">
+
+                            <div class="empty-icon">
+                                ↕
+                            </div>
+
+                            <div class="empty-title">
+                                معامله‌ای وجود ندارد
+                            </div>
+
+                            <div class="empty-text">
+                                معاملات شما بعد از شروع فعالیت اینجا نمایش داده می‌شوند.
+                            </div>
+
+                        </div>
+                    `
+            }
+
+
+            ${renderBottomNav()}
+
+        </div>
+
+    `;
+
+}
+
+
+// =====================================
+// ..M STATS
+// =====================================
+
+function renderStats() {
+
+    const trades =
+        state.trades;
+
+
+    const closed =
+        trades.filter(
+            t =>
+                String(
+                    t.status ||
+                    ""
+                ).toUpperCase() ===
+                "CLOSED"
+        );
+
+
+    const wins =
+        closed.filter(
+            t =>
+                number(
+                    t.profit
+                ) > 0
+        );
+
+
+    const winRate =
+        closed.length
+            ? (
+                wins.length /
+                closed.length *
+                100
+            )
+            : 0;
+
+
+    return `
+
+        <div class="page">
+
+            <div class="page-header">
+
+                <h1>
+                    آمار عملکرد
+                </h1>
+
+            </div>
+
+
+            <div class="stats-grid">
+
+                <div class="glass stat-card">
+
+                    <div class="stat-label">
+                        سود کل
+                    </div>
+
+                    <div class="stat-value">
+                        ${formatUSD(
+                            state.wallet.totalProfit
+                        )}
+                    </div>
+
+                </div>
+
+
+                <div class="glass stat-card">
+
+                    <div class="stat-label">
+                        نرخ موفقیت
+                    </div>
+
+                    <div class="stat-value">
+                        ${winRate.toFixed(2)}%
+                    </div>
+
+                </div>
+
+
+                <div class="glass stat-card">
+
+                    <div class="stat-label">
+                        کل معاملات
+                    </div>
+
+                    <div class="stat-value">
+                        ${trades.length.toLocaleString(
+                            "fa-IR"
+                        )}
+                    </div>
+
+                </div>
+
+
+                <div class="glass stat-card">
+
+                    <div class="stat-label">
+                        معاملات موفق
+                    </div>
+
+                    <div class="stat-value">
+                        ${wins.length.toLocaleString(
+                            "fa-IR"
+                        )}
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <section class="section">
+
+                <div class="glass ai-card">
+
+                    <div class="ai-header">
+
+                        <div class="ai-title">
+
+                            <div class="ai-icon">
+                                🤖
+                            </div>
+
+                            <div>
+
+                                <div class="ai-name">
+                                    وضعیت هوش مصنوعی
+                                </div>
+
+                                <div class="ai-description">
+                                    ${escapeHTML(
+                                        state.bot.strategy
+                                    )}
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <span class="status ${
+                            String(
+                                state.bot.status
+                            ).toUpperCase() ===
+                            "ACTIVE"
+                                ? "status-active"
+                                : "status-stopped"
+                        }">
+
+                            ${
+                                String(
+                                    state.bot.status
+                                ).toUpperCase() ===
+                                "ACTIVE"
+                                    ? "فعال"
+                                    : "متوقف"
+                            }
+
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            ${renderBottomNav()}
+
+        </div>
+
+    `;
+
+}
+
+
+// =====================================
+// ..M PROFILE
+// فقط پشتیبانی
+// =====================================
+
+function renderProfile() {
+
+    const name =
+        state.user?.firstName ||
+        "کاربر";
+
+    const username =
+        state.user?.username
+            ? "@" +
+              String(
+                  state.user.username
+              ).replace(
+                  "@",
+                  ""
+              )
+            : "کاربر تلگرام";
+
+
+    return `
+
+        <div class="page">
+
+            <div class="page-header">
+
+                <h1>
+                    پروفایل
+                </h1>
+
+            </div>
+
+
+            <div class="glass profile-card">
+
+                <div class="profile-avatar">
+                    ${escapeHTML(
+                        String(name)
+                            .charAt(0)
+                            .toUpperCase()
+                    )}
+                </div>
+
+
+                <div class="profile-name">
+                    ${escapeHTML(name)}
+                </div>
+
+
+                <div class="profile-username">
+                    ${escapeHTML(username)}
+                </div>
+
+
+                <div class="glass support-box">
+
+                    <div class="support-title">
+                        پشتیبانی AutoTrade AI
+                    </div>
+
+                    <div class="support-id">
+                        ${SUPPORT_USERNAME}
+                    </div>
+
+
+                    <button
+                        class="support-button"
+                        id="supportButton"
+                        type="button"
+                    >
+                        ارتباط با پشتیبانی
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            ${renderBottomNav()}
+
+        </div>
+
+    `;
+
+}
+
+
+// =====================================
+// ..M WITHDRAW PAGE
+// برداشت کاملاً تومان محور
+// =====================================
+
+function renderWithdraw() {
+
+    const available =
+        number(
+            state.wallet.withdrawable
+        );
+
+
+    return `
+
+        <div class="page">
+
+            <div class="page-header">
+
+                <button
+                    class="page-back"
+                    id="backWalletButton"
+                    type="button"
+                >
+                    ←
+                </button>
+
+                <h1>
+                    برداشت تومان
+                </h1>
+
+            </div>
+
+
+            <div class="glass balance-card">
+
+                <div class="balance-top">
+
+                    <span class="balance-label">
+                        موجودی قابل برداشت
+                    </span>
+
+                    <span class="currency-badge">
+                        USDT
+                    </span>
+
+                </div>
+
+
+                <div class="balance-value">
+                    ${formatUSD(
+                        available
+                    )}
+                </div>
+
+
+                <div class="balance-toman">
                     ${formatToman(
                         usdToToman(
-                            withdrawable
+                            available
                         )
                     )}
                 </div>
@@ -1187,475 +2056,90 @@ function renderWallet() {
             </div>
 
 
-            <div class="wallet-actions">
+            <div class="glass form-card">
 
-                <button
-                    class="primary-button"
-                    onclick="showDeposit()"
-                >
-                    + واریز
-                </button>
+                <div class="form-group">
 
+                    <label class="form-label">
+                        مبلغ برداشت به دلار
+                    </label>
 
-                <button
-                    class="secondary-button"
-                    onclick="showWithdraw()"
-                >
-                    برداشت تومان
-                </button>
-
-            </div>
-
-
-            <div class="section-card">
-
-                <div class="section-title">
-                    نرخ تبدیل
-                </div>
-
-                <div class="info-row">
-
-                    <span>
-                        دلار
-                    </span>
-
-                    <strong>
-                        ${
-                            state.exchangeRate > 0
-                                ? formatToman(
-                                    state.exchangeRate
-                                )
-                                : "۰ تومان"
-                        }
-                    </strong>
+                    <input
+                        id="withdrawAmount"
+                        class="form-input"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="مثلاً 10"
+                    >
 
                 </div>
 
-            </div>
 
-        </div>
+                <div
+                    id="withdrawTomanPreview"
+                    class="toman-box"
+                >
 
-        ${renderBottomNavigation()}
-
-    `;
-
-}
-
-
-// =====================================
-// Trades :: M
-// =====================================
-
-function renderTrades() {
-
-    const trades =
-        Array.isArray(
-            state.trades
-        )
-            ? state.trades
-            : [];
-
-
-    const tradeRows =
-        trades.length
-            ? trades.slice(0, 30).map(
-                trade => {
-
-                    const profit =
-                        safeNumber(
-                            trade.profit
-                        );
-
-
-                    return `
-
-                        <div class="trade-row">
-
-                            <div>
-
-                                <strong>
-                                    ${
-                                        trade.symbol ||
-                                        "نامشخص"
-                                    }
-                                </strong>
-
-                                <small>
-                                    ${
-                                        trade.type ||
-                                        "WAIT"
-                                    }
-                                </small>
-
-                            </div>
-
-
-                            <div class="${
-                                profit >= 0
-                                    ? "profit"
-                                    : "loss"
-                            }">
-
-                                ${
-                                    profit >= 0
-                                        ? "+"
-                                        : ""
-                                }
-
-                                ${formatUSD(profit)}
-
-                            </div>
-
-                        </div>
-
-                    `;
-
-                }
-            ).join("")
-            : `
-
-                <div class="empty-state">
-
-                    <div class="empty-icon">
-                        ↕
+                    <div class="toman-label">
+                        مبلغ قابل دریافت به تومان
                     </div>
 
-                    <strong>
-                        هنوز معامله‌ای ثبت نشده است
-                    </strong>
-
-                    <span>
-                        ۰ معامله
-                    </span>
-
-                </div>
-
-            `;
-
-
-    return `
-
-        <div class="page">
-
-            ${renderHeader("معاملات")}
-
-
-            <div class="section-card">
-
-                <div class="section-title">
-                    معاملات اخیر
-                </div>
-
-                ${tradeRows}
-
-            </div>
-
-        </div>
-
-        ${renderBottomNavigation()}
-
-    `;
-
-}
-
-
-// =====================================
-// Analytics :: M
-// =====================================
-
-function renderAnalytics() {
-
-    const totalTrades =
-        safeNumber(
-            state.wallet.totalTrades
-        );
-
-    const profit =
-        safeNumber(
-            state.wallet.totalProfit
-        );
-
-
-    return `
-
-        <div class="page">
-
-            ${renderHeader("آمار")}
-
-
-            <div class="analytics-grid">
-
-                <div class="analytics-card">
-
-                    <span>
-                        کل معاملات
-                    </span>
-
-                    <strong>
-                        ${faNumber(
-                            totalTrades
-                        )}
-                    </strong>
+                    <div
+                        id="withdrawTomanValue"
+                        class="toman-value"
+                    >
+                        ۰ تومان
+                    </div>
 
                 </div>
 
 
-                <div class="analytics-card">
+                <div class="form-group">
 
-                    <span>
-                        سود کل
-                    </span>
+                    <label class="form-label">
+                        شماره حساب یا شبا
+                    </label>
 
-                    <strong>
-                        ${formatUSD(profit)}
-                    </strong>
-
-                </div>
-
-
-                <div class="analytics-card">
-
-                    <span>
-                        دقت هوش مصنوعی
-                    </span>
-
-                    <strong>
-                        ${faNumber(
-                            state.bot.accuracy
-                        )}٪
-                    </strong>
+                    <input
+                        id="bankAccount"
+                        class="form-input"
+                        type="text"
+                        inputmode="numeric"
+                        placeholder="شماره شبا یا حساب"
+                    >
 
                 </div>
 
 
-                <div class="analytics-card">
+                <div class="form-group">
+
+                    <label class="form-label">
+                        نام صاحب حساب
+                    </label>
+
+                    <input
+                        id="accountHolderName"
+                        class="form-input"
+                        type="text"
+                        placeholder="نام و نام خانوادگی"
+                    >
 
-                    <span>
-                        اطمینان AI
-                    </span>
-
-                    <strong>
-                        ${faNumber(
-                            state.bot.confidence
-                        )}٪
-                    </strong>
-
-                </div>
-
-            </div>
-
-
-            <div class="section-card">
-
-                <div class="section-title">
-                    وضعیت سرمایه
-                </div>
-
-                <div class="info-row">
-
-                    <span>
-                        سرمایه فعلی
-                    </span>
-
-                    <strong>
-                        ${formatUSD(
-                            state.wallet.balance
-                        )}
-                    </strong>
-
-                </div>
-
-
-                <div class="info-row">
-
-                    <span>
-                        معادل تومان
-                    </span>
-
-                    <strong>
-                        ${formatToman(
-                            usdToToman(
-                                state.wallet.balance
-                            )
-                        )}
-                    </strong>
-
-                </div>
-
-            </div>
-
-        </div>
-
-        ${renderBottomNavigation()}
-
-    `;
-
-}
-
-
-// =====================================
-// Profile :: M
-// =====================================
-
-function renderProfile() {
-
-    const user =
-        state.user ||
-        getTelegramUser() ||
-        {};
-
-
-    const name =
-        getUserName();
-
-    const username =
-        getUsername();
-
-    const telegramId =
-        getTelegramId();
-
-
-    return `
-
-        <div class="page">
-
-            ${renderHeader("پروفایل")}
-
-
-            <div class="profile-card">
-
-                <div class="profile-avatar">
-
-                    ${
-                        name
-                            .charAt(0)
-                            .toUpperCase()
-                    }
-
-                </div>
-
-
-                <div class="profile-name">
-
-                    ${name}
-
-                </div>
-
-
-                <div class="profile-username">
-
-                    ${username}
-
-                </div>
-
-
-                <div class="account-badge">
-
-                    حساب واقعی
-
-                </div>
-
-            </div>
-
-
-            <div class="section-card">
-
-                <div class="section-title">
-                    اطلاعات حساب
-                </div>
-
-
-                <div class="info-row">
-
-                    <span>
-                        نام و نام خانوادگی
-                    </span>
-
-                    <strong>
-                        ${name}
-                    </strong>
-
-                </div>
-
-
-                <div class="info-row">
-
-                    <span>
-                        نام کاربری
-                    </span>
-
-                    <strong>
-                        ${username}
-                    </strong>
-
-                </div>
-
-
-                <div class="info-row">
-
-                    <span>
-                        شناسه تلگرام
-                    </span>
-
-                    <strong>
-                        ${
-                            telegramId
-                                ? faNumber(
-                                    telegramId
-                                )
-                                : "۰"
-                        }
-                    </strong>
-
-                </div>
-
-
-                <div class="info-row">
-
-                    <span>
-                        نوع حساب
-                    </span>
-
-                    <strong>
-                        حساب واقعی
-                    </strong>
-
-                </div>
-
-            </div>
-
-
-            <div class="section-card support-card">
-
-                <div class="support-icon">
-                    💬
-                </div>
-
-
-                <div class="section-title">
-                    پشتیبانی
-                </div>
-
-
-                <div class="support-username">
-                    ${SUPPORT_USERNAME}
                 </div>
 
 
                 <button
-                    class="primary-button"
-                    onclick="openSupport()"
+                    id="withdrawSubmit"
+                    class="submit-button"
+                    type="button"
                 >
-
-                    💬 ارتباط با پشتیبانی
-
+                    ثبت درخواست برداشت
                 </button>
 
             </div>
 
-        </div>
 
-        ${renderBottomNavigation()}
+        </div>
 
     `;
 
@@ -1663,203 +2147,32 @@ function renderProfile() {
 
 
 // =====================================
-// Deposit :: M
+// ..M DEPOSIT
 // =====================================
 
 function showDeposit() {
 
-    const app =
-        getApp();
-
-    if (!app) return;
-
-
-    app.innerHTML = `
-
-        <div class="page">
-
-            ${renderHeader("واریز")}
-
-
-            <div class="section-card">
-
-                <div class="section-title">
-                    واریز تومان
-                </div>
-
-
-                <p class="muted">
-                    مبلغ مورد نظر خود را به تومان وارد کنید.
-                </p>
-
-
-                <label>
-                    مبلغ واریز
-                </label>
-
-
-                <input
-                    id="depositAmount"
-                    class="money-input"
-                    type="number"
-                    inputmode="numeric"
-                    min="1"
-                    placeholder="مثلاً ۵۰۰۰۰۰"
-                />
-
-
-                <div
-                    id="depositPreview"
-                    class="amount-preview"
-                >
-                    معادل دلار: ۰ USD
-                </div>
-
-
-                <button
-                    class="primary-button"
-                    onclick="createDeposit()"
-                >
-
-                    ادامه واریز
-
-                </button>
-
-
-                <button
-                    class="secondary-button"
-                    onclick="navigateTo('wallet')"
-                >
-
-                    بازگشت
-
-                </button>
-
-            </div>
-
-        </div>
-
-        ${renderBottomNavigation()}
-
-    `;
-
-
-    const input =
-        document.getElementById(
-            "depositAmount"
-        );
-
-
-    if (input) {
-
-        input.addEventListener(
-            "input",
-            updateDepositPreview
-        );
-
-    }
+    showToast(
+        "بخش واریز از طریق سرویس واریز فعال می‌شود"
+    );
 
 }
 
 
 // =====================================
-// Deposit Preview :: M
+// ..M START BOT
 // =====================================
 
-function updateDepositPreview() {
-
-    const input =
-        document.getElementById(
-            "depositAmount"
-        );
-
-    const preview =
-        document.getElementById(
-            "depositPreview"
-        );
-
-
-    if (
-        !input ||
-        !preview
-    ) {
-
-        return;
-
-    }
-
-
-    const toman =
-        safeNumber(
-            input.value
-        );
-
-
-    const rate =
-        safeNumber(
-            state.exchangeRate
-        );
-
-
-    const usd =
-        rate > 0
-            ? toman / rate
-            : 0;
-
-
-    preview.textContent =
-        `معادل دلار: ${formatUSD(usd)}`;
-
-}
-
-
-// =====================================
-// Create Deposit :: M
-// =====================================
-
-async function createDeposit() {
-
-    const input =
-        document.getElementById(
-            "depositAmount"
-        );
-
-
-    const amountToman =
-        Math.floor(
-            safeNumber(
-                input?.value
-            )
-        );
-
-
-    if (
-        amountToman <= 0
-    ) {
-
-        showToast(
-            "مبلغ واریز را وارد کنید"
-        );
-
-        return;
-
-    }
-
-
-    const telegramUser =
-        getTelegramUser();
-
+async function startBot() {
 
     const userId =
-        state.user?._id ||
-        state.user?.id ||
-        telegramUser?.id;
+        getUserId();
 
 
     if (!userId) {
 
         showToast(
-            "کاربر تلگرام شناسایی نشد"
+            "شناسه کاربر در دسترس نیست"
         );
 
         return;
@@ -1867,305 +2180,147 @@ async function createDeposit() {
     }
 
 
-    if (
-        state.exchangeRate <= 0
-    ) {
+    try {
 
-        showToast(
-            "نرخ دلار هنوز دریافت نشده است"
-        );
+        await api(
 
-        return;
+            "/api/bot/start/" +
+            encodeURIComponent(
+                userId
+            ),
 
-    }
-
-
-    const button =
-        document.querySelector(
-            ".primary-button"
-        );
-
-
-    if (button) {
-
-        button.disabled =
-            true;
-
-        button.textContent =
-            "در حال ایجاد درخواست...";
-
-    }
-
-
-    const data =
-        await apiRequest(
-            "/api/deposit",
             {
 
                 method:
                     "POST",
 
-                body: {
-
-                    userId,
-
-                    amountToman,
-
-                    exchangeRate:
-                        state.exchangeRate,
-
-                    method:
-                        "GATEWAY",
-
-                    gateway:
-                        "ZARINPAL"
-
-                }
+                body:
+                    JSON.stringify({})
 
             }
+
+        );
+
+
+        showToast(
+            "هوش مصنوعی فعال شد"
+        );
+
+
+        await loadBot();
+
+        render();
+
+    }
+
+    catch (error) {
+
+        showToast(
+            error.message
+        );
+
+    }
+
+}
+
+
+// =====================================
+// ..M OPEN SUPPORT
+// =====================================
+
+function openSupport() {
+
+    const username =
+        SUPPORT_USERNAME
+            .replace(
+                "@",
+                ""
+            );
+
+
+    const url =
+        "https://t.me/" +
+        username;
+
+
+    if (
+        tg &&
+        typeof tg.openTelegramLink ===
+            "function"
+    ) {
+
+        tg.openTelegramLink(
+            url
+        );
+
+        return;
+
+    }
+
+
+    window.open(
+        url,
+        "_blank"
+    );
+
+}
+
+
+// =====================================
+// ..M SUBMIT WITHDRAW
+// =====================================
+
+async function submitWithdraw() {
+
+    const amountInput =
+        document.getElementById(
+            "withdrawAmount"
+        );
+
+    const bankInput =
+        document.getElementById(
+            "bankAccount"
+        );
+
+    const holderInput =
+        document.getElementById(
+            "accountHolderName"
+        );
+
+
+    const amountUSD =
+        number(
+            amountInput?.value
         );
 
 
     if (
-        data?.success
+        amountUSD <= 0
     ) {
 
         showToast(
-            "درخواست واریز ایجاد شد"
+            "مبلغ برداشت را وارد کنید"
         );
 
-
-        if (
-            data?.deposit?.paymentUrl
-        ) {
-
-            openExternal(
-                data.deposit.paymentUrl
-            );
-
-        }
-        else {
-
-            navigateTo(
-                "wallet"
-            );
-
-        }
+        return;
 
     }
-    else {
+
+
+    if (
+        amountUSD >
+        number(
+            state.wallet.withdrawable
+        )
+    ) {
 
         showToast(
-            data?.message ||
-            "ایجاد درخواست واریز ناموفق بود"
+            "مبلغ بیشتر از موجودی قابل برداشت است"
         );
+
+        return;
 
     }
-
-
-    if (button) {
-
-        button.disabled =
-            false;
-
-        button.textContent =
-            "ادامه واریز";
-
-    }
-
-}
-
-
-// =====================================
-// Withdraw :: M
-// کاملاً تومان‌محور
-// =====================================
-
-function showWithdraw() {
-
-    const app =
-        getApp();
-
-    if (!app) return;
-
-
-    const availableToman =
-        usdToToman(
-            state.wallet.withdrawable
-        );
-
-
-    app.innerHTML = `
-
-        <div class="page">
-
-            ${renderHeader("برداشت")}
-
-
-            <div class="section-card">
-
-                <div class="section-title">
-                    برداشت تومان
-                </div>
-
-
-                <div class="available-box">
-
-                    <span>
-                        موجودی قابل برداشت
-                    </span>
-
-                    <strong>
-                        ${formatToman(
-                            availableToman
-                        )}
-                    </strong>
-
-                    <small>
-                        ${formatUSD(
-                            state.wallet.withdrawable
-                        )}
-                    </small>
-
-                </div>
-
-
-                <label>
-                    مبلغ برداشت به تومان
-                </label>
-
-
-                <input
-                    id="withdrawAmountToman"
-                    class="money-input"
-                    type="number"
-                    inputmode="numeric"
-                    min="100000"
-                    placeholder="مثلاً ۵۰۰۰۰۰"
-                />
-
-
-                <label>
-                    شماره شبا
-                </label>
-
-
-                <input
-                    id="withdrawBankAccount"
-                    class="money-input"
-                    type="text"
-                    inputmode="text"
-                    placeholder="IR..."
-                />
-
-
-                <label>
-                    نام صاحب حساب
-                </label>
-
-
-                <input
-                    id="withdrawHolderName"
-                    class="money-input"
-                    type="text"
-                    placeholder="نام و نام خانوادگی"
-                />
-
-
-                <button
-                    class="secondary-button"
-                    onclick="fillWithdrawAll()"
-                >
-
-                    برداشت کل موجودی
-
-                </button>
-
-
-                <button
-                    class="primary-button"
-                    onclick="createWithdraw()"
-                >
-
-                    ثبت درخواست برداشت
-
-                </button>
-
-
-                <button
-                    class="secondary-button"
-                    onclick="navigateTo('wallet')"
-                >
-
-                    بازگشت
-
-                </button>
-
-            </div>
-
-        </div>
-
-        ${renderBottomNavigation()}
-
-    `;
-
-}
-
-
-// =====================================
-// Fill Withdraw All :: M
-// =====================================
-
-function fillWithdrawAll() {
-
-    const input =
-        document.getElementById(
-            "withdrawAmountToman"
-        );
-
-
-    if (input) {
-
-        input.value =
-            usdToToman(
-                state.wallet.withdrawable
-            );
-
-    }
-
-}
-
-
-// =====================================
-// Create Withdraw :: M
-// =====================================
-
-async function createWithdraw() {
-
-    const amountInput =
-        document.getElementById(
-            "withdrawAmountToman"
-        );
-
-
-    const bankInput =
-        document.getElementById(
-            "withdrawBankAccount"
-        );
-
-
-    const holderInput =
-        document.getElementById(
-            "withdrawHolderName"
-        );
-
-
-    const amountToman =
-        Math.floor(
-            safeNumber(
-                amountInput?.value
-            )
-        );
 
 
     const bankAccount =
@@ -2183,38 +2338,11 @@ async function createWithdraw() {
 
 
     if (
-        amountToman <= 0
-    ) {
-
-        showToast(
-            "مبلغ برداشت را به تومان وارد کنید"
-        );
-
-        return;
-
-    }
-
-
-    if (
-        amountToman <
-        100000
-    ) {
-
-        showToast(
-            "حداقل برداشت ۱۰۰٬۰۰۰ تومان است"
-        );
-
-        return;
-
-    }
-
-
-    if (
         !bankAccount
     ) {
 
         showToast(
-            "شماره شبا را وارد کنید"
+            "شماره حساب یا شبا را وارد کنید"
         );
 
         return;
@@ -2235,20 +2363,14 @@ async function createWithdraw() {
     }
 
 
-    const telegramUser =
-        getTelegramUser();
-
-
     const userId =
-        state.user?._id ||
-        state.user?.id ||
-        telegramUser?.id;
+        getUserId();
 
 
     if (!userId) {
 
         showToast(
-            "کاربر شناسایی نشد"
+            "شناسه کاربر موجود نیست"
         );
 
         return;
@@ -2256,54 +2378,68 @@ async function createWithdraw() {
     }
 
 
-    const data =
-        await apiRequest(
-            "/api/withdraw",
-            {
+    try {
 
-                method:
-                    "POST",
-
-                body: {
-
-                    userId,
-
-                    amountToman,
+        const result =
+            await api(
+                "/api/withdraw",
+                {
 
                     method:
-                        "BANK",
+                        "POST",
 
-                    bankAccount,
+                    body:
+                        JSON.stringify({
 
-                    accountHolderName
+                            userId,
+
+                            amountUSD,
+
+                            withdrawAll:
+                                false,
+
+                            method:
+                                "BANK",
+
+                            bankAccount,
+
+                            accountHolderName
+
+                        })
 
                 }
-
-            }
-        );
+            );
 
 
-    if (
-        data?.success
-    ) {
+        const toman =
+            number(
+                result?.amountToman
+            );
+
 
         showToast(
-            "درخواست برداشت ثبت شد"
+
+            toman > 0
+
+                ? "درخواست برداشت با موفقیت ثبت شد"
+
+                : "درخواست برداشت ثبت شد"
+
         );
 
 
         await loadWallet();
 
-        navigateTo(
+        goTo(
             "wallet"
         );
 
     }
-    else {
+
+    catch (error) {
 
         showToast(
-            data?.message ||
-            "ثبت برداشت ناموفق بود"
+            error.message
         );
 
     }
@@ -2312,288 +2448,296 @@ async function createWithdraw() {
 
 
 // =====================================
-// Toggle Bot :: M
+// ..M WITHDRAW PREVIEW
 // =====================================
 
-async function toggleBot() {
+function updateWithdrawPreview() {
 
-    const telegramUser =
-        getTelegramUser();
-
-    const userId =
-        state.user?._id ||
-        state.user?.id ||
-        telegramUser?.id;
-
-
-    if (!userId) {
-
-        showToast(
-            "کاربر شناسایی نشد"
+    const input =
+        document.getElementById(
+            "withdrawAmount"
         );
 
-        return;
-
-    }
+    const output =
+        document.getElementById(
+            "withdrawTomanValue"
+        );
 
 
     if (
-        state.bot.status ===
-        "ACTIVE"
+        !input ||
+        !output
     ) {
-
-        showToast(
-            "توقف ربات از پنل مدیریت انجام می‌شود"
-        );
 
         return;
 
     }
 
 
-    const data =
-        await apiRequest(
-            "/api/bot/start/" +
-            encodeURIComponent(
-                userId
-            ),
-            {
+    const usd =
+        number(
+            input.value
+        );
 
-                method:
-                    "POST"
+
+    output.textContent =
+        formatToman(
+            usdToToman(
+                usd
+            )
+        );
+
+}
+
+
+// =====================================
+// ..M EVENTS
+// =====================================
+
+function bindEvents() {
+
+    const app =
+        getApp();
+
+
+    if (!app) {
+
+        return;
+
+    }
+
+
+    // -------------------------------------
+    // Bottom navigation
+    // -------------------------------------
+
+    app
+        .querySelectorAll(
+            "[data-page]"
+        )
+        .forEach(
+
+            function (element) {
+
+                element.addEventListener(
+                    "click",
+                    function () {
+
+                        goTo(
+                            element.dataset.page
+                        );
+
+                    }
+                );
+
+            }
+
+        );
+
+
+    // -------------------------------------
+    // Refresh
+    // -------------------------------------
+
+    const refresh =
+        document.getElementById(
+            "refreshButton"
+        );
+
+
+    if (refresh) {
+
+        refresh.onclick =
+            async function () {
+
+                refresh.disabled =
+                    true;
+
+                await loadData();
+
+                refresh.disabled =
+                    false;
+
+                render();
+
+                showToast(
+                    "اطلاعات به‌روزرسانی شد"
+                );
+
+            };
+
+    }
+
+
+    // -------------------------------------
+    // Deposit
+    // -------------------------------------
+
+    app
+        .querySelectorAll(
+            "#depositButton, #depositButton2"
+        )
+        .forEach(
+            function (button) {
+
+                button.onclick =
+                    showDeposit;
 
             }
         );
 
 
-    if (
-        data?.success ||
-        data?.bot
-    ) {
+    // -------------------------------------
+    // Withdraw
+    // -------------------------------------
 
-        state.bot.status =
-            "ACTIVE";
+    app
+        .querySelectorAll(
+            "#withdrawButton, #withdrawButton2"
+        )
+        .forEach(
+            function (button) {
 
-        showToast(
-            "ربات AI فعال شد"
+                button.onclick =
+                    function () {
+
+                        state.currentPage =
+                            "withdraw";
+
+                        render();
+
+                    };
+
+            }
         );
 
-        render();
 
-    }
-    else {
+    // -------------------------------------
+    // View trades
+    // -------------------------------------
 
-        showToast(
-            data?.message ||
-            "فعال‌سازی ربات ناموفق بود"
-        );
-
-    }
-
-}
-
-
-// =====================================
-// Open Support :: M
-// =====================================
-
-function openSupport() {
-
-    const username =
-        SUPPORT_USERNAME
-            .replace("@", "")
-            .trim();
-
-
-    const url =
-        "https://t.me/" +
-        username;
-
-
-    try {
-
-        if (
-            tg &&
-            typeof tg.openTelegramLink ===
-            "function"
-        ) {
-
-            tg.openTelegramLink(
-                url
-            );
-
-            return;
-
-        }
-
-    } catch (error) {
-
-        console.warn(
-            "Support open error:",
-            error
-        );
-
-    }
-
-
-    openExternal(
-        url
-    );
-
-}
-
-
-// =====================================
-// External Link :: M
-// =====================================
-
-function openExternal(
-    url
-) {
-
-    if (!url) {
-
-        return;
-
-    }
-
-
-    try {
-
-        if (
-            tg &&
-            typeof tg.openLink ===
-            "function"
-        ) {
-
-            tg.openLink(
-                url
-            );
-
-            return;
-
-        }
-
-    } catch {
-
-        // fallback
-    }
-
-
-    window.open(
-        url,
-        "_blank"
-    );
-
-}
-
-
-// =====================================
-// Toast :: M
-// =====================================
-
-function showToast(
-    message
-) {
-
-    let toast =
+    const viewTrades =
         document.getElementById(
-            "appToast"
+            "viewTradesButton"
         );
 
 
-    if (!toast) {
+    if (viewTrades) {
 
-        toast =
-            document.createElement(
-                "div"
-            );
+        viewTrades.onclick =
+            function () {
 
-        toast.id =
-            "appToast";
-
-        toast.className =
-            "app-toast";
-
-        document.body.appendChild(
-            toast
-        );
-
-    }
-
-
-    toast.textContent =
-        message ||
-        "انجام شد";
-
-
-    toast.classList.add(
-        "show"
-    );
-
-
-    clearTimeout(
-        window.__toastTimer
-    );
-
-
-    window.__toastTimer =
-        setTimeout(
-            () => {
-
-                toast.classList.remove(
-                    "show"
+                goTo(
+                    "trades"
                 );
 
-            },
-            3000
-        );
-
-}
-
-
-// =====================================
-// Navigation :: M
-// =====================================
-
-function navigateTo(
-    page
-) {
-
-    const allowed = [
-
-        "dashboard",
-        "wallet",
-        "trades",
-        "analytics",
-        "profile"
-
-    ];
-
-
-    if (
-        !allowed.includes(
-            page
-        )
-    ) {
-
-        page =
-            "dashboard";
+            };
 
     }
 
 
-    state.currentPage =
-        page;
+    // -------------------------------------
+    // Start bot
+    // -------------------------------------
+
+    const startBotButton =
+        document.getElementById(
+            "startBotButton"
+        );
 
 
-    render();
+    if (startBotButton) {
+
+        startBotButton.onclick =
+            startBot;
+
+    }
+
+
+    // -------------------------------------
+    // Support
+    // -------------------------------------
+
+    const supportButton =
+        document.getElementById(
+            "supportButton"
+        );
+
+
+    if (supportButton) {
+
+        supportButton.onclick =
+            openSupport;
+
+    }
+
+
+    // -------------------------------------
+    // Back wallet
+    // -------------------------------------
+
+    const backWallet =
+        document.getElementById(
+            "backWalletButton"
+        );
+
+
+    if (backWallet) {
+
+        backWallet.onclick =
+            function () {
+
+                goTo(
+                    "wallet"
+                );
+
+            };
+
+    }
+
+
+    // -------------------------------------
+    // Withdraw amount
+    // -------------------------------------
+
+    const withdrawAmount =
+        document.getElementById(
+            "withdrawAmount"
+        );
+
+
+    if (withdrawAmount) {
+
+        withdrawAmount.addEventListener(
+            "input",
+            updateWithdrawPreview
+        );
+
+    }
+
+
+    // -------------------------------------
+    // Withdraw submit
+    // -------------------------------------
+
+    const withdrawSubmit =
+        document.getElementById(
+            "withdrawSubmit"
+        );
+
+
+    if (withdrawSubmit) {
+
+        withdrawSubmit.onclick =
+            submitWithdraw;
+
+    }
 
 }
 
 
 // =====================================
-// Render :: M
+// ..M RENDER
 // =====================================
 
 function render() {
@@ -2609,1276 +2753,156 @@ function render() {
     }
 
 
-    try {
-
-        switch (
-            state.currentPage
-        ) {
-
-            case "wallet":
-
-                app.innerHTML =
-                    renderWallet();
-
-                break;
+    let content = "";
 
 
-            case "trades":
+    switch (
+        state.currentPage
+    ) {
 
-                app.innerHTML =
-                    renderTrades();
+        case "wallet":
 
-                break;
+            content =
+                renderWallet();
 
-
-            case "analytics":
-
-                app.innerHTML =
-                    renderAnalytics();
-
-                break;
+            break;
 
 
-            case "profile":
+        case "trades":
 
-                app.innerHTML =
-                    renderProfile();
+            content =
+                renderTrades();
 
-                break;
-
-
-            case "dashboard":
-
-            default:
-
-                app.innerHTML =
-                    renderDashboard();
-
-                break;
-
-        }
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "Render Error:",
-            error
-        );
+            break;
 
 
-        app.innerHTML = `
+        case "stats":
 
-            <div class="page">
+            content =
+                renderStats();
 
-                ${renderHeader("خطا")}
+            break;
 
-                <div class="section-card">
 
-                    <div class="section-title">
-                        AutoTrade AI
-                    </div>
+        case "profile":
 
-                    <p>
-                        اطلاعات موقتاً در دسترس نیست.
-                    </p>
+            content =
+                renderProfile();
 
-                    <strong>
-                        موجودی: ۰ USD
-                    </strong>
+            break;
 
-                    <button
-                        class="primary-button"
-                        onclick="render()"
-                    >
-                        تلاش مجدد
-                    </button>
 
-                </div>
+        case "withdraw":
 
-            </div>
+            content =
+                renderWithdraw();
 
-            ${renderBottomNavigation()}
+            break;
 
-        `;
+
+        case "dashboard":
+
+        default:
+
+            content =
+                renderDashboard();
+
+            break;
 
     }
+
+
+    app.innerHTML =
+        content;
+
+
+    bindEvents();
 
 }
 
 
 // =====================================
-// Inject Required Styles :: M
+// ..M HIDE LOADING
 // =====================================
 
-function injectStyles() {
+function hideLoadingScreen() {
 
-    if (
+    const loading =
         document.getElementById(
-            "autotrade-runtime-style"
-        )
-    ) {
+            "loading-screen"
+        );
+
+
+    if (!loading) {
 
         return;
 
     }
 
 
-    const style =
-        document.createElement(
-            "style"
-        );
+    loading.classList.add(
+        "hidden"
+    );
 
 
-    style.id =
-        "autotrade-runtime-style";
+    setTimeout(
+        function () {
 
+            loading.style.display =
+                "none";
 
-    style.textContent = `
-
-        * {
-            box-sizing: border-box;
-        }
-
-
-        html,
-        body {
-
-            margin: 0;
-            padding: 0;
-
-            min-height: 100%;
-
-            background:
-                #0b1020;
-
-            color:
-                #ffffff;
-
-            font-family:
-                Arial,
-                Tahoma,
-                sans-serif;
-
-        }
-
-
-        body {
-
-            padding-bottom:
-                82px;
-
-        }
-
-
-        button,
-        input {
-
-            font-family:
-                inherit;
-
-        }
-
-
-        button {
-
-            cursor:
-                pointer;
-
-        }
-
-
-        .page {
-
-            width:
-                100%;
-
-            max-width:
-                700px;
-
-            margin:
-                0 auto;
-
-            padding:
-                18px 16px 100px;
-
-        }
-
-
-        .top-header {
-
-            display:
-                flex;
-
-            justify-content:
-                space-between;
-
-            align-items:
-                center;
-
-            margin-bottom:
-                18px;
-
-        }
-
-
-        .app-title {
-
-            font-size:
-                22px;
-
-            font-weight:
-                800;
-
-        }
-
-
-        .app-subtitle {
-
-            margin-top:
-                4px;
-
-            font-size:
-                12px;
-
-            opacity:
-                .65;
-
-        }
-
-
-        .header-status {
-
-            display:
-                flex;
-
-            align-items:
-                center;
-
-            gap:
-                6px;
-
-            font-size:
-                12px;
-
-            opacity:
-                .8;
-
-        }
-
-
-        .status-dot {
-
-            width:
-                8px;
-
-            height:
-                8px;
-
-            border-radius:
-                50%;
-
-            background:
-                #42d392;
-
-        }
-
-
-        .welcome-box {
-
-            padding:
-                20px;
-
-            border-radius:
-                22px;
-
-            background:
-                #111827;
-
-            margin-bottom:
-                14px;
-
-        }
-
-
-        .welcome-small {
-
-            font-size:
-                13px;
-
-            opacity:
-                .65;
-
-        }
-
-
-        .welcome-box h1 {
-
-            margin:
-                7px 0;
-
-            font-size:
-                24px;
-
-        }
-
-
-        .welcome-box p {
-
-            margin:
-                0;
-
-            font-size:
-                13px;
-
-            opacity:
-                .65;
-
-        }
-
-
-        .main-balance-card,
-        .wallet-main-card {
-
-            padding:
-                25px;
-
-            border-radius:
-                24px;
-
-            background:
-                linear-gradient(
-                    145deg,
-                    #18233b,
-                    #101827
-                );
-
-            margin-bottom:
-                14px;
-
-        }
-
-
-        .card-label {
-
-            font-size:
-                13px;
-
-            opacity:
-                .65;
-
-            margin-bottom:
-                8px;
-
-        }
-
-
-        .balance-usd {
-
-            font-size:
-                29px;
-
-            font-weight:
-                800;
-
-        }
-
-
-        .balance-toman {
-
-            margin-top:
-                7px;
-
-            font-size:
-                15px;
-
-            opacity:
-                .75;
-
-        }
-
-
-        .stats-grid,
-        .analytics-grid {
-
-            display:
-                grid;
-
-            grid-template-columns:
-                repeat(2, 1fr);
-
-            gap:
-                10px;
-
-            margin-bottom:
-                14px;
-
-        }
-
-
-        .stat-card,
-        .analytics-card {
-
-            padding:
-                16px;
-
-            border-radius:
-                18px;
-
-            background:
-                #111827;
-
-        }
-
-
-        .stat-card span,
-        .analytics-card span {
-
-            display:
-                block;
-
-            font-size:
-                12px;
-
-            opacity:
-                .6;
-
-            margin-bottom:
-                8px;
-
-        }
-
-
-        .stat-card strong,
-        .analytics-card strong {
-
-            font-size:
-                17px;
-
-        }
-
-
-        .section-card {
-
-            padding:
-                18px;
-
-            border-radius:
-                20px;
-
-            background:
-                #111827;
-
-            margin-bottom:
-                14px;
-
-        }
-
-
-        .section-title {
-
-            font-size:
-                16px;
-
-            font-weight:
-                800;
-
-            margin-bottom:
-                15px;
-
-        }
-
-
-        .info-row,
-        .trade-row {
-
-            display:
-                flex;
-
-            justify-content:
-                space-between;
-
-            align-items:
-                center;
-
-            gap:
-                12px;
-
-            padding:
-                13px 0;
-
-            border-bottom:
-                1px solid
-                rgba(255,255,255,.07);
-
-        }
-
-
-        .info-row:last-child,
-        .trade-row:last-child {
-
-            border-bottom:
-                0;
-
-        }
-
-
-        .info-row span {
-
-            font-size:
-                13px;
-
-            opacity:
-                .65;
-
-        }
-
-
-        .info-row strong {
-
-            font-size:
-                13px;
-
-            text-align:
-                left;
-
-        }
-
-
-        .primary-button,
-        .secondary-button {
-
-            width:
-                100%;
-
-            border:
-                0;
-
-            border-radius:
-                15px;
-
-            padding:
-                15px;
-
-            margin-top:
-                10px;
-
-            font-size:
-                14px;
-
-            font-weight:
-                800;
-
-        }
-
-
-        .primary-button {
-
-            background:
-                #ffffff;
-
-            color:
-                #0b1020;
-
-        }
-
-
-        .secondary-button {
-
-            background:
-                #1c2639;
-
-            color:
-                #ffffff;
-
-        }
-
-
-        button:disabled {
-
-            opacity:
-                .5;
-
-            cursor:
-                not-allowed;
-
-        }
-
-
-        .wallet-actions {
-
-            margin-bottom:
-                14px;
-
-        }
-
-
-        .big-number {
-
-            font-size:
-                25px;
-
-            font-weight:
-                800;
-
-        }
-
-
-        .muted {
-
-            margin-top:
-                6px;
-
-            opacity:
-                .6;
-
-            font-size:
-                13px;
-
-        }
-
-
-        .profile-card {
-
-            text-align:
-                center;
-
-            padding:
-                24px;
-
-            border-radius:
-                24px;
-
-            background:
-                #111827;
-
-            margin-bottom:
-                14px;
-
-        }
-
-
-        .profile-avatar {
-
-            width:
-                76px;
-
-            height:
-                76px;
-
-            margin:
-                0 auto 12px;
-
-            border-radius:
-                50%;
-
-            display:
-                flex;
-
-            align-items:
-                center;
-
-            justify-content:
-                center;
-
-            background:
-                #25314b;
-
-            font-size:
-                28px;
-
-            font-weight:
-                800;
-
-        }
-
-
-        .profile-name {
-
-            font-size:
-                21px;
-
-            font-weight:
-                800;
-
-        }
-
-
-        .profile-username {
-
-            margin-top:
-                5px;
-
-            font-size:
-                13px;
-
-            opacity:
-                .6;
-
-        }
-
-
-        .account-badge {
-
-            display:
-                inline-block;
-
-            margin-top:
-                12px;
-
-            padding:
-                6px 12px;
-
-            border-radius:
-                20px;
-
-            background:
-                #182b25;
-
-            font-size:
-                11px;
-
-        }
-
-
-        .support-card {
-
-            text-align:
-                center;
-
-        }
-
-
-        .support-icon {
-
-            font-size:
-                32px;
-
-            margin-bottom:
-                7px;
-
-        }
-
-
-        .support-username {
-
-            direction:
-                ltr;
-
-            font-size:
-                17px;
-
-            font-weight:
-                800;
-
-            margin:
-                10px 0;
-
-        }
-
-
-        .trade-row small {
-
-            display:
-                block;
-
-            margin-top:
-                5px;
-
-            opacity:
-                .5;
-
-        }
-
-
-        .profit {
-
-            color:
-                #57d99a;
-
-        }
-
-
-        .loss {
-
-            color:
-                #ff7373;
-
-        }
-
-
-        .empty-state {
-
-            text-align:
-                center;
-
-            padding:
-                35px 10px;
-
-            opacity:
-                .7;
-
-        }
-
-
-        .empty-icon {
-
-            font-size:
-                35px;
-
-            margin-bottom:
-                10px;
-
-        }
-
-
-        .money-input {
-
-            width:
-                100%;
-
-            border:
-                1px solid
-                rgba(255,255,255,.1);
-
-            outline:
-                none;
-
-            border-radius:
-                14px;
-
-            background:
-                #0b1020;
-
-            color:
-                #ffffff;
-
-            padding:
-                15px;
-
-            margin:
-                8px 0 12px;
-
-            font-size:
-                15px;
-
-            direction:
-                rtl;
-
-        }
-
-
-        .money-input:focus {
-
-            border-color:
-                rgba(255,255,255,.35);
-
-        }
-
-
-        label {
-
-            display:
-                block;
-
-            font-size:
-                13px;
-
-            margin-top:
-                10px;
-
-            opacity:
-                .75;
-
-        }
-
-
-        .amount-preview {
-
-            padding:
-                12px;
-
-            border-radius:
-                12px;
-
-            background:
-                #0b1020;
-
-            font-size:
-                13px;
-
-            opacity:
-                .8;
-
-            margin-bottom:
-                8px;
-
-        }
-
-
-        .available-box {
-
-            padding:
-                16px;
-
-            border-radius:
-                16px;
-
-            background:
-                #0b1020;
-
-            margin-bottom:
-                15px;
-
-        }
-
-
-        .available-box span,
-        .available-box small {
-
-            display:
-                block;
-
-            opacity:
-                .6;
-
-        }
-
-
-        .available-box strong {
-
-            display:
-                block;
-
-            margin:
-                7px 0;
-
-            font-size:
-                22px;
-
-        }
-
-
-        .bottom-nav {
-
-            position:
-                fixed;
-
-            z-index:
-                100;
-
-            bottom:
-                0;
-
-            right:
-                0;
-
-            left:
-                0;
-
-            height:
-                72px;
-
-            display:
-                grid;
-
-            grid-template-columns:
-                repeat(5, 1fr);
-
-            background:
-                rgba(11,16,32,.97);
-
-            border-top:
-                1px solid
-                rgba(255,255,255,.08);
-
-            backdrop-filter:
-                blur(12px);
-
-        }
-
-
-        .nav-item {
-
-            border:
-                0;
-
-            background:
-                transparent;
-
-            color:
-                #ffffff;
-
-            opacity:
-                .5;
-
-            display:
-                flex;
-
-            flex-direction:
-                column;
-
-            align-items:
-                center;
-
-            justify-content:
-                center;
-
-            gap:
-                4px;
-
-        }
-
-
-        .nav-item span {
-
-            font-size:
-                20px;
-
-        }
-
-
-        .nav-item small {
-
-            font-size:
-                10px;
-
-        }
-
-
-        .nav-item.active {
-
-            opacity:
-                1;
-
-        }
-
-
-        .app-toast {
-
-            position:
-                fixed;
-
-            z-index:
-                999;
-
-            left:
-                50%;
-
-            bottom:
-                90px;
-
-            transform:
-                translate(-50%, 20px);
-
-            background:
-                #ffffff;
-
-            color:
-                #0b1020;
-
-            padding:
-                12px 18px;
-
-            border-radius:
-                14px;
-
-            font-size:
-                13px;
-
-            opacity:
-                0;
-
-            pointer-events:
-                none;
-
-            transition:
-                .25s ease;
-
-            white-space:
-                nowrap;
-
-            max-width:
-                90%;
-
-            overflow:
-                hidden;
-
-            text-overflow:
-                ellipsis;
-
-        }
-
-
-        .app-toast.show {
-
-            opacity:
-                1;
-
-            transform:
-                translate(-50%, 0);
-
-        }
-
-
-        @media (
-            min-width: 600px
-        ) {
-
-            .bottom-nav {
-
-                left:
-                    50%;
-
-                right:
-                    auto;
-
-                width:
-                    700px;
-
-                transform:
-                    translateX(-50%);
-
-                border-radius:
-                    18px 18px 0 0;
-
-            }
-
-        }
-
-    `;
-
-
-    document.head.appendChild(
-        style
+        },
+        400
     );
 
 }
 
 
 // =====================================
-// Initialization :: M
+// ..M INITIALIZE
 // =====================================
 
-async function initApp() {
-
-    injectStyles();
-
-    render();
-
+async function initializeApp() {
 
     try {
 
-        await loadAllData();
+        await authenticateTelegram();
+
+        await loadData();
+
+        render();
 
     }
 
     catch (error) {
 
         console.error(
-            "Initial loading error:",
+            "Initialize:",
             error
         );
 
+        render();
+
     }
 
+    finally {
 
-    render();
+        hideLoadingScreen();
+
+    }
 
 }
 
 
 // =====================================
-// Auto Refresh :: M
-// =====================================
-
-setInterval(
-    async () => {
-
-        try {
-
-            await Promise.allSettled([
-
-                loadExchangeRate(),
-                loadWallet(),
-                loadBot()
-
-            ]);
-
-
-            render();
-
-        }
-
-        catch (error) {
-
-            console.warn(
-                "Auto refresh error:",
-                error
-            );
-
-        }
-
-    },
-    30000
-);
-
-
-// =====================================
-// Global Functions :: M
-// =====================================
-
-window.navigateTo =
-    navigateTo;
-
-window.render =
-    render;
-
-window.renderProfile =
-    renderProfile;
-
-window.openSupport =
-    openSupport;
-
-window.showDeposit =
-    showDeposit;
-
-window.createDeposit =
-    createDeposit;
-
-window.showWithdraw =
-    showWithdraw;
-
-window.createWithdraw =
-    createWithdraw;
-
-window.fillWithdrawAll =
-    fillWithdrawAll;
-
-window.toggleBot =
-    toggleBot;
-
-window.updateDepositPreview =
-    updateDepositPreview;
-
-
-// =====================================
-// Start :: M
+// ..M START
 // =====================================
 
 document.addEventListener(
     "DOMContentLoaded",
-    initApp
+    function () {
+
+        initializeApp();
+
+    }
 );
-
-
-// اگر DOMContentLoaded قبلاً اجرا شده باشد
-if (
-    document.readyState !==
-    "loading"
-) {
-
-    initApp();
-
-}
