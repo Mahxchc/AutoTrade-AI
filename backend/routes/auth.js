@@ -1,6 +1,6 @@
 // =====================================
-// Auth Routes :: M
-// AutoTrade AI
+// ..M AutoTrade AI
+// Auth Routes
 // Telegram Authentication
 // File: backend/routes/auth.js
 // =====================================
@@ -19,7 +19,70 @@ const router =
 
 
 // =====================================
-// Telegram Login
+// Helper :: M
+// Safe User Response
+// =====================================
+
+function userResponse(user) {
+
+    return {
+
+        id:
+            user._id,
+
+        telegramId:
+            user.telegramId,
+
+        username:
+            user.username || "",
+
+        firstName:
+            user.firstName || "",
+
+        lastName:
+            user.lastName || "",
+
+        phoneNumber:
+            user.phoneNumber || "",
+
+        status:
+            user.status,
+
+        approvalStatus:
+            user.approvalStatus,
+
+        accessEnabled:
+            user.accessEnabled,
+
+        isAdmin:
+            user.isAdmin,
+
+        botAccess:
+            user.botAccess,
+
+        botActive:
+            user.botActive,
+
+        walletId:
+            user.walletId || null,
+
+        createdAt:
+            user.createdAt,
+
+        updatedAt:
+            user.updatedAt,
+
+        lastLogin:
+            user.lastLogin
+
+    };
+
+}
+
+
+// =====================================
+// Telegram Login :: M
+// ورود از طریق Telegram Mini App
 // =====================================
 
 router.post(
@@ -30,7 +93,7 @@ router.post(
         try {
 
             // =================================
-            // Telegram User From Middleware
+            // Telegram User :: M
             // =================================
 
             const telegramUser =
@@ -46,13 +109,19 @@ router.post(
 
                     success: false,
 
+                    authenticated: false,
+
                     message:
-                        "Telegram user not found"
+                        "کاربر Telegram پیدا نشد"
 
                 });
 
             }
 
+
+            // =================================
+            // Telegram ID :: M
+            // =================================
 
             const telegramId =
                 String(
@@ -61,20 +130,19 @@ router.post(
 
 
             // =================================
-            // Find Existing User
+            // Find Existing User :: M
             // =================================
 
             let user =
                 await User.findOne({
 
-                    telegramId:
-                        telegramId
+                    telegramId
 
                 });
 
 
             // =================================
-            // Create User If Not Exists
+            // Create New User :: M
             // =================================
 
             if (!user) {
@@ -82,8 +150,7 @@ router.post(
                 user =
                     await User.create({
 
-                        telegramId:
-                            telegramId,
+                        telegramId,
 
                         username:
                             telegramUser.username ||
@@ -97,8 +164,14 @@ router.post(
                             telegramUser.last_name ||
                             "",
 
+                        phoneNumber:
+                            "",
+
                         accessEnabled:
                             false,
+
+                        approvalStatus:
+                            "PENDING",
 
                         isAdmin:
                             false,
@@ -110,33 +183,79 @@ router.post(
                             false,
 
                         status:
-                            "PENDING"
+                            "PENDING",
+
+                        lastLogin:
+                            new Date()
 
                     });
 
             }
 
+            // =================================
+            // Update Existing User :: M
+            // =================================
+
             else {
 
-                // =================================
-                // Update Telegram Information
-                // =================================
+                // ---------------------------------
+                // Telegram Username
+                // ---------------------------------
 
-                user.username =
-                    telegramUser.username ||
-                    user.username ||
-                    "";
+                if (
+                    telegramUser.username
+                ) {
 
-                user.firstName =
-                    telegramUser.first_name ||
-                    user.firstName ||
-                    "";
+                    user.username =
+                        telegramUser.username;
 
-                user.lastName =
-                    telegramUser.last_name ||
-                    user.lastName ||
-                    "";
+                }
 
+
+                // ---------------------------------
+                // First Name
+                // ---------------------------------
+
+                if (
+                    telegramUser.first_name
+                ) {
+
+                    user.firstName =
+                        telegramUser.first_name;
+
+                }
+
+
+                // ---------------------------------
+                // Last Name
+                // ---------------------------------
+
+                if (
+                    telegramUser.last_name
+                ) {
+
+                    user.lastName =
+                        telegramUser.last_name;
+
+                }
+
+
+                // ---------------------------------
+                // Last Login
+                // ---------------------------------
+
+                user.lastLogin =
+                    new Date();
+
+
+                // ---------------------------------
+                // IMPORTANT SECURITY RULE
+                // ---------------------------------
+                //
+                // ورود مجدد کاربر نباید
+                // accessEnabled را خودکار فعال کند.
+                //
+                // ---------------------------------
 
                 await user.save();
 
@@ -144,7 +263,7 @@ router.post(
 
 
             // =================================
-            // Attach User To Request
+            // Attach User To Request :: M
             // =================================
 
             req.user =
@@ -152,51 +271,24 @@ router.post(
 
 
             // =================================
-            // Response
+            // Response :: M
             // =================================
 
             return res.json({
 
-                success: true,
+                success:
+                    true,
 
-                authenticated: true,
+                authenticated:
+                    true,
 
                 message:
-                    "Telegram authentication successful",
+                    "احراز هویت Telegram با موفقیت انجام شد",
 
-                user: {
-
-                    id:
-                        user._id,
-
-                    telegramId:
-                        user.telegramId,
-
-                    username:
-                        user.username,
-
-                    firstName:
-                        user.firstName,
-
-                    lastName:
-                        user.lastName,
-
-                    status:
-                        user.status,
-
-                    accessEnabled:
-                        user.accessEnabled,
-
-                    isAdmin:
-                        user.isAdmin,
-
-                    botAccess:
-                        user.botAccess,
-
-                    botActive:
-                        user.botActive
-
-                }
+                user:
+                    userResponse(
+                        user
+                    )
 
             });
 
@@ -218,7 +310,8 @@ router.post(
 
 
 // =====================================
-// Current Authenticated User
+// Current User :: M
+// کاربر فعلی
 // =====================================
 
 router.get(
@@ -229,7 +322,7 @@ router.get(
         try {
 
             // =================================
-            // Telegram User
+            // Telegram User :: M
             // =================================
 
             const telegramUser =
@@ -245,8 +338,10 @@ router.get(
 
                     success: false,
 
+                    authenticated: false,
+
                     message:
-                        "Telegram user not found"
+                        "کاربر Telegram پیدا نشد"
 
                 });
 
@@ -254,7 +349,7 @@ router.get(
 
 
             // =================================
-            // Find User
+            // Find User :: M
             // =================================
 
             const user =
@@ -269,7 +364,7 @@ router.get(
 
 
             // =================================
-            // User Not Found
+            // User Not Found :: M
             // =================================
 
             if (!user) {
@@ -278,8 +373,10 @@ router.get(
 
                     success: false,
 
+                    authenticated: false,
+
                     message:
-                        "User account not found"
+                        "حساب کاربری پیدا نشد"
 
                 });
 
@@ -287,7 +384,52 @@ router.get(
 
 
             // =================================
-            // Attach User
+            // Update Last Login :: M
+            // =================================
+
+            user.lastLogin =
+                new Date();
+
+
+            // =================================
+            // Sync Telegram Information :: M
+            // =================================
+
+            if (
+                telegramUser.username
+            ) {
+
+                user.username =
+                    telegramUser.username;
+
+            }
+
+
+            if (
+                telegramUser.first_name
+            ) {
+
+                user.firstName =
+                    telegramUser.first_name;
+
+            }
+
+
+            if (
+                telegramUser.last_name
+            ) {
+
+                user.lastName =
+                    telegramUser.last_name;
+
+            }
+
+
+            await user.save();
+
+
+            // =================================
+            // Attach User :: M
             // =================================
 
             req.user =
@@ -295,48 +437,21 @@ router.get(
 
 
             // =================================
-            // Response
+            // Response :: M
             // =================================
 
             return res.json({
 
-                success: true,
+                success:
+                    true,
 
-                authenticated: true,
+                authenticated:
+                    true,
 
-                user: {
-
-                    id:
-                        user._id,
-
-                    telegramId:
-                        user.telegramId,
-
-                    username:
-                        user.username,
-
-                    firstName:
-                        user.firstName,
-
-                    lastName:
-                        user.lastName,
-
-                    status:
-                        user.status,
-
-                    accessEnabled:
-                        user.accessEnabled,
-
-                    isAdmin:
-                        user.isAdmin,
-
-                    botAccess:
-                        user.botAccess,
-
-                    botActive:
-                        user.botActive
-
-                }
+                user:
+                    userResponse(
+                        user
+                    )
 
             });
 
@@ -358,7 +473,7 @@ router.get(
 
 
 // =====================================
-// Export Router
+// Export Router :: M
 // =====================================
 
 export default router;
