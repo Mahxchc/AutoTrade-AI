@@ -1,7 +1,8 @@
 // =====================================
 // ..M AutoTrade AI
 // File: MiniApp/app.js
-// نسخه کامل Mini App
+// نسخه کامل
+// برداشت کاملاً تومان‌محور
 // Support: @mehdi2410l
 // =====================================
 
@@ -33,7 +34,7 @@ if (tg) {
     } catch (error) {
 
         console.warn(
-            "Telegram UI:",
+            "Telegram UI Error:",
             error
         );
 
@@ -59,47 +60,66 @@ const SUPPORT_USERNAME =
 
 const state = {
 
-    page: "dashboard",
-
-    loading: false,
+    page:
+        "dashboard",
 
     user: {
 
-        id: 0,
+        id:
+            0,
 
-        firstName: "کاربر",
+        backendId:
+            null,
 
-        lastName: "",
+        firstName:
+            "کاربر",
 
-        username: ""
+        lastName:
+            "",
+
+        username:
+            ""
 
     },
 
     wallet: {
 
-        balance: 0,
+        balance:
+            0,
 
-        totalProfit: 0,
+        totalProfit:
+            0,
 
-        totalTrades: 0,
+        todayProfit:
+            0,
 
-        withdrawable: 0,
+        totalTrades:
+            0,
 
-        currency: "USDT"
+        withdrawable:
+            0,
+
+        currency:
+            "USDT"
 
     },
 
     bot: {
 
-        status: "STOPPED",
+        status:
+            "STOPPED",
 
-        strategy: "AI Scalping",
+        strategy:
+            "AI Scalping",
 
-        accuracy: 0,
+        accuracy:
+            0,
 
-        confidence: 0,
+        confidence:
+            0,
 
-        lastSignal: "WAIT"
+        lastSignal:
+            "WAIT"
 
     },
 
@@ -107,13 +127,14 @@ const state = {
 
     deposits: [],
 
-    exchangeRate: 0
+    exchangeRate:
+        0
 
 };
 
 
 // =====================================
-// TELEGRAM USER
+// GET TELEGRAM USER
 // =====================================
 
 function getTelegramUser() {
@@ -121,49 +142,51 @@ function getTelegramUser() {
     const user =
         tg?.initDataUnsafe?.user;
 
+
     if (!user) {
 
         return;
 
     }
 
-    state.user = {
 
-        id:
-            Number(user.id) || 0,
+    state.user.id =
+        Number(user.id) || 0;
 
-        firstName:
-            user.first_name ||
-            "کاربر",
+    state.user.firstName =
+        user.first_name ||
+        "کاربر";
 
-        lastName:
-            user.last_name ||
-            "",
+    state.user.lastName =
+        user.last_name ||
+        "";
 
-        username:
-            user.username ||
-            ""
-
-    };
+    state.user.username =
+        user.username ||
+        "";
 
 }
 
 
 // =====================================
-// HELPERS
+// NUMBER
 // =====================================
 
 function number(value) {
 
-    const n =
+    const result =
         Number(value);
 
-    return Number.isFinite(n)
-        ? n
+    return Number.isFinite(result)
+        ? result
         : 0;
 
 }
 
+
+// =====================================
+// USD FORMAT
+// =====================================
 
 function usd(value) {
 
@@ -171,13 +194,22 @@ function usd(value) {
         .toLocaleString(
             "en-US",
             {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
+
+                minimumFractionDigits:
+                    2,
+
+                maximumFractionDigits:
+                    2
+
             }
         );
 
 }
 
+
+// =====================================
+// TOMAN FORMAT
+// =====================================
 
 function toman(value) {
 
@@ -185,12 +217,19 @@ function toman(value) {
         .toLocaleString(
             "fa-IR",
             {
-                maximumFractionDigits: 0
+
+                maximumFractionDigits:
+                    0
+
             }
         );
 
 }
 
+
+// =====================================
+// SAFE TEXT
+// =====================================
 
 function safe(value) {
 
@@ -203,32 +242,28 @@ function safe(value) {
 
             const map = {
 
-                "&": "&amp;",
+                "&":
+                    "&amp;",
 
-                "<": "&lt;",
+                "<":
+                    "&lt;",
 
-                ">": "&gt;",
+                ">":
+                    "&gt;",
 
-                '"': "&quot;",
+                '"':
+                    "&quot;",
 
-                "'": "&#039;"
+                "'":
+                    "&#039;"
 
             };
 
-            return map[character];
+            return map[
+                character
+            ];
 
         }
-    );
-
-}
-
-
-function userId() {
-
-    return (
-        state.user.id ||
-        tg?.initDataUnsafe?.user?.id ||
-        0
     );
 
 }
@@ -245,6 +280,7 @@ function getRoot() {
             "app"
         );
 
+
     if (!root) {
 
         root =
@@ -254,12 +290,14 @@ function getRoot() {
 
     }
 
+
     if (!root) {
 
         root =
             document.body;
 
     }
+
 
     return root;
 
@@ -277,6 +315,7 @@ function showToast(message) {
             "m-toast"
         );
 
+
     if (!toast) {
 
         toast =
@@ -293,16 +332,20 @@ function showToast(message) {
 
     }
 
+
     toast.textContent =
         message;
+
 
     toast.classList.add(
         "show"
     );
 
+
     clearTimeout(
         window.__toastTimer
     );
+
 
     window.__toastTimer =
         setTimeout(
@@ -367,12 +410,13 @@ async function api(
 
     let data = {};
 
+
     try {
 
         data =
             await response.json();
 
-    } catch (error) {
+    } catch {
 
         data = {};
 
@@ -397,269 +441,12 @@ async function api(
 
 
 // =====================================
-// LOAD EXCHANGE RATE
-// =====================================
-
-async function loadExchangeRate() {
-
-    try {
-
-        const data =
-            await api(
-                "/api/currency/exchange-rate"
-            );
-
-        state.exchangeRate =
-            number(
-
-                data.rate ??
-                data.exchangeRate ??
-                data.usdToToman ??
-                data.usdToIrr ??
-                0
-
-            );
-
-    } catch (error) {
-
-        state.exchangeRate = 0;
-
-        console.warn(
-            "Exchange Rate:",
-            error.message
-        );
-
-    }
-
-}
-
-
-// =====================================
-// LOAD WALLET
-// =====================================
-
-async function loadWallet() {
-
-    const id =
-        state.user.backendId;
-
-    if (!id) {
-
-        return;
-
-    }
-
-
-    try {
-
-        const data =
-            await api(
-                "/api/wallet/" +
-                encodeURIComponent(id)
-            );
-
-        const wallet =
-            data.wallet ||
-            data ||
-            {};
-
-
-        state.wallet = {
-
-            balance:
-                number(
-                    wallet.balance
-                ),
-
-            totalProfit:
-                number(
-                    wallet.totalProfit
-                ),
-
-            totalTrades:
-                number(
-                    wallet.totalTrades
-                ),
-
-            withdrawable:
-                number(
-                    wallet.withdrawable ??
-                    wallet.balance
-                ),
-
-            currency:
-                wallet.currency ||
-                "USDT"
-
-        };
-
-    } catch (error) {
-
-        console.warn(
-            "Wallet:",
-            error.message
-        );
-
-    }
-
-}
-
-
-// =====================================
-// LOAD BOT
-// =====================================
-
-async function loadBot() {
-
-    const id =
-        state.user.backendId;
-
-    if (!id) {
-
-        return;
-
-    }
-
-
-    try {
-
-        const data =
-            await api(
-                "/api/bot/" +
-                encodeURIComponent(id)
-            );
-
-        const bot =
-            data.bot ||
-            data ||
-            {};
-
-
-        state.bot = {
-
-            status:
-                bot.status ||
-                "STOPPED",
-
-            strategy:
-                bot.strategy ||
-                "AI Scalping",
-
-            accuracy:
-                number(
-                    bot.accuracy
-                ),
-
-            confidence:
-                number(
-                    bot.confidence
-                ),
-
-            lastSignal:
-                bot.lastSignal ||
-                "WAIT"
-
-        };
-
-    } catch (error) {
-
-        console.warn(
-            "Bot:",
-            error.message
-        );
-
-    }
-
-}
-
-
-// =====================================
-// LOAD TRADES
-// =====================================
-
-async function loadTrades() {
-
-    const id =
-        state.user.backendId;
-
-    if (!id) {
-
-        return;
-
-    }
-
-
-    try {
-
-        const data =
-            await api(
-                "/api/trades/" +
-                encodeURIComponent(id)
-            );
-
-        state.trades =
-            Array.isArray(data)
-                ? data
-                : (
-                    data.trades ||
-                    []
-                );
-
-    } catch (error) {
-
-        state.trades = [];
-
-    }
-
-}
-
-
-// =====================================
-// LOAD DEPOSITS
-// =====================================
-
-async function loadDeposits() {
-
-    const id =
-        state.user.backendId;
-
-    if (!id) {
-
-        return;
-
-    }
-
-
-    try {
-
-        const data =
-            await api(
-                "/api/deposit/user/" +
-                encodeURIComponent(id)
-            );
-
-        state.deposits =
-            data.deposits ||
-            [];
-
-    } catch (error) {
-
-        state.deposits = [];
-
-    }
-
-}
-
-
-// =====================================
-// TELEGRAM AUTH
+// AUTH
 // =====================================
 
 async function authenticate() {
 
-    if (
-        !tg?.initData
-    ) {
+    if (!tg?.initData) {
 
         return;
 
@@ -695,7 +482,9 @@ async function authenticate() {
 
         state.user.backendId =
             user._id ||
-            user.id;
+            user.id ||
+            null;
+
 
     } catch (error) {
 
@@ -703,6 +492,288 @@ async function authenticate() {
             "Telegram Auth:",
             error.message
         );
+
+    }
+
+}
+
+
+// =====================================
+// EXCHANGE RATE
+// =====================================
+
+async function loadExchangeRate() {
+
+    try {
+
+        const data =
+            await api(
+                "/api/currency/exchange-rate"
+            );
+
+
+        state.exchangeRate =
+            number(
+
+                data.rate ??
+                data.exchangeRate ??
+                data.usdToToman ??
+                data.usdToIrr ??
+                0
+
+            );
+
+
+    } catch (error) {
+
+        state.exchangeRate =
+            0;
+
+
+        console.warn(
+            "Exchange Rate:",
+            error.message
+        );
+
+    }
+
+}
+
+
+// =====================================
+// WALLET
+// =====================================
+
+async function loadWallet() {
+
+    const id =
+        state.user.backendId;
+
+
+    if (!id) {
+
+        return;
+
+    }
+
+
+    try {
+
+        const data =
+            await api(
+                "/api/wallet/" +
+                encodeURIComponent(id)
+            );
+
+
+        const wallet =
+            data.wallet ||
+            data ||
+            {};
+
+
+        state.wallet = {
+
+            balance:
+                number(
+                    wallet.balance
+                ),
+
+            totalProfit:
+                number(
+                    wallet.totalProfit
+                ),
+
+            todayProfit:
+                number(
+                    wallet.todayProfit
+                ),
+
+            totalTrades:
+                number(
+                    wallet.totalTrades
+                ),
+
+            withdrawable:
+                number(
+
+                    wallet.withdrawable ??
+                    wallet.balance
+
+                ),
+
+            currency:
+                wallet.currency ||
+                "USDT"
+
+        };
+
+
+    } catch (error) {
+
+        console.warn(
+            "Wallet:",
+            error.message
+        );
+
+    }
+
+}
+
+
+// =====================================
+// BOT
+// =====================================
+
+async function loadBot() {
+
+    const id =
+        state.user.backendId;
+
+
+    if (!id) {
+
+        return;
+
+    }
+
+
+    try {
+
+        const data =
+            await api(
+                "/api/bot/" +
+                encodeURIComponent(id)
+            );
+
+
+        const bot =
+            data.bot ||
+            data ||
+            {};
+
+
+        state.bot = {
+
+            status:
+                bot.status ||
+                "STOPPED",
+
+            strategy:
+                bot.strategy ||
+                "AI Scalping",
+
+            accuracy:
+                number(
+                    bot.accuracy
+                ),
+
+            confidence:
+                number(
+                    bot.confidence
+                ),
+
+            lastSignal:
+                bot.lastSignal ||
+                "WAIT"
+
+        };
+
+
+    } catch (error) {
+
+        console.warn(
+            "Bot:",
+            error.message
+        );
+
+    }
+
+}
+
+
+// =====================================
+// TRADES
+// =====================================
+
+async function loadTrades() {
+
+    const id =
+        state.user.backendId;
+
+
+    if (!id) {
+
+        return;
+
+    }
+
+
+    try {
+
+        const data =
+            await api(
+                "/api/trades/" +
+                encodeURIComponent(id)
+            );
+
+
+        state.trades =
+            Array.isArray(data)
+                ?
+            data
+                :
+            (
+                data.trades ||
+                []
+            );
+
+
+    } catch {
+
+        state.trades =
+            [];
+
+    }
+
+}
+
+
+// =====================================
+// DEPOSITS
+// =====================================
+
+async function loadDeposits() {
+
+    const id =
+        state.user.backendId;
+
+
+    if (!id) {
+
+        return;
+
+    }
+
+
+    try {
+
+        const data =
+            await api(
+                "/api/deposit/user/" +
+                encodeURIComponent(id)
+            );
+
+
+        state.deposits =
+            data.deposits ||
+            [];
+
+
+    } catch {
+
+        state.deposits =
+            [];
 
     }
 
@@ -763,7 +834,6 @@ function renderDashboard() {
 
 
     const tomanValue =
-
         state.exchangeRate > 0
 
             ?
@@ -824,6 +894,7 @@ function renderDashboard() {
                     واریز
                 </button>
 
+
                 <button
                     class="m-button"
                     data-page="withdraw"
@@ -846,11 +917,11 @@ function renderDashboard() {
                 </span>
 
                 <strong>
-                    $0.00
+                    $${usd(w.todayProfit)}
                 </strong>
 
                 <small>
-                    0.00%
+                    عملکرد امروز
                 </small>
 
             </div>
@@ -867,7 +938,7 @@ function renderDashboard() {
                 </strong>
 
                 <small>
-                    0.00%
+                    سود و زیان
                 </small>
 
             </div>
@@ -917,18 +988,23 @@ function renderDashboard() {
                 ربات هوش مصنوعی
             </h2>
 
+
             <span
                 class="${
                     b.status === "ACTIVE"
-                        ? "m-status active"
-                        : "m-status"
+                        ?
+                    "m-status active"
+                        :
+                    "m-status"
                 }"
             >
 
                 ${
                     b.status === "ACTIVE"
-                        ? "فعال"
-                        : "متوقف"
+                        ?
+                    "فعال"
+                        :
+                    "متوقف"
                 }
 
             </span>
@@ -958,7 +1034,9 @@ function renderDashboard() {
                 </span>
 
                 <strong>
-                    ${number(b.accuracy).toFixed(2)}%
+                    ${number(
+                        b.accuracy
+                    ).toFixed(2)}%
                 </strong>
 
             </div>
@@ -974,10 +1052,12 @@ function renderDashboard() {
 
                     ${
                         b.lastSignal === "BUY"
-                            ? "خرید"
+                            ?
+                        "خرید"
                             :
                         b.lastSignal === "SELL"
-                            ? "فروش"
+                            ?
+                        "فروش"
                             :
                         "انتظار"
                     }
@@ -1012,6 +1092,7 @@ function renderDashboard() {
                 آخرین معاملات
             </h2>
 
+
             <button
                 class="m-link"
                 data-page="trades"
@@ -1035,13 +1116,18 @@ function renderDashboard() {
 
 
 // =====================================
-// WALLET
+// WALLET PAGE
 // =====================================
 
 function renderWallet() {
 
     const w =
         state.wallet;
+
+
+    const tomanValue =
+        number(w.balance) *
+        number(state.exchangeRate);
 
 
     return `
@@ -1076,11 +1162,7 @@ function renderWallet() {
 
             <div class="m-toman">
 
-                ${toman(
-                    number(w.balance) *
-                    number(state.exchangeRate)
-                )}
-
+                ${toman(tomanValue)}
                 تومان
 
             </div>
@@ -1098,6 +1180,7 @@ function renderWallet() {
                 واریز
             </button>
 
+
             <button
                 class="m-button"
                 data-page="withdraw"
@@ -1112,7 +1195,7 @@ function renderWallet() {
         <div class="m-section-title">
 
             <h2>
-                خلاصه
+                خلاصه کیف پول
             </h2>
 
         </div>
@@ -1162,11 +1245,33 @@ function renderWallet() {
             <div class="m-row">
 
                 <span>
+                    معادل قابل برداشت
+                </span>
+
+                <strong>
+
+                    ${toman(
+                        number(w.withdrawable) *
+                        number(state.exchangeRate)
+                    )}
+
+                    تومان
+
+                </strong>
+
+            </div>
+
+
+            <div class="m-row">
+
+                <span>
                     تعداد معاملات
                 </span>
 
                 <strong>
-                    ${number(w.totalTrades)}
+                    ${number(
+                        w.totalTrades
+                    )}
                 </strong>
 
             </div>
@@ -1214,14 +1319,19 @@ function renderTrades(
 
 
     return state.trades
-        .slice(0, limit)
+        .slice(
+            0,
+            limit
+        )
         .map(
             function (trade) {
 
                 const type =
                     trade.type === "BUY"
-                        ? "خرید"
-                        : "فروش";
+                        ?
+                    "خرید"
+                        :
+                    "فروش";
 
 
                 return `
@@ -1231,11 +1341,14 @@ function renderTrades(
                         <div>
 
                             <strong>
+
                                 ${type}
+
                                 ${safe(
                                     trade.symbol ||
                                     ""
                                 )}
+
                             </strong>
 
                             <small>
@@ -1255,9 +1368,11 @@ function renderTrades(
                         <div>
 
                             <strong>
+
                                 $${usd(
                                     trade.profit
                                 )}
+
                             </strong>
 
                             <small>
@@ -1387,19 +1502,23 @@ function renderAnalytics() {
                 </strong>
 
                 <span>
-                    سود امروز: $0.00
+                    سود امروز:
+                    $${usd(w.todayProfit)}
                 </span>
 
                 <span>
-                    ضرر امروز: $0.00
+                    ضرر امروز:
+                    $0.00
                 </span>
 
                 <span>
-                    تعداد معاملات موفق: 0
+                    معاملات موفق:
+                    0
                 </span>
 
                 <span>
-                    تعداد معاملات ناموفق: 0
+                    معاملات ناموفق:
+                    0
                 </span>
 
             </div>
@@ -1506,6 +1625,7 @@ function renderDeposit() {
                 </span>
 
                 <strong>
+
                     ${
                         state.exchangeRate > 0
                             ?
@@ -1515,6 +1635,7 @@ function renderDeposit() {
                             :
                         "0 تومان"
                     }
+
                 </strong>
 
             </div>
@@ -1554,89 +1675,125 @@ function renderDeposit() {
 
 // =====================================
 // WITHDRAW
+// کاملاً تومان‌محور
 // =====================================
 
 function renderWithdraw() {
+
+    const availableToman =
+
+        number(
+            state.wallet.withdrawable
+        ) *
+
+        number(
+            state.exchangeRate
+        );
+
 
     return `
 
         ${renderHeader(
             "برداشت",
-            "درخواست برداشت موجودی"
+            "برداشت موجودی به تومان"
         )}
 
 
         <div class="m-card">
 
-            <div class="m-row">
+            <div class="m-withdraw-balance">
 
                 <span>
                     موجودی قابل برداشت
                 </span>
 
+
                 <strong>
+
+                    ${toman(
+                        availableToman
+                    )}
+
+                    تومان
+
+                </strong>
+
+
+                <small>
+
+                    معادل
                     $${usd(
                         state.wallet.withdrawable
                     )}
+                    USDT
+
+                </small>
+
+            </div>
+
+
+            <label class="m-label">
+
+                مبلغ برداشت به تومان
+
+            </label>
+
+
+            <input
+                id="withdrawAmountToman"
+                class="m-input"
+                type="number"
+                min="0"
+                step="1000"
+                value="0"
+                placeholder="0"
+            />
+
+
+            <div
+                class="m-row"
+                id="withdrawUsdPreview"
+            >
+
+                <span>
+                    معادل USDT
+                </span>
+
+                <strong>
+                    $0.00
                 </strong>
 
             </div>
 
 
             <label class="m-label">
-                مبلغ USDT
+
+                شماره کارت یا شبا
+
             </label>
 
 
             <input
-                id="withdrawAmount"
+                id="withdrawAccount"
                 class="m-input"
-                type="number"
-                min="0"
-                step="0.01"
-                value="0"
+                type="text"
+                inputmode="numeric"
+                placeholder="شماره کارت یا شماره شبا"
             />
 
 
             <label class="m-label">
-                شبکه
-            </label>
 
+                نام صاحب حساب
 
-            <select
-                id="withdrawNetwork"
-                class="m-input"
-            >
-
-                <option value="">
-                    انتخاب شبکه
-                </option>
-
-                <option value="TRC20">
-                    TRC20
-                </option>
-
-                <option value="BEP20">
-                    BEP20
-                </option>
-
-                <option value="ERC20">
-                    ERC20
-                </option>
-
-            </select>
-
-
-            <label class="m-label">
-                آدرس کیف پول
             </label>
 
 
             <input
-                id="withdrawAddress"
+                id="withdrawOwner"
                 class="m-input"
                 type="text"
-                placeholder="آدرس کیف پول"
+                placeholder="نام و نام خانوادگی"
             />
 
 
@@ -1649,6 +1806,14 @@ function renderWithdraw() {
                 ثبت درخواست برداشت
 
             </button>
+
+
+            <div class="m-withdraw-note">
+
+                مبلغ برداشت پس از بررسی و تأیید
+                درخواست پرداخت خواهد شد.
+
+            </div>
 
         </div>
 
@@ -1781,8 +1946,10 @@ function renderBottomNav() {
             <button
                 class="${
                     state.page === "dashboard"
-                        ? "active"
-                        : ""
+                        ?
+                    "active"
+                        :
+                    ""
                 }"
                 data-page="dashboard"
                 type="button"
@@ -1802,8 +1969,10 @@ function renderBottomNav() {
             <button
                 class="${
                     state.page === "wallet"
-                        ? "active"
-                        : ""
+                        ?
+                    "active"
+                        :
+                    ""
                 }"
                 data-page="wallet"
                 type="button"
@@ -1823,8 +1992,10 @@ function renderBottomNav() {
             <button
                 class="${
                     state.page === "trades"
-                        ? "active"
-                        : ""
+                        ?
+                    "active"
+                        :
+                    ""
                 }"
                 data-page="trades"
                 type="button"
@@ -1844,8 +2015,10 @@ function renderBottomNav() {
             <button
                 class="${
                     state.page === "analytics"
-                        ? "active"
-                        : ""
+                        ?
+                    "active"
+                        :
+                    ""
                 }"
                 data-page="analytics"
                 type="button"
@@ -1865,15 +2038,17 @@ function renderBottomNav() {
             <button
                 class="${
                     state.page === "profile"
-                        ? "active"
-                        : ""
+                        ?
+                    "active"
+                        :
+                    ""
                 }"
                 data-page="profile"
                 type="button"
             >
 
                 <span>
-                    ◉
+                    💬
                 </span>
 
                 <small>
@@ -1894,14 +2069,14 @@ function renderBottomNav() {
 // NAVIGATION
 // =====================================
 
-function goTo(
-    page
-) {
+function goTo(page) {
 
     state.page =
         page;
 
+
     renderPage();
+
 
     window.scrollTo(
         0,
@@ -1959,10 +2134,11 @@ async function startBot() {
     const id =
         state.user.backendId;
 
+
     if (!id) {
 
         showToast(
-            "ابتدا اتصال حساب انجام شود"
+            "حساب کاربری هنوز آماده نیست"
         );
 
         return;
@@ -2006,11 +2182,14 @@ async function startBot() {
 
         await loadBot();
 
+
         renderPage();
+
 
         showToast(
             "ربات هوش مصنوعی فعال شد"
         );
+
 
     } catch (error) {
 
@@ -2046,7 +2225,7 @@ async function createDeposit() {
     if (!id) {
 
         showToast(
-            "حساب کاربری هنوز آماده نیست"
+            "حساب کاربری آماده نیست"
         );
 
         return;
@@ -2072,7 +2251,7 @@ async function createDeposit() {
     ) {
 
         showToast(
-            "نرخ دلار هنوز دریافت نشده است"
+            "نرخ دلار دریافت نشده است"
         );
 
         return;
@@ -2124,9 +2303,11 @@ async function createDeposit() {
 
         await loadDeposits();
 
+
         goTo(
             "wallet"
         );
+
 
     } catch (error) {
 
@@ -2141,6 +2322,7 @@ async function createDeposit() {
 
 // =====================================
 // WITHDRAW
+// برداشت کاملاً به تومان
 // =====================================
 
 async function submitWithdraw() {
@@ -2149,29 +2331,30 @@ async function submitWithdraw() {
         state.user.backendId;
 
 
-    const amount =
+    const amountToman =
         number(
             document
                 .getElementById(
-                    "withdrawAmount"
+                    "withdrawAmountToman"
                 )
                 ?.value
         );
 
 
-    const network =
+    const account =
         document
             .getElementById(
-                "withdrawNetwork"
+                "withdrawAccount"
             )
-            ?.value ||
+            ?.value
+            ?.trim() ||
             "";
 
 
-    const address =
+    const owner =
         document
             .getElementById(
-                "withdrawAddress"
+                "withdrawOwner"
             )
             ?.value
             ?.trim() ||
@@ -2190,11 +2373,11 @@ async function submitWithdraw() {
 
 
     if (
-        amount <= 0
+        amountToman <= 0
     ) {
 
         showToast(
-            "مبلغ برداشت باید بیشتر از صفر باشد"
+            "مبلغ برداشت را وارد کنید"
         );
 
         return;
@@ -2203,8 +2386,32 @@ async function submitWithdraw() {
 
 
     if (
-        amount >
-        state.wallet.withdrawable
+        state.exchangeRate <= 0
+    ) {
+
+        showToast(
+            "نرخ دلار دریافت نشده است"
+        );
+
+        return;
+
+    }
+
+
+    const availableToman =
+
+        number(
+            state.wallet.withdrawable
+        ) *
+
+        number(
+            state.exchangeRate
+        );
+
+
+    if (
+        amountToman >
+        availableToman
     ) {
 
         showToast(
@@ -2217,12 +2424,11 @@ async function submitWithdraw() {
 
 
     if (
-        !network ||
-        !address
+        !account
     ) {
 
         showToast(
-            "شبکه و آدرس را وارد کنید"
+            "شماره کارت یا شبا را وارد کنید"
         );
 
         return;
@@ -2230,43 +2436,85 @@ async function submitWithdraw() {
     }
 
 
+    if (
+        !owner
+    ) {
+
+        showToast(
+            "نام صاحب حساب را وارد کنید"
+        );
+
+        return;
+
+    }
+
+
+    const amountUSDT =
+
+        amountToman /
+        state.exchangeRate;
+
+
     try {
 
-        await api(
-            "/api/withdraw",
-            {
+        /*
+         * توجه:
+         * مقدار اصلی درخواست تومان است.
+         * Backend باید amountToman را دریافت کند
+         * و سمت سرور دوباره موجودی و نرخ را
+         * بررسی کند.
+         */
 
-                method:
-                    "POST",
+        const data =
+            await api(
+                "/api/withdraw",
+                {
 
-                body:
-                    JSON.stringify({
+                    method:
+                        "POST",
 
-                        userId:
-                            id,
+                    body:
+                        JSON.stringify({
 
-                        amount,
+                            userId:
+                                id,
 
-                        network,
+                            amountToman:
+                                amountToman,
 
-                        address
+                            amountUSDT:
+                                amountUSDT,
 
-                    })
+                            exchangeRate:
+                                state.exchangeRate,
 
-            }
-        );
+                            account:
+                                account,
+
+                            owner:
+                                owner
+
+                        })
+
+                }
+            );
 
 
         showToast(
-            "درخواست برداشت ثبت شد"
+
+            data.message ||
+            "درخواست برداشت با موفقیت ثبت شد"
+
         );
 
 
         await loadWallet();
 
+
         goTo(
             "wallet"
         );
+
 
     } catch (error) {
 
@@ -2328,6 +2576,68 @@ function attachInputEvents() {
                     output.textContent =
                         "$" +
                         usd(usdValue);
+
+                }
+
+            }
+        );
+
+    }
+
+
+    const withdraw =
+        document.getElementById(
+            "withdrawAmountToman"
+        );
+
+
+    if (withdraw) {
+
+        withdraw.addEventListener(
+            "input",
+            function () {
+
+                const amountToman =
+                    number(
+                        withdraw.value
+                    );
+
+
+                const amountUSDT =
+
+                    state.exchangeRate > 0
+
+                        ?
+
+                    amountToman /
+                    state.exchangeRate
+
+                        :
+
+                    0;
+
+
+                const preview =
+                    document.getElementById(
+                        "withdrawUsdPreview"
+                    );
+
+
+                if (preview) {
+
+                    preview.innerHTML = `
+
+                        <span>
+                            معادل USDT
+                        </span>
+
+                        <strong>
+                            $${usd(
+                                amountUSDT
+                            )}
+                        </strong>
+
+                    `;
 
                 }
 
@@ -2406,9 +2716,11 @@ document.addEventListener(
 
             await refresh();
 
+
             showToast(
                 "اطلاعات به‌روزرسانی شد"
             );
+
 
             return;
 
@@ -2514,13 +2826,21 @@ function injectStyles() {
         }
 
 
+        html,
         body {
 
             margin: 0;
 
             padding: 0;
 
+            min-height: 100%;
+
             background: #050816;
+
+        }
+
+
+        body {
 
             color: #ffffff;
 
@@ -2556,7 +2876,7 @@ function injectStyles() {
 
             background: #050816;
 
-            padding-bottom: 80px;
+            padding-bottom: 90px;
 
         }
 
@@ -2711,7 +3031,8 @@ function injectStyles() {
 
             display: grid;
 
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns:
+                1fr 1fr;
 
             gap: 10px;
 
@@ -2768,7 +3089,8 @@ function injectStyles() {
 
             display: grid;
 
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns:
+                1fr 1fr;
 
             gap: 12px;
 
@@ -3210,6 +3532,63 @@ function injectStyles() {
         }
 
 
+        .m-withdraw-balance {
+
+            text-align: center;
+
+            padding: 8px 0 18px;
+
+        }
+
+
+        .m-withdraw-balance span {
+
+            display: block;
+
+            color: #94a3b8;
+
+            font-size: 13px;
+
+        }
+
+
+        .m-withdraw-balance strong {
+
+            display: block;
+
+            margin-top: 10px;
+
+            font-size: 27px;
+
+        }
+
+
+        .m-withdraw-balance small {
+
+            display: block;
+
+            margin-top: 7px;
+
+            color: #64748b;
+
+        }
+
+
+        .m-withdraw-note {
+
+            color: #64748b;
+
+            font-size: 11px;
+
+            line-height: 1.8;
+
+            margin-top: 15px;
+
+            text-align: center;
+
+        }
+
+
         #m-toast {
 
             position: fixed;
@@ -3256,9 +3635,7 @@ function injectStyles() {
         }
 
 
-        @media (
-            max-width: 380px
-        ) {
+        @media (max-width: 380px) {
 
             .m-content {
 
