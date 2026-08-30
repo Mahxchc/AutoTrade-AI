@@ -9,25 +9,113 @@ import express from "express";
 import mongoose from "mongoose";
 
 import Withdraw from "../models/Withdraw.js";
+import Wallet from "../models/Wallet.js";
 import User from "../models/User.js";
+
+import {
+    requiredTelegramUser
+} from "../middleware/auth.js";
+
 
 const router = express.Router();
 
 
 // =====================================
-// CREATE WITHDRAW REQUEST
+// ..M GET AUTHENTICATED USER
+// دریافت کاربر احراز هویت‌شده
+// =====================================
+
+async function getAuthenticatedUser(req) {
+
+    const telegramId =
+        req.telegramId ||
+        req.telegramUser?.id ||
+        req.user?.telegramId;
+
+
+    if (!telegramId) {
+
+        throw new Error(
+            "Telegram user is not authenticated"
+        );
+
+    }
+
+
+    const user =
+        await User.findOne({
+
+            telegramId:
+                String(telegramId)
+
+        });
+
+
+    if (!user) {
+
+        throw new Error(
+            "User not found"
+        );
+
+    }
+
+
+    return user;
+
+}
+
+
+// =====================================
+// ..M MASK IBAN
+// مخفی کردن بخشی از شماره شبا
+// =====================================
+
+function maskIban(
+    iban
+) {
+
+    const value =
+        String(iban || "");
+
+
+    if (
+        value.length <= 8
+    ) {
+
+        return value;
+
+    }
+
+
+    return (
+        value.slice(0, 4) +
+        "********" +
+        value.slice(-4)
+    );
+
+}
+
+
+// =====================================
+// ..M CREATE WITHDRAW REQUEST
 // ایجاد درخواست برداشت
 // POST /api/withdraw
 // =====================================
 
 router.post(
     "/",
+    requiredTelegramUser,
     async (req, res) => {
 
         try {
 
+            const user =
+                await getAuthenticatedUser(
+                    req
+                );
+
+
             const {
-                userId,
                 amountToman,
                 iban,
                 description
@@ -35,35 +123,21 @@ router.post(
 
 
             // =====================================
-            // بررسی User ID
+            // ..M ACCESS CONTROL
+            // کنترل دسترسی برداشت
             // =====================================
-
-            if (!userId) {
-
-                return res.status(400).json({
-
-                    success: false,
-
-                    message:
-                        "شناسه کاربر ارسال نشده است"
-
-                });
-
-            }
-
 
             if (
-                !mongoose.Types.ObjectId.isValid(
-                    userId
-                )
+                user.status !==
+                "ACTIVE"
             ) {
 
-                return res.status(400).json({
+                return res.status(403).json({
 
                     success: false,
 
                     message:
-                        "شناسه کاربر نامعتبر است"
+                        "حساب کاربری فعال نیست"
 
                 });
 
@@ -71,12 +145,14 @@ router.post(
 
 
             // =====================================
+            // ..M VALIDATE AMOUNT
             // بررسی مبلغ
-            // تومان
             // =====================================
 
             const amount =
-                Number(amountToman);
+                Number(
+                    amountToman
+                );
 
 
             if (
@@ -96,8 +172,13 @@ router.post(
             }
 
 
+            // =====================================
+            // ..M MINIMUM WITHDRAW
             // حداقل برداشت
-            const MIN_WITHDRAW_TOMAN = 100000;
+            // =====================================
+
+            const MIN_WITHDRAW_TOMAN =
+                100000;
 
 
             if (
@@ -118,7 +199,8 @@ router.post(
 
 
             // =====================================
-            // بررسی شبا
+            // ..M VALIDATE IBAN
+            // بررسی شماره شبا
             // =====================================
 
             if (!iban) {
@@ -141,17 +223,11 @@ router.post(
                     .toUpperCase();
 
 
-            // تبدیل IRxxxxxxxxxxxxxxxxxxxxxxxxxx
-            // اگر کاربر IR را وارد نکرده باشد
-
             const normalizedIban =
                 cleanIban.startsWith("IR")
                     ? cleanIban
                     : "IR" + cleanIban;
 
-
-            // شماره شبا ایران
-            // IR + 24 رقم
 
             if (
                 !/^IR\d{24}$/.test(
@@ -164,7 +240,7 @@ router.post(
                     success: false,
 
                     message:
-                        "شماره شبا نامعتبر است. مثال: IRxxxxxxxxxxxxxxxxxxxxxxxx"
+                        "شماره شبا نامعتبر است"
 
                 });
 
@@ -172,23 +248,27 @@ router.post(
 
 
             // =====================================
-            // دریافت کاربر
+            // ..M FIND WALLET
+            // پیدا کردن کیف پول
             // =====================================
 
-            const user =
-                await User.findById(
-                    userId
-                );
+            const wallet =
+                await Wallet.findOne({
+
+                    userId:
+                        user._id
+
+                });
 
 
-            if (!user) {
+            if (!wallet) {
 
                 return res.status(404).json({
 
                     success: false,
 
                     message:
-                        "کاربر پیدا نشد"
+                        "کیف پول کاربر پیدا نشد"
 
                 });
 
@@ -196,19 +276,42 @@ router.post(
 
 
             // =====================================
+            // ..M WALLET STATUS
+            // =====================================
+
+            if (
+                wallet.status !==
+                "ACTIVE"
+            ) {
+
+                return res.status(403).json({
+
+                    success: false,
+
+                    message:
+                        "کیف پول فعال نیست"
+
+                });
+
+            }
+
+
+            // =====================================
+            // ..M WITHDRAWABLE BALANCE
             // موجودی قابل برداشت
             // =====================================
 
-            const currentBalance =
+            const withdrawable =
                 Number(
-                    user.balance || 0
+                    wallet.withdrawable || 0
                 );
 
 
             if (
                 !Number.isFinite(
-                    currentBalance
-                )
+                    withdrawable
+                ) ||
+                withdrawable < 0
             ) {
 
                 return res.status(500).json({
@@ -216,7 +319,7 @@ router.post(
                     success: false,
 
                     message:
-                        "موجودی کاربر نامعتبر است"
+                        "موجودی قابل برداشت نامعتبر است"
 
                 });
 
@@ -224,12 +327,13 @@ router.post(
 
 
             // =====================================
+            // ..M CHECK BALANCE
             // بررسی موجودی
             // =====================================
 
             if (
                 amount >
-                currentBalance
+                withdrawable
             ) {
 
                 return res.status(400).json({
@@ -237,10 +341,10 @@ router.post(
                     success: false,
 
                     message:
-                        "موجودی کافی نیست",
+                        "موجودی قابل برداشت کافی نیست",
 
-                    balanceToman:
-                        currentBalance
+                    withdrawableToman:
+                        withdrawable
 
                 });
 
@@ -248,15 +352,18 @@ router.post(
 
 
             // =====================================
+            // ..M PENDING WITHDRAW
             // جلوگیری از چند برداشت همزمان
             // =====================================
 
             const pendingWithdraw =
                 await Withdraw.findOne({
 
-                    userId,
+                    userId:
+                        user._id,
 
-                    status: "PENDING"
+                    status:
+                        "PENDING"
 
                 });
 
@@ -279,69 +386,131 @@ router.post(
 
 
             // =====================================
-            // کسر موجودی
-            //
-            // برداشت واقعی باید از بک‌اند انجام شود
-            // نه Mini App
-            // =====================================
-
-            user.balance =
-                currentBalance - amount;
-
-
-            await user.save();
-
-
-            // =====================================
+            // ..M CREATE WITHDRAW FIRST
             // ایجاد درخواست برداشت
             // =====================================
 
-            let withdraw;
+            const withdraw =
+                await Withdraw.create({
 
-            try {
+                    userId:
+                        user._id,
 
-                withdraw =
-                    await Withdraw.create({
+                    amountToman:
+                        amount,
 
-                        userId,
+                    iban:
+                        normalizedIban,
 
-                        amountToman:
-                            amount,
+                    description:
+                        description
+                            ? String(description)
+                            : "",
 
-                        iban:
-                            normalizedIban,
+                    status:
+                        "PENDING",
 
-                        description:
-                            description || "",
+                    processedAt:
+                        null
+
+                });
+
+
+            // =====================================
+            // ..M RESERVE WITHDRAWABLE BALANCE
+            // رزرو موجودی قابل برداشت
+            // =====================================
+
+            const updatedWallet =
+                await Wallet.findOneAndUpdate(
+
+                    {
+
+                        _id:
+                            wallet._id,
 
                         status:
-                            "PENDING",
+                            "ACTIVE",
 
-                        processedAt:
-                            null
+                        withdrawable: {
 
-                    });
+                            $gte:
+                                amount
 
-            }
+                        }
 
-            catch (createError) {
+                    },
 
-                // =====================================
-                // اگر ثبت Withdraw شکست خورد،
-                // موجودی کاربر برگردانده می‌شود
-                // =====================================
+                    {
 
-                user.balance =
-                    currentBalance;
+                        $inc: {
 
-                await user.save();
+                            withdrawable:
+                                -amount
 
-                throw createError;
+                        }
+
+                    },
+
+                    {
+
+                        returnDocument:
+                            "after"
+
+                    }
+
+                );
+
+
+            // =====================================
+            // ..M ROLLBACK IF BALANCE UPDATE FAILED
+            // =====================================
+
+            if (!updatedWallet) {
+
+                await Withdraw.findOneAndUpdate(
+
+                    {
+
+                        _id:
+                            withdraw._id,
+
+                        status:
+                            "PENDING"
+
+                    },
+
+                    {
+
+                        $set: {
+
+                            status:
+                                "CANCELLED",
+
+                            description:
+                                "موجودی قابل برداشت کافی نبود"
+
+                        }
+
+                    }
+
+                );
+
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    message:
+                        "موجودی قابل برداشت کافی نیست"
+
+                });
 
             }
 
 
             // =====================================
+            // ..M RESPONSE
             // پاسخ
             // =====================================
 
@@ -364,13 +533,22 @@ router.post(
                         withdraw.amountToman,
 
                     iban:
-                        normalizedIban,
+                        maskIban(
+                            withdraw.iban
+                        ),
 
                     status:
                         withdraw.status,
 
                     createdAt:
                         withdraw.createdAt
+
+                },
+
+                wallet: {
+
+                    withdrawableToman:
+                        updatedWallet.withdrawable
 
                 }
 
@@ -403,64 +581,39 @@ router.post(
 
 
 // =====================================
-// GET USER WITHDRAWS
-// دریافت برداشت‌های کاربر
-// GET /api/withdraw/user/:userId
+// ..M GET MY WITHDRAWS
+// دریافت برداشت‌های کاربر فعلی
+// GET /api/withdraw/my
 // =====================================
 
 router.get(
-    "/user/:userId",
+    "/my",
+    requiredTelegramUser,
     async (req, res) => {
 
         try {
 
-            const {
-                userId
-            } = req.params;
+            const user =
+                await getAuthenticatedUser(
+                    req
+                );
 
-
-            // =====================================
-            // بررسی ID
-            // =====================================
-
-            if (
-                !mongoose.Types.ObjectId.isValid(
-                    userId
-                )
-            ) {
-
-                return res.status(400).json({
-
-                    success: false,
-
-                    message:
-                        "شناسه کاربر نامعتبر است"
-
-                });
-
-            }
-
-
-            // =====================================
-            // دریافت درخواست‌ها
-            // =====================================
 
             const withdraws =
                 await Withdraw.find({
 
-                    userId
+                    userId:
+                        user._id
 
                 })
                 .sort({
 
-                    createdAt: -1
+                    createdAt:
+                        -1
 
-                });
+                })
+                .limit(100);
 
-
-            // =====================================
-            // پاسخ
-            // =====================================
 
             return res.status(200).json({
 
@@ -469,7 +622,38 @@ router.get(
                 count:
                     withdraws.length,
 
-                withdraws
+                withdraws:
+                    withdraws.map(
+                        (withdraw) => ({
+
+                            id:
+                                withdraw._id,
+
+                            amountToman:
+                                withdraw.amountToman,
+
+                            iban:
+                                maskIban(
+                                    withdraw.iban
+                                ),
+
+                            description:
+                                withdraw.description,
+
+                            status:
+                                withdraw.status,
+
+                            processedAt:
+                                withdraw.processedAt,
+
+                            createdAt:
+                                withdraw.createdAt,
+
+                            updatedAt:
+                                withdraw.updatedAt
+
+                        })
+                    )
 
             });
 
@@ -478,7 +662,7 @@ router.get(
         catch (error) {
 
             console.error(
-                "Get User Withdraws Error:",
+                "Get My Withdraws Error:",
                 error
             );
 
@@ -488,6 +672,7 @@ router.get(
                 success: false,
 
                 message:
+                    error.message ||
                     "دریافت درخواست‌های برداشت ناموفق بود"
 
             });
@@ -499,16 +684,23 @@ router.get(
 
 
 // =====================================
-// GET WITHDRAW STATUS
-// وضعیت یک برداشت
+// ..M GET MY WITHDRAW STATUS
+// وضعیت برداشت خود کاربر
 // GET /api/withdraw/:withdrawId
 // =====================================
 
 router.get(
     "/:withdrawId",
+    requiredTelegramUser,
     async (req, res) => {
 
         try {
+
+            const user =
+                await getAuthenticatedUser(
+                    req
+                );
+
 
             const {
                 withdrawId
@@ -516,7 +708,7 @@ router.get(
 
 
             // =====================================
-            // بررسی ID
+            // ..M VALIDATE ID
             // =====================================
 
             if (
@@ -538,13 +730,19 @@ router.get(
 
 
             // =====================================
-            // پیدا کردن برداشت
+            // ..M FIND OWN WITHDRAW
             // =====================================
 
             const withdraw =
-                await Withdraw.findById(
-                    withdrawId
-                );
+                await Withdraw.findOne({
+
+                    _id:
+                        withdrawId,
+
+                    userId:
+                        user._id
+
+                });
 
 
             if (!withdraw) {
@@ -561,10 +759,6 @@ router.get(
             }
 
 
-            // =====================================
-            // پاسخ
-            // =====================================
-
             return res.status(200).json({
 
                 success: true,
@@ -574,14 +768,13 @@ router.get(
                     id:
                         withdraw._id,
 
-                    userId:
-                        withdraw.userId,
-
                     amountToman:
                         withdraw.amountToman,
 
                     iban:
-                        withdraw.iban,
+                        maskIban(
+                            withdraw.iban
+                        ),
 
                     description:
                         withdraw.description,
@@ -617,6 +810,7 @@ router.get(
                 success: false,
 
                 message:
+                    error.message ||
                     "دریافت وضعیت برداشت ناموفق بود"
 
             });
@@ -628,7 +822,7 @@ router.get(
 
 
 // =====================================
-// EXPORT
+// ..M EXPORT
 // =====================================
 
 export default router;
