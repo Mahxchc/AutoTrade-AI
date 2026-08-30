@@ -1,5 +1,5 @@
 // =====================================
-// AutoTrade AI Backend :: M
+// ..M AutoTrade AI Backend
 // Main Server
 // File: backend/server.js
 // =====================================
@@ -10,29 +10,24 @@ import dotenv from "dotenv";
 
 
 // =====================================
-// Load Environment
+// Load Environment :: M
 // =====================================
 
 dotenv.config();
 
 
 // =====================================
-// Database
+// Database :: M
 // =====================================
 
 import connectDatabase
     from "./database.js";
 
-
-// =====================================
-// Database Connection
-// =====================================
-
 import mongoose from "mongoose";
 
 
 // =====================================
-// Authentication Middleware
+// Authentication Middleware :: M
 // =====================================
 
 import {
@@ -41,7 +36,7 @@ import {
 
 
 // =====================================
-// Routes
+// Routes :: M
 // =====================================
 
 import userRoutes
@@ -73,7 +68,22 @@ import withdrawRoutes
 
 
 // =====================================
-// Express App
+// Admin Routes :: M
+// =====================================
+//
+// فقط سازنده / Admin
+// اجازه استفاده از این مسیرها را دارد.
+//
+// /api/admin
+//
+// =====================================
+
+import adminRoutes
+    from "./routes/admin.js";
+
+
+// =====================================
+// Express App :: M
 // =====================================
 
 const app =
@@ -81,7 +91,7 @@ const app =
 
 
 // =====================================
-// Trust Proxy
+// Trust Proxy :: M
 // =====================================
 
 app.set(
@@ -91,7 +101,7 @@ app.set(
 
 
 // =====================================
-// Basic Security
+// Basic Security :: M
 // =====================================
 
 app.disable(
@@ -100,7 +110,7 @@ app.disable(
 
 
 // =====================================
-// CORS
+// CORS :: M
 // =====================================
 
 const allowedOrigins = [
@@ -116,10 +126,13 @@ app.use(
 
     cors({
 
-        origin(origin, callback) {
+        origin(
+            origin,
+            callback
+        ) {
 
             // ---------------------------------
-            // Allow server-to-server requests
+            // Server-to-server
             // ---------------------------------
 
             if (!origin) {
@@ -133,7 +146,7 @@ app.use(
 
 
             // ---------------------------------
-            // If no origins configured
+            // No configured origins
             // ---------------------------------
 
             if (
@@ -149,7 +162,7 @@ app.use(
 
 
             // ---------------------------------
-            // Check allowed origin
+            // Allowed origin
             // ---------------------------------
 
             if (
@@ -167,9 +180,11 @@ app.use(
 
 
             return callback(
+
                 new Error(
                     "CORS origin not allowed"
                 )
+
             );
 
         },
@@ -203,7 +218,7 @@ app.use(
 
 
 // =====================================
-// Body Parser
+// Body Parser :: M
 // =====================================
 
 app.use(
@@ -234,11 +249,15 @@ app.use(
 
 
 // =====================================
-// Request Time
+// Request Time :: M
 // =====================================
 
 app.use(
-    (req, res, next) => {
+    (
+        req,
+        res,
+        next
+    ) => {
 
         req.requestTime =
             new Date();
@@ -250,12 +269,15 @@ app.use(
 
 
 // =====================================
-// Root Health
+// Root Health :: M
 // =====================================
 
 app.get(
     "/",
-    (req, res) => {
+    (
+        req,
+        res
+    ) => {
 
         return res.status(200).json({
 
@@ -278,12 +300,15 @@ app.get(
 
 
 // =====================================
-// Real Health Check
+// Real Health Check :: M
 // =====================================
 
 app.get(
     "/health",
-    (req, res) => {
+    (
+        req,
+        res
+    ) => {
 
         const readyState =
             mongoose.connection.readyState;
@@ -294,9 +319,11 @@ app.get(
 
 
         return res.status(
+
             databaseConnected
                 ? 200
                 : 503
+
         ).json({
 
             success:
@@ -325,13 +352,13 @@ app.get(
 
 
 // =====================================
-// Telegram Authentication
+// Telegram Authentication :: M
 // =====================================
 //
 // POST /api/auth/telegram
 //
-// این مسیر خودش middleware احراز هویت
-// مخصوص Telegram را داخل auth.js دارد.
+// خود auth.js احراز هویت را انجام می‌دهد.
+//
 // =====================================
 
 app.use(
@@ -341,7 +368,7 @@ app.use(
 
 
 // =====================================
-// Public Currency Route
+// Public Currency Route :: M
 // =====================================
 
 app.use(
@@ -351,17 +378,36 @@ app.use(
 
 
 // =====================================
-// Protected API Routes
+// Admin Routes :: M
 // =====================================
 //
-// تمام مسیرهای زیر نیاز به Telegram
-// initData معتبر دارند.
+// مهم:
 //
+// این Route داخل خودش:
+//
+// requireTelegramUser
+// +
+// requireAdmin
+//
+// را اجرا می‌کند.
+//
+// بنابراین فقط سازنده اجازه دسترسی دارد.
+//
+// =====================================
+
+app.use(
+    "/api/admin",
+    adminRoutes
+);
+
+
+// =====================================
+// Protected API Routes :: M
 // =====================================
 
 
 // =====================================
-// Users
+// Users :: M
 // =====================================
 
 app.use(
@@ -372,7 +418,7 @@ app.use(
 
 
 // =====================================
-// Wallet
+// Wallet :: M
 // =====================================
 
 app.use(
@@ -383,7 +429,7 @@ app.use(
 
 
 // =====================================
-// Trades
+// Trades :: M
 // =====================================
 
 app.use(
@@ -394,7 +440,7 @@ app.use(
 
 
 // =====================================
-// Bot
+// Bot :: M
 // =====================================
 
 app.use(
@@ -405,7 +451,7 @@ app.use(
 
 
 // =====================================
-// Deposits
+// Deposits :: M
 // =====================================
 
 app.use(
@@ -416,7 +462,7 @@ app.use(
 
 
 // =====================================
-// Payments
+// Payments :: M
 // =====================================
 
 app.use(
@@ -427,7 +473,7 @@ app.use(
 
 
 // =====================================
-// Withdrawals
+// Withdrawals :: M
 // =====================================
 
 app.use(
@@ -438,11 +484,14 @@ app.use(
 
 
 // =====================================
-// 404 Handler
+// 404 Handler :: M
 // =====================================
 
 app.use(
-    (req, res) => {
+    (
+        req,
+        res
+    ) => {
 
         return res.status(404).json({
 
@@ -462,7 +511,7 @@ app.use(
 
 
 // =====================================
-// Global Error Handler
+// Global Error Handler :: M
 // =====================================
 
 app.use(
@@ -516,7 +565,7 @@ app.use(
 
 
 // =====================================
-// Start Server
+// Start Server :: M
 // =====================================
 
 const PORT =
@@ -581,14 +630,14 @@ async function startServer() {
 
 
 // =====================================
-// Start Application
+// Start Application :: M
 // =====================================
 
 startServer();
 
 
 // =====================================
-// Export App
+// Export App :: M
 // =====================================
 
 export default app;
