@@ -1,13 +1,19 @@
+// =====================================
 // ..M Bot Routes
 // AutoTrade AI
 // مسیرهای کنترل ربات
-// File: backend/routes/Bot.js
+// File: backend/routes/bot.js
+// =====================================
 
 import express from "express";
 import mongoose from "mongoose";
 
 import Bot from "../models/Bot.js";
 import User from "../models/User.js";
+
+import {
+    requireTelegramUser
+} from "../middleware/auth.js";
 
 import {
     reactivateBot
@@ -19,55 +25,57 @@ const router =
 
 
 // =========================================================
-// ..M RESOLVE USER
-// پیدا کردن کاربر با Mongo ID یا Telegram ID
+// ..M TELEGRAM USER CHECK
 // =========================================================
 
-async function resolveUser(
-    identifier
+function getAuthenticatedTelegramId(
+    req
 ) {
 
-    if (!identifier) {
-        return null;
-    }
-
-
-    // -----------------------------------------------------
-    // Mongo ObjectId
-    // -----------------------------------------------------
-
     if (
-        mongoose.Types.ObjectId.isValid(
-            identifier
-        )
+        !req.telegramUser ||
+        !req.telegramUser.id
     ) {
 
-        const user =
-            await User.findById(
-                identifier
-            );
-
-        if (user) {
-            return user;
-        }
+        return null;
 
     }
 
 
-    // -----------------------------------------------------
-    // Telegram ID
-    // -----------------------------------------------------
+    return String(
+        req.telegramUser.id
+    );
 
-    const telegramUser =
-        await User.findOne({
-
-            telegramId:
-                String(identifier)
-
-        });
+}
 
 
-    return telegramUser || null;
+// =========================================================
+// ..M RESOLVE CURRENT USER
+// فقط کاربر احراز‌شده Telegram
+// =========================================================
+
+async function resolveCurrentUser(
+    req
+) {
+
+    const telegramId =
+        getAuthenticatedTelegramId(
+            req
+        );
+
+
+    if (!telegramId) {
+
+        return null;
+
+    }
+
+
+    return await User.findOne({
+
+        telegramId
+
+    });
 
 }
 
@@ -133,12 +141,60 @@ function defaultBot(
 
 
 // =========================================================
+// ..M ACCESS CHECK
+// بررسی دسترسی معامله
+// =========================================================
+
+function hasTradingAccess(
+    user
+) {
+
+    if (!user) {
+
+        return false;
+
+    }
+
+
+    if (
+        String(user.status)
+            .toUpperCase() ===
+        "BLOCKED"
+    ) {
+
+        return false;
+
+    }
+
+
+    return (
+
+        user.approvalStatus ===
+            "APPROVED" &&
+
+        user.accessEnabled ===
+            true &&
+
+        user.botAccess ===
+            true &&
+
+        String(user.status)
+            .toUpperCase() ===
+            "ACTIVE"
+
+    );
+
+}
+
+
+// =========================================================
 // ..M GET BOT STATUS
-// GET /bot/:userId
+// GET /api/bot
 // =========================================================
 
 router.get(
-    "/:userId",
+    "/",
+    requireTelegramUser,
     async (
         req,
         res
@@ -146,13 +202,9 @@ router.get(
 
         try {
 
-            const identifier =
-                req.params.userId;
-
-
             const user =
-                await resolveUser(
-                    identifier
+                await resolveCurrentUser(
+                    req
                 );
 
 
@@ -161,6 +213,8 @@ router.get(
                 return res.status(404).json({
 
                     success: false,
+
+                    authenticated: true,
 
                     message:
                         "User not found"
@@ -203,10 +257,152 @@ router.get(
 
             });
 
-        } catch (error) {
+        }
+
+        catch (error) {
 
             console.error(
-                "Get Bot Status Error:",
+                "[GET BOT STATUS ERROR]",
+                error
+            );
+
+
+            return res.status(500).json({
+
+                success: false,
+
+                message:
+                    "Failed to get bot status"
+
+            });
+
+        }
+
+    }
+);
+
+
+// =========================================================
+// ..M GET BOT BY USER ID
+// GET /api/bot/:userId
+//
+// userId فقط باید متعلق به Telegram فعلی باشد.
+// =========================================================
+
+router.get(
+    "/:userId",
+    requireTelegramUser,
+    async (
+        req,
+        res
+    ) => {
+
+        try {
+
+            const user =
+                await resolveCurrentUser(
+                    req
+                );
+
+
+            if (!user) {
+
+                return res.status(404).json({
+
+                    success: false,
+
+                    authenticated: true,
+
+                    message:
+                        "User not found"
+
+                });
+
+            }
+
+
+            // =========================================
+            // Security Check
+            // =========================================
+
+            const requestedId =
+                String(
+                    req.params.userId
+                );
+
+
+            const ownMongoId =
+                String(
+                    user._id
+                );
+
+
+            const ownTelegramId =
+                String(
+                    user.telegramId
+                );
+
+
+            if (
+                requestedId !==
+                    ownMongoId &&
+                requestedId !==
+                    ownTelegramId
+            ) {
+
+                return res.status(403).json({
+
+                    success: false,
+
+                    authenticated: true,
+
+                    message:
+                        "You can only access your own bot"
+
+                });
+
+            }
+
+
+            const bot =
+                await Bot.findOne({
+
+                    userId:
+                        user._id
+
+                });
+
+
+            if (!bot) {
+
+                return res.status(200).json({
+
+                    success: true,
+
+                    bot:
+                        defaultBot(
+                            user._id
+                        )
+
+                });
+
+            }
+
+
+            return res.status(200).json({
+
+                success: true,
+
+                bot
+
+            });
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "[GET BOT ERROR]",
                 error
             );
 
@@ -228,11 +424,12 @@ router.get(
 
 // =========================================================
 // ..M START BOT
-// POST /bot/start/:userId
+// POST /api/bot/start/:userId
 // =========================================================
 
 router.post(
     "/start/:userId",
+    requireTelegramUser,
     async (
         req,
         res
@@ -240,13 +437,9 @@ router.post(
 
         try {
 
-            const identifier =
-                req.params.userId;
-
-
             const user =
-                await resolveUser(
-                    identifier
+                await resolveCurrentUser(
+                    req
                 );
 
 
@@ -256,6 +449,8 @@ router.post(
 
                     success: false,
 
+                    authenticated: true,
+
                     message:
                         "User not found"
 
@@ -264,29 +459,66 @@ router.post(
             }
 
 
-            // -------------------------------------------------
-            // ..M ACCESS CONTROL
-            // -------------------------------------------------
+            // =========================================
+            // Security Check
+            // =========================================
+
+            const requestedId =
+                String(
+                    req.params.userId
+                );
+
+
+            const ownMongoId =
+                String(
+                    user._id
+                );
+
+
+            const ownTelegramId =
+                String(
+                    user.telegramId
+                );
+
 
             if (
-
-                user.approvalStatus !==
-                    "APPROVED" ||
-
-                user.accessEnabled !==
-                    true ||
-
-                user.botAccess !==
-                    true ||
-
-                user.status !==
-                    "ACTIVE"
-
+                requestedId !==
+                    ownMongoId &&
+                requestedId !==
+                    ownTelegramId
             ) {
 
                 return res.status(403).json({
 
                     success: false,
+
+                    authenticated: true,
+
+                    message:
+                        "You can only control your own bot"
+
+                });
+
+            }
+
+
+            // =========================================
+            // Access Control
+            // =========================================
+
+            if (
+                !hasTradingAccess(
+                    user
+                )
+            ) {
+
+                return res.status(403).json({
+
+                    success: false,
+
+                    authenticated: true,
+
+                    approved: false,
 
                     message:
                         "Your trading access has not been approved yet."
@@ -296,9 +528,9 @@ router.post(
             }
 
 
-            // -------------------------------------------------
-            // ..M FIND BOT
-            // -------------------------------------------------
+            // =========================================
+            // Find Bot
+            // =========================================
 
             let bot =
                 await Bot.findOne({
@@ -309,9 +541,9 @@ router.post(
                 });
 
 
-            // -------------------------------------------------
-            // ..M CREATE BOT
-            // -------------------------------------------------
+            // =========================================
+            // Create Bot
+            // =========================================
 
             if (!bot) {
 
@@ -354,6 +586,12 @@ router.post(
                         lastSignal:
                             "WAIT",
 
+                        accuracy:
+                            0,
+
+                        confidence:
+                            0,
+
                         lastRun:
                             new Date(),
 
@@ -371,15 +609,16 @@ router.post(
             }
 
 
-            // -------------------------------------------------
-            // ..M MAX LOSSES
-            // -------------------------------------------------
+            // =========================================
+            // Maximum Consecutive Losses
+            // =========================================
 
             if (
 
                 Number(
                     bot.consecutiveLosses || 0
                 ) >=
+
                 Number(
                     bot.maxConsecutiveLosses || 2
                 )
@@ -418,9 +657,9 @@ router.post(
             }
 
 
-            // -------------------------------------------------
-            // ..M ALREADY ACTIVE
-            // -------------------------------------------------
+            // =========================================
+            // Already Active
+            // =========================================
 
             if (
 
@@ -431,6 +670,12 @@ router.post(
                     true
 
             ) {
+
+                user.botActive =
+                    true;
+
+                await user.save();
+
 
                 return res.status(200).json({
 
@@ -446,9 +691,9 @@ router.post(
             }
 
 
-            // -------------------------------------------------
-            // ..M ACTIVATE
-            // -------------------------------------------------
+            // =========================================
+            // Activate
+            // =========================================
 
             bot.status =
                 "ACTIVE";
@@ -472,9 +717,9 @@ router.post(
             await bot.save();
 
 
-            // -------------------------------------------------
-            // ..M SYNC USER
-            // -------------------------------------------------
+            // =========================================
+            // Sync User
+            // =========================================
 
             user.botActive =
                 true;
@@ -494,10 +739,12 @@ router.post(
 
             });
 
-        } catch (error) {
+        }
+
+        catch (error) {
 
             console.error(
-                "Start Bot Error:",
+                "[START BOT ERROR]",
                 error
             );
 
@@ -519,11 +766,12 @@ router.post(
 
 // =========================================================
 // ..M STOP BOT
-// POST /bot/stop/:userId
+// POST /api/bot/stop/:userId
 // =========================================================
 
 router.post(
     "/stop/:userId",
+    requireTelegramUser,
     async (
         req,
         res
@@ -531,13 +779,9 @@ router.post(
 
         try {
 
-            const identifier =
-                req.params.userId;
-
-
             const user =
-                await resolveUser(
-                    identifier
+                await resolveCurrentUser(
+                    req
                 );
 
 
@@ -547,8 +791,53 @@ router.post(
 
                     success: false,
 
+                    authenticated: true,
+
                     message:
                         "User not found"
+
+                });
+
+            }
+
+
+            // =========================================
+            // Security Check
+            // =========================================
+
+            const requestedId =
+                String(
+                    req.params.userId
+                );
+
+
+            const ownMongoId =
+                String(
+                    user._id
+                );
+
+
+            const ownTelegramId =
+                String(
+                    user.telegramId
+                );
+
+
+            if (
+                requestedId !==
+                    ownMongoId &&
+                requestedId !==
+                    ownTelegramId
+            ) {
+
+                return res.status(403).json({
+
+                    success: false,
+
+                    authenticated: true,
+
+                    message:
+                        "You can only control your own bot"
 
                 });
 
@@ -587,9 +876,9 @@ router.post(
             }
 
 
-            // -------------------------------------------------
-            // ..M STOP
-            // -------------------------------------------------
+            // =========================================
+            // Stop
+            // =========================================
 
             bot.status =
                 "STOPPED";
@@ -607,9 +896,9 @@ router.post(
             await bot.save();
 
 
-            // -------------------------------------------------
-            // ..M SYNC USER
-            // -------------------------------------------------
+            // =========================================
+            // Sync User
+            // =========================================
 
             user.botActive =
                 false;
@@ -629,10 +918,12 @@ router.post(
 
             });
 
-        } catch (error) {
+        }
+
+        catch (error) {
 
             console.error(
-                "Stop Bot Error:",
+                "[STOP BOT ERROR]",
                 error
             );
 
@@ -654,11 +945,12 @@ router.post(
 
 // =========================================================
 // ..M REACTIVATE BOT
-// POST /bot/reactivate/:userId
+// POST /api/bot/reactivate/:userId
 // =========================================================
 
 router.post(
     "/reactivate/:userId",
+    requireTelegramUser,
     async (
         req,
         res
@@ -666,13 +958,9 @@ router.post(
 
         try {
 
-            const identifier =
-                req.params.userId;
-
-
             const user =
-                await resolveUser(
-                    identifier
+                await resolveCurrentUser(
+                    req
                 );
 
 
@@ -682,6 +970,8 @@ router.post(
 
                     success: false,
 
+                    authenticated: true,
+
                     message:
                         "User not found"
 
@@ -690,29 +980,66 @@ router.post(
             }
 
 
-            // -------------------------------------------------
-            // ..M ACCESS CONTROL
-            // -------------------------------------------------
+            // =========================================
+            // Security Check
+            // =========================================
+
+            const requestedId =
+                String(
+                    req.params.userId
+                );
+
+
+            const ownMongoId =
+                String(
+                    user._id
+                );
+
+
+            const ownTelegramId =
+                String(
+                    user.telegramId
+                );
+
 
             if (
-
-                user.approvalStatus !==
-                    "APPROVED" ||
-
-                user.accessEnabled !==
-                    true ||
-
-                user.botAccess !==
-                    true ||
-
-                user.status !==
-                    "ACTIVE"
-
+                requestedId !==
+                    ownMongoId &&
+                requestedId !==
+                    ownTelegramId
             ) {
 
                 return res.status(403).json({
 
                     success: false,
+
+                    authenticated: true,
+
+                    message:
+                        "You can only control your own bot"
+
+                });
+
+            }
+
+
+            // =========================================
+            // Access Control
+            // =========================================
+
+            if (
+                !hasTradingAccess(
+                    user
+                )
+            ) {
+
+                return res.status(403).json({
+
+                    success: false,
+
+                    authenticated: true,
+
+                    approved: false,
 
                     message:
                         "Your trading access has not been approved yet."
@@ -722,9 +1049,9 @@ router.post(
             }
 
 
-            // -------------------------------------------------
-            // ..M REACTIVATE
-            // -------------------------------------------------
+            // =========================================
+            // Reactivate
+            // =========================================
 
             const bot =
                 await reactivateBot({
@@ -735,9 +1062,9 @@ router.post(
                 });
 
 
-            // -------------------------------------------------
-            // ..M SYNC USER
-            // -------------------------------------------------
+            // =========================================
+            // Sync User
+            // =========================================
 
             user.botActive =
                 true;
@@ -757,10 +1084,12 @@ router.post(
 
             });
 
-        } catch (error) {
+        }
+
+        catch (error) {
 
             console.error(
-                "Reactivate Bot Error:",
+                "[REACTIVATE BOT ERROR]",
                 error
             );
 
