@@ -1,7 +1,6 @@
 // =====================================
 // ..M AutoTrade AI
-// Authentication Routes
-// Telegram Authentication
+// Telegram Authentication Routes
 // File: backend/routes/auth.js
 // =====================================
 
@@ -19,21 +18,41 @@ const router =
 
 
 // =====================================
-// Admin Check :: M
-// بررسی سازنده
+// Admin Telegram ID :: M
 // =====================================
 
-function isAdminTelegramUser(
-    telegramId
+function getAdminTelegramId() {
+
+    return String(
+        process.env.ADMIN_TELEGRAM_ID || ""
+    ).trim();
+
+}
+
+
+// =====================================
+// Check Admin :: M
+// =====================================
+
+function isTelegramAdmin(
+    telegramUser
 ) {
 
-    const adminTelegramId =
-        String(
-            process.env.ADMIN_TELEGRAM_ID || ""
-        ).trim();
+    if (
+        !telegramUser ||
+        !telegramUser.id
+    ) {
+
+        return false;
+
+    }
 
 
-    if (!adminTelegramId) {
+    const adminId =
+        getAdminTelegramId();
+
+
+    if (!adminId) {
 
         return false;
 
@@ -41,8 +60,9 @@ function isAdminTelegramUser(
 
 
     return (
-        String(telegramId) ===
-        adminTelegramId
+        String(
+            telegramUser.id
+        ) === adminId
     );
 
 }
@@ -50,7 +70,6 @@ function isAdminTelegramUser(
 
 // =====================================
 // Build User Response :: M
-// ساخت اطلاعات کاربر برای Frontend
 // =====================================
 
 function buildUserResponse(
@@ -66,46 +85,43 @@ function buildUserResponse(
             user.telegramId,
 
         username:
-            user.username,
+            user.username || "",
 
         firstName:
-            user.firstName,
+            user.firstName || "",
 
         lastName:
-            user.lastName,
+            user.lastName || "",
 
         phoneNumber:
-            user.phoneNumber,
+            user.phoneNumber || "",
 
         accessEnabled:
-            user.accessEnabled,
+            user.accessEnabled === true,
 
         approvalStatus:
-            user.approvalStatus,
+            user.approvalStatus || "PENDING",
 
         isAdmin:
-            user.isAdmin,
+            user.isAdmin === true,
 
         botAccess:
-            user.botAccess,
+            user.botAccess === true,
 
         botActive:
-            user.botActive,
+            user.botActive === true,
 
         status:
-            user.status,
-
-        walletId:
-            user.walletId,
-
-        createdAt:
-            user.createdAt,
-
-        updatedAt:
-            user.updatedAt,
+            user.status || "PENDING",
 
         lastLogin:
-            user.lastLogin
+            user.lastLogin || null,
+
+        createdAt:
+            user.createdAt || null,
+
+        updatedAt:
+            user.updatedAt || null
 
     };
 
@@ -113,8 +129,7 @@ function buildUserResponse(
 
 
 // =====================================
-// Telegram Login :: M
-// ورود و ثبت کاربر
+// Telegram Login
 // =====================================
 
 router.post(
@@ -143,19 +158,21 @@ router.post(
 
                 return res.status(401).json({
 
-                    success:
-                        false,
+                    success: false,
 
-                    authenticated:
-                        false,
+                    authenticated: false,
 
                     message:
-                        "اطلاعات کاربر تلگرام پیدا نشد"
+                        "Telegram user not found"
 
                 });
 
             }
 
+
+            // =================================
+            // Telegram ID
+            // =================================
 
             const telegramId =
                 String(
@@ -164,23 +181,24 @@ router.post(
 
 
             // =================================
-            // Check Admin
+            // Admin Check
             // =================================
 
-            const adminUser =
-                isAdminTelegramUser(
-                    telegramId
+            const admin =
+                isTelegramAdmin(
+                    telegramUser
                 );
 
 
             // =================================
-            // Find Existing User
+            // Find User
             // =================================
 
             let user =
                 await User.findOne({
 
-                    telegramId
+                    telegramId:
+                        telegramId
 
                 });
 
@@ -194,7 +212,8 @@ router.post(
                 user =
                     await User.create({
 
-                        telegramId,
+                        telegramId:
+                            telegramId,
 
                         username:
                             telegramUser.username ||
@@ -211,31 +230,43 @@ router.post(
                         phoneNumber:
                             "",
 
-                        // -------------------------
-                        // سازنده بدون تأیید
-                        // -------------------------
+                        // =========================
+                        // Admin / User Access
+                        // =========================
 
                         accessEnabled:
-                            adminUser,
+                            admin,
 
                         approvalStatus:
-                            adminUser
+                            admin
                                 ? "APPROVED"
                                 : "PENDING",
 
                         isAdmin:
-                            adminUser,
+                            admin,
+
+                        // =========================
+                        // Bot Access
+                        // =========================
 
                         botAccess:
-                            adminUser,
+                            admin,
 
                         botActive:
                             false,
 
+                        // =========================
+                        // Account Status
+                        // =========================
+
                         status:
-                            adminUser
+                            admin
                                 ? "ACTIVE"
                                 : "PENDING",
+
+                        // =========================
+                        // Login
+                        // =========================
 
                         lastLogin:
                             new Date()
@@ -250,34 +281,55 @@ router.post(
                 // Update Telegram Information
                 // =================================
 
-                user.username =
-                    telegramUser.username ||
-                    user.username ||
-                    "";
+                if (
+                    telegramUser.username !==
+                    undefined
+                ) {
+
+                    user.username =
+                        telegramUser.username ||
+                        "";
+
+                }
 
 
-                user.firstName =
-                    telegramUser.first_name ||
-                    user.firstName ||
-                    "";
+                if (
+                    telegramUser.first_name !==
+                    undefined
+                ) {
+
+                    user.firstName =
+                        telegramUser.first_name ||
+                        "";
+
+                }
 
 
-                user.lastName =
-                    telegramUser.last_name ||
-                    user.lastName ||
-                    "";
+                if (
+                    telegramUser.last_name !==
+                    undefined
+                ) {
 
+                    user.lastName =
+                        telegramUser.last_name ||
+                        "";
+
+                }
+
+
+                // =================================
+                // Update Login Time
+                // =================================
 
                 user.lastLogin =
                     new Date();
 
 
                 // =================================
-                // Admin Protection :: M
-                // سازنده همیشه دسترسی دارد
+                // Admin Protection
                 // =================================
 
-                if (adminUser) {
+                if (admin) {
 
                     user.isAdmin =
                         true;
@@ -288,11 +340,18 @@ router.post(
                     user.approvalStatus =
                         "APPROVED";
 
+                    user.botAccess =
+                        true;
+
                     user.status =
                         "ACTIVE";
 
                 }
 
+
+                // =================================
+                // Save
+                // =================================
 
                 await user.save();
 
@@ -308,39 +367,27 @@ router.post(
 
 
             // =================================
-            // Access Information
-            // =================================
-
-            const accessGranted =
-                user.isAdmin === true ||
-                user.accessEnabled === true ||
-                user.botAccess === true ||
-                user.approvalStatus === "APPROVED" ||
-                user.status === "ACTIVE";
-
-
-            // =================================
             // Response
             // =================================
 
             return res.json({
 
-                success:
-                    true,
+                success: true,
 
-                authenticated:
-                    true,
-
-                approved:
-                    accessGranted,
+                authenticated: true,
 
                 isAdmin:
                     user.isAdmin === true,
 
+                approved:
+                    user.accessEnabled === true ||
+                    user.approvalStatus ===
+                        "APPROVED" ||
+                    user.status ===
+                        "ACTIVE",
+
                 message:
-                    accessGranted
-                        ? "ورود با موفقیت انجام شد"
-                        : "حساب شما ثبت شد و منتظر تأیید مدیریت است",
+                    "Telegram authentication successful",
 
                 user:
                     buildUserResponse(
@@ -367,8 +414,8 @@ router.post(
 
 
 // =====================================
-// Current User :: M
-// کاربر فعلی
+// Current Authenticated User
+// GET /api/auth/me
 // =====================================
 
 router.get(
@@ -397,24 +444,16 @@ router.get(
 
                 return res.status(401).json({
 
-                    success:
-                        false,
+                    success: false,
 
-                    authenticated:
-                        false,
+                    authenticated: false,
 
                     message:
-                        "کاربر تلگرام پیدا نشد"
+                        "Telegram user not found"
 
                 });
 
             }
-
-
-            const telegramId =
-                String(
-                    telegramUser.id
-                );
 
 
             // =================================
@@ -424,7 +463,10 @@ router.get(
             const user =
                 await User.findOne({
 
-                    telegramId
+                    telegramId:
+                        String(
+                            telegramUser.id
+                        )
 
                 });
 
@@ -437,14 +479,12 @@ router.get(
 
                 return res.status(404).json({
 
-                    success:
-                        false,
+                    success: false,
 
-                    authenticated:
-                        true,
+                    authenticated: true,
 
                     message:
-                        "حساب کاربری پیدا نشد"
+                        "User account not found"
 
                 });
 
@@ -452,20 +492,20 @@ router.get(
 
 
             // =================================
-            // Admin Check
+            // Check Admin
             // =================================
 
-            const adminUser =
-                isAdminTelegramUser(
-                    telegramId
+            const admin =
+                isTelegramAdmin(
+                    telegramUser
                 );
 
 
             // =================================
-            // Admin Protection :: M
+            // Restore Admin Access
             // =================================
 
-            if (adminUser) {
+            if (admin) {
 
                 let changed =
                     false;
@@ -485,7 +525,8 @@ router.get(
 
 
                 if (
-                    user.accessEnabled !== true
+                    user.accessEnabled !==
+                    true
                 ) {
 
                     user.accessEnabled =
@@ -512,6 +553,20 @@ router.get(
 
 
                 if (
+                    user.botAccess !==
+                    true
+                ) {
+
+                    user.botAccess =
+                        true;
+
+                    changed =
+                        true;
+
+                }
+
+
+                if (
                     user.status !==
                     "ACTIVE"
                 ) {
@@ -525,9 +580,7 @@ router.get(
                 }
 
 
-                if (
-                    changed
-                ) {
+                if (changed) {
 
                     await user.save();
 
@@ -537,26 +590,11 @@ router.get(
 
 
             // =================================
-            // Update Last Login
+            // Attach User
             // =================================
 
-            user.lastLogin =
-                new Date();
-
-
-            await user.save();
-
-
-            // =================================
-            // Access
-            // =================================
-
-            const accessGranted =
-                user.isAdmin === true ||
-                user.accessEnabled === true ||
-                user.botAccess === true ||
-                user.approvalStatus === "APPROVED" ||
-                user.status === "ACTIVE";
+            req.user =
+                user;
 
 
             // =================================
@@ -565,17 +603,19 @@ router.get(
 
             return res.json({
 
-                success:
-                    true,
+                success: true,
 
-                authenticated:
-                    true,
-
-                approved:
-                    accessGranted,
+                authenticated: true,
 
                 isAdmin:
                     user.isAdmin === true,
+
+                approved:
+                    user.accessEnabled === true ||
+                    user.approvalStatus ===
+                        "APPROVED" ||
+                    user.status ===
+                        "ACTIVE",
 
                 user:
                     buildUserResponse(
@@ -590,6 +630,110 @@ router.get(
 
             console.error(
                 "[AUTH ME ERROR]",
+                error
+            );
+
+            next(error);
+
+        }
+
+    }
+);
+
+
+// =====================================
+// Admin Status Check
+// GET /api/auth/admin
+// =====================================
+
+router.get(
+    "/admin",
+    requireTelegramUser,
+    async (
+        req,
+        res,
+        next
+    ) => {
+
+        try {
+
+            const telegramUser =
+                req.telegramUser;
+
+
+            if (
+                !telegramUser ||
+                !telegramUser.id
+            ) {
+
+                return res.status(401).json({
+
+                    success: false,
+
+                    isAdmin: false,
+
+                    message:
+                        "Telegram authentication required"
+
+                });
+
+            }
+
+
+            const admin =
+                isTelegramAdmin(
+                    telegramUser
+                );
+
+
+            if (!admin) {
+
+                return res.status(403).json({
+
+                    success: false,
+
+                    isAdmin: false,
+
+                    message:
+                        "Admin access required"
+
+                });
+
+            }
+
+
+            const user =
+                await User.findOne({
+
+                    telegramId:
+                        String(
+                            telegramUser.id
+                        )
+
+                });
+
+
+            return res.json({
+
+                success: true,
+
+                isAdmin: true,
+
+                user:
+                    user
+                        ? buildUserResponse(
+                            user
+                        )
+                        : null
+
+            });
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "[AUTH ADMIN ERROR]",
                 error
             );
 
