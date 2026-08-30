@@ -1,14 +1,18 @@
 // =====================================
-// Wallet Routes:: M
+// ..M Wallet Routes
 // AutoTrade AI
-// مسیرهای کیف پول
-// File: backend/routes/Wallet.js
+// مسیرهای امن کیف پول
+// File: backend/routes/wallet.js
 // =====================================
 
 import express from "express";
-import mongoose from "mongoose";
 
 import Wallet from "../models/Wallet.js";
+import User from "../models/User.js";
+
+import {
+    requireTelegramUser
+} from "../middleware/auth.js";
 
 import {
     getWalletDisplayValues
@@ -20,39 +24,92 @@ const router =
 
 
 // =====================================
-// GET USER WALLET:: M
-// دریافت اطلاعات کیف پول
+// ..M GET CURRENT USER
+// دریافت کاربر احراز‌شده
+// =====================================
+
+async function getCurrentUser(
+    req
+) {
+
+    if (
+        !req.telegramUser ||
+        !req.telegramUser.id
+    ) {
+
+        return null;
+
+    }
+
+
+    return await User.findOne({
+
+        telegramId:
+            String(
+                req.telegramUser.id
+            )
+
+    });
+
+}
+
+
+// =====================================
+// ..M CHECK USER ACCESS
+// =====================================
+
+function isBlocked(
+    user
+) {
+
+    return (
+        user &&
+        String(
+            user.status
+        ).toUpperCase() ===
+        "BLOCKED"
+    );
+
+}
+
+
+// =====================================
+// ..M GET USER WALLET
 // GET /api/wallet/:userId
 // =====================================
 
 router.get(
     "/:userId",
-    async (req, res) => {
+    requireTelegramUser,
+    async (
+        req,
+        res
+    ) => {
 
         try {
 
-            const {
-                userId
-            } = req.params;
-
-
             // =====================================
-            // بررسی شناسه کاربر:: M
+            // ..M CURRENT TELEGRAM USER
             // =====================================
 
-            if (
-                !mongoose.Types.ObjectId.isValid(
-                    userId
-                )
-            ) {
+            const user =
+                await getCurrentUser(
+                    req
+                );
 
-                return res.status(400).json({
+
+            if (!user) {
+
+                return res.status(404).json({
 
                     success:
                         false,
 
+                    authenticated:
+                        true,
+
                     message:
-                        "Invalid user ID"
+                        "User not found"
 
                 });
 
@@ -60,19 +117,93 @@ router.get(
 
 
             // =====================================
-            // پیدا کردن کیف پول:: M
+            // ..M BLOCKED USER
+            // =====================================
+
+            if (
+                isBlocked(
+                    user
+                )
+            ) {
+
+                return res.status(403).json({
+
+                    success:
+                        false,
+
+                    authenticated:
+                        true,
+
+                    message:
+                        "User account is blocked"
+
+                });
+
+            }
+
+
+            // =====================================
+            // ..M IDENTITY SECURITY
+            // کاربر فقط کیف پول خودش
+            // =====================================
+
+            const requestedId =
+                String(
+                    req.params.userId
+                );
+
+
+            const ownMongoId =
+                String(
+                    user._id
+                );
+
+
+            const ownTelegramId =
+                String(
+                    user.telegramId
+                );
+
+
+            if (
+                requestedId !==
+                    ownMongoId &&
+
+                requestedId !==
+                    ownTelegramId
+            ) {
+
+                return res.status(403).json({
+
+                    success:
+                        false,
+
+                    authenticated:
+                        true,
+
+                    message:
+                        "You can only access your own wallet"
+
+                });
+
+            }
+
+
+            // =====================================
+            // ..M FIND WALLET
             // =====================================
 
             let wallet =
                 await Wallet.findOne({
 
-                    userId
+                    userId:
+                        user._id
 
                 });
 
 
             // =====================================
-            // ساخت کیف پول در صورت نبودن:: M
+            // ..M CREATE WALLET
             // =====================================
 
             if (!wallet) {
@@ -80,7 +211,8 @@ router.get(
                 wallet =
                     await Wallet.create({
 
-                        userId,
+                        userId:
+                            user._id,
 
                         balance:
                             0,
@@ -102,33 +234,68 @@ router.get(
 
                     });
 
+
+                // =================================
+                // ..M SYNC USER WALLET
+                // =================================
+
+                user.walletId =
+                    wallet._id;
+
+
+                await user.save();
+
+            }
+
+            else if (
+                !user.walletId ||
+                String(
+                    user.walletId
+                ) !==
+                String(
+                    wallet._id
+                )
+            ) {
+
+                user.walletId =
+                    wallet._id;
+
+
+                await user.save();
+
             }
 
 
             // =====================================
-            // موجودی دلار:: M
+            // ..M SAFE NUMBERS
             // =====================================
 
             const balanceUSD =
                 Number(
                     wallet.balance
-                );
+                ) || 0;
 
 
             const totalProfitUSD =
                 Number(
                     wallet.totalProfit
-                );
+                ) || 0;
 
 
             const withdrawableUSD =
                 Number(
                     wallet.withdrawable
-                );
+                ) || 0;
+
+
+            const totalTrades =
+                Number(
+                    wallet.totalTrades
+                ) || 0;
 
 
             // =====================================
-            // تبدیل به تومان:: M
+            // ..M CURRENCY DISPLAY
             // =====================================
 
             const balanceDisplay =
@@ -150,7 +317,7 @@ router.get(
 
 
             // =====================================
-            // پاسخ به Mini App:: M
+            // ..M RESPONSE
             // =====================================
 
             return res.status(200).json({
@@ -158,10 +325,16 @@ router.get(
                 success:
                     true,
 
+                authenticated:
+                    true,
+
                 wallet: {
 
                     id:
                         wallet._id,
+
+                    userId:
+                        wallet.userId,
 
                     currency:
                         wallet.currency,
@@ -170,9 +343,12 @@ router.get(
                         wallet.status,
 
 
-                    // =====================================
-                    // موجودی
-                    // =====================================
+                    // =================================
+                    // ..M BALANCE
+                    // =================================
+
+                    balance:
+                        balanceUSD,
 
                     balanceUSD,
 
@@ -186,9 +362,12 @@ router.get(
                         balanceDisplay.balanceTomanText,
 
 
-                    // =====================================
-                    // سود کل
-                    // =====================================
+                    // =================================
+                    // ..M TOTAL PROFIT
+                    // =================================
+
+                    totalProfit:
+                        totalProfitUSD,
 
                     totalProfitUSD,
 
@@ -202,9 +381,12 @@ router.get(
                         profitDisplay.balanceTomanText,
 
 
-                    // =====================================
-                    // قابل برداشت
-                    // =====================================
+                    // =================================
+                    // ..M WITHDRAWABLE
+                    // =================================
+
+                    withdrawable:
+                        withdrawableUSD,
 
                     withdrawableUSD,
 
@@ -218,17 +400,16 @@ router.get(
                         withdrawableDisplay.balanceTomanText,
 
 
-                    // =====================================
-                    // معاملات
-                    // =====================================
+                    // =================================
+                    // ..M TRADES
+                    // =================================
 
-                    totalTrades:
-                        wallet.totalTrades,
+                    totalTrades,
 
 
-                    // =====================================
-                    // نرخ دلار
-                    // =====================================
+                    // =================================
+                    // ..M EXCHANGE RATE
+                    // =================================
 
                     exchangeRate:
                         balanceDisplay.exchangeRate,
@@ -237,9 +418,9 @@ router.get(
                         balanceDisplay.exchangeRateText,
 
 
-                    // =====================================
-                    // زمان بروزرسانی
-                    // =====================================
+                    // =================================
+                    // ..M UPDATED
+                    // =================================
 
                     updatedAt:
                         balanceDisplay.updatedAt
@@ -248,13 +429,12 @@ router.get(
 
             });
 
-
         }
 
         catch (error) {
 
             console.error(
-                "Get Wallet Error:",
+                "[GET WALLET ERROR]",
                 error
             );
 
@@ -276,8 +456,7 @@ router.get(
 
 
 // =====================================
-// EXPORT ROUTER:: M
-// خروجی مسیرهای کیف پول
+// ..M EXPORT
 // =====================================
 
 export default router;
