@@ -1,6 +1,6 @@
 // =====================================
-// AutoTrade AI
-// Payment Routes:: M
+// ..M AutoTrade AI
+// Payment Routes
 // مسیرهای تأیید و وضعیت پرداخت
 // File: backend/routes/payment.js
 // =====================================
@@ -26,7 +26,7 @@ const router =
 
 
 // =====================================
-// Helper: Get Authenticated User:: M
+// ..M Get Authenticated User
 // دریافت کاربر احراز هویت‌شده
 // =====================================
 
@@ -71,20 +71,25 @@ async function getAuthenticatedUser(req) {
 
 
 // =====================================
-// GET MY PAYMENT STATUS:: M
-// دریافت وضعیت پرداخت خود کاربر
+// ..M GET MY PAYMENT STATUS
+// وضعیت پرداخت کاربر
 // GET /api/payment/:depositId
 // =====================================
 
 router.get(
     "/:depositId",
     requiredTelegramUser,
-    async (req, res) => {
+    async (
+        req,
+        res
+    ) => {
 
         try {
 
             const user =
-                await getAuthenticatedUser(req);
+                await getAuthenticatedUser(
+                    req
+                );
 
 
             const {
@@ -92,9 +97,9 @@ router.get(
             } = req.params;
 
 
-            // =====================================
-            // بررسی شناسه واریز:: M
-            // =====================================
+            // =================================
+            // ..M Validate Deposit ID
+            // =================================
 
             if (
                 !mongoose.Types.ObjectId.isValid(
@@ -115,9 +120,9 @@ router.get(
             }
 
 
-            // =====================================
-            // دریافت وضعیت پرداخت:: M
-            // =====================================
+            // =================================
+            // ..M Get Payment Status
+            // =================================
 
             const payment =
                 await getPaymentStatus(
@@ -140,19 +145,31 @@ router.get(
         catch (error) {
 
             console.error(
-                "Get Payment Status Error:",
+                "[GET PAYMENT STATUS ERROR]",
                 error
             );
 
 
-            return res.status(400).json({
+            const message =
+                error.message ||
+                "دریافت وضعیت پرداخت ناموفق بود";
+
+
+            const statusCode =
+                message ===
+                "Payment not found"
+                    ? 404
+                    : 400;
+
+
+            return res.status(
+                statusCode
+            ).json({
 
                 success:
                     false,
 
-                message:
-                    error.message ||
-                    "دریافت وضعیت پرداخت ناموفق بود"
+                message
 
             });
 
@@ -163,28 +180,30 @@ router.get(
 
 
 // =====================================
-// VERIFY PAYMENT:: M
+// ..M VERIFY PAYMENT
 // تأیید پرداخت
 // POST /api/payment/verify
 // =====================================
 //
-// این endpoint فقط برای Admin است.
+// فقط Admin.
 //
-// Mini App نباید بتواند:
+// نکته امنیتی:
 //
-// verified: true
+// verified از Client به عنوان حقیقت
+// پرداخت پذیرفته نمی‌شود.
 //
-// ارسال کند و Wallet را شارژ کند.
-//
-// تأیید واقعی باید توسط درگاه یا
-// سیستم پرداخت انجام شود.
+// verifyPayment باید وضعیت واقعی
+// پرداخت را بررسی کند.
 // =====================================
 
 router.post(
     "/verify",
     requiredTelegramUser,
     requiredAdmin,
-    async (req, res) => {
+    async (
+        req,
+        res
+    ) => {
 
         try {
 
@@ -192,14 +211,13 @@ router.post(
                 depositId,
                 paymentId,
                 transactionId,
-                gateway,
-                verified
+                gateway
             } = req.body;
 
 
-            // =====================================
-            // بررسی شناسه واریز:: M
-            // =====================================
+            // =================================
+            // ..M Deposit ID
+            // =================================
 
             if (
                 !depositId
@@ -237,12 +255,14 @@ router.post(
             }
 
 
-            // =====================================
-            // بررسی تأیید پرداخت:: M
-            // =====================================
+            // =================================
+            // ..M Payment ID
+            // =================================
 
             if (
-                verified !== true
+                paymentId !== undefined &&
+                paymentId !== null &&
+                String(paymentId).trim() === ""
             ) {
 
                 return res.status(400).json({
@@ -251,16 +271,62 @@ router.post(
                         false,
 
                     message:
-                        "پرداخت تأیید نشده است"
+                        "Payment ID نامعتبر است"
 
                 });
 
             }
 
 
-            // =====================================
-            // تأیید پرداخت:: M
-            // =====================================
+            // =================================
+            // ..M Transaction ID
+            // =================================
+
+            if (
+                transactionId !== undefined &&
+                transactionId !== null &&
+                String(transactionId).trim() === ""
+            ) {
+
+                return res.status(400).json({
+
+                    success:
+                        false,
+
+                    message:
+                        "Transaction ID نامعتبر است"
+
+                });
+
+            }
+
+
+            // =================================
+            // ..M Gateway
+            // =================================
+
+            const normalizedGateway =
+                gateway
+                    ? String(
+                        gateway
+                    )
+                    .trim()
+                    .toUpperCase()
+                    : null;
+
+
+            // =================================
+            // ..M Verify Payment
+            // =================================
+            //
+            // توجه:
+            //
+            // دیگر verified:true از Client
+            // دریافت نمی‌کنیم.
+            //
+            // سرویس Verification باید خودش
+            // پرداخت واقعی را بررسی کند.
+            // =================================
 
             const result =
                 await verifyPayment({
@@ -268,41 +334,81 @@ router.post(
                     depositId,
 
                     paymentId:
-                        paymentId ||
-                        null,
+                        paymentId
+                            ? String(
+                                paymentId
+                            ).trim()
+                            : null,
 
                     transactionId:
-                        transactionId ||
-                        null,
+                        transactionId
+                            ? String(
+                                transactionId
+                            ).trim()
+                            : null,
 
                     gateway:
-                        gateway ||
-                        null,
-
-                    verified:
-                        true
+                        normalizedGateway
 
                 });
 
 
-            // =====================================
-            // نتیجه:: M
-            // =====================================
+            // =================================
+            // ..M Already Verified
+            // =================================
+
+            if (
+                result?.alreadyVerified
+            ) {
+
+                return res.status(200).json({
+
+                    success:
+                        true,
+
+                    verified:
+                        true,
+
+                    alreadyVerified:
+                        true,
+
+                    message:
+                        "این پرداخت قبلاً تأیید شده است",
+
+                    deposit:
+                        result.deposit ||
+                        null,
+
+                    wallet:
+                        result.wallet ||
+                        null
+
+                });
+
+            }
+
+
+            // =================================
+            // ..M Successful Verification
+            // =================================
 
             return res.status(200).json({
 
                 success:
                     true,
 
+                verified:
+                    true,
+
+                alreadyVerified:
+                    false,
+
                 message:
-                    result.alreadyVerified
-
-                        ? "این پرداخت قبلاً تأیید شده است"
-
-                        : "پرداخت با موفقیت تأیید شد",
+                    "پرداخت با موفقیت تأیید شد",
 
                 deposit:
-                    result.deposit,
+                    result.deposit ||
+                    null,
 
                 wallet:
                     result.wallet ||
@@ -315,7 +421,7 @@ router.post(
         catch (error) {
 
             console.error(
-                "Verify Payment Error:",
+                "[VERIFY PAYMENT ERROR]",
                 error
             );
 
@@ -323,6 +429,9 @@ router.post(
             return res.status(400).json({
 
                 success:
+                    false,
+
+                verified:
                     false,
 
                 message:
@@ -338,7 +447,7 @@ router.post(
 
 
 // =====================================
-// EXPORT ROUTER:: M
+// ..M EXPORT
 // =====================================
 
 export default router;
