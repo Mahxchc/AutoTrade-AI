@@ -1,6 +1,6 @@
 // =====================================
+// ..M AutoTrade AI
 // Authentication Middleware
-// AutoTrade AI
 // File: backend/middleware/auth.js
 // =====================================
 
@@ -12,7 +12,7 @@ import User from "../models/User.js";
 
 
 // =====================================
-// Get Telegram InitData
+// Get Telegram InitData :: M
 // =====================================
 
 function getTelegramInitData(req) {
@@ -29,7 +29,7 @@ function getTelegramInitData(req) {
 
 
 // =====================================
-// Require Telegram User
+// Require Telegram User :: M
 // =====================================
 
 export function requireTelegramUser(
@@ -53,7 +53,7 @@ export function requireTelegramUser(
                 authenticated: false,
 
                 message:
-                    "Telegram authentication required"
+                    "احراز هویت Telegram لازم است"
 
             });
 
@@ -79,7 +79,7 @@ export function requireTelegramUser(
 
                 message:
                     result?.message ||
-                    "Invalid Telegram authentication"
+                    "احراز هویت Telegram نامعتبر است"
 
             });
 
@@ -98,21 +98,29 @@ export function requireTelegramUser(
                 authenticated: false,
 
                 message:
-                    "Telegram user information is missing"
+                    "اطلاعات کاربر Telegram موجود نیست"
 
             });
 
         }
 
 
-        // Save Telegram user
+        // =================================
+        // Save Telegram User :: M
+        // =================================
+
         req.telegramUser =
             result.user;
 
 
-        // Save Telegram ID
+        // =================================
+        // Save Telegram ID :: M
+        // =================================
+
         req.telegramId =
-            String(result.user.id);
+            String(
+                result.user.id
+            );
 
 
         return next();
@@ -134,7 +142,7 @@ export function requireTelegramUser(
             authenticated: false,
 
             message:
-                "Telegram authentication failed"
+                "احراز هویت Telegram انجام نشد"
 
         });
 
@@ -144,7 +152,7 @@ export function requireTelegramUser(
 
 
 // =====================================
-// Require User
+// Require User :: M
 // =====================================
 
 export const requireUser =
@@ -152,7 +160,7 @@ export const requireUser =
 
 
 // =====================================
-// Required Telegram User
+// Required Telegram User :: M
 // =====================================
 
 export const requiredTelegramUser =
@@ -160,16 +168,21 @@ export const requiredTelegramUser =
 
 
 // =====================================
-// Require Admin
+// Require Admin :: M
+// فقط سازنده / مدیر
 // =====================================
 
-export function requireAdmin(
+export async function requireAdmin(
     req,
     res,
     next
 ) {
 
     try {
+
+        // =================================
+        // Telegram Authentication
+        // =================================
 
         if (!req.telegramUser) {
 
@@ -180,12 +193,22 @@ export function requireAdmin(
                 authenticated: false,
 
                 message:
-                    "Telegram authentication required"
+                    "احراز هویت Telegram لازم است"
 
             });
 
         }
 
+
+        const telegramId =
+            String(
+                req.telegramUser.id
+            );
+
+
+        // =================================
+        // Admin Telegram ID
+        // =================================
 
         const adminTelegramId =
             process.env.ADMIN_TELEGRAM_ID;
@@ -198,15 +221,19 @@ export function requireAdmin(
                 success: false,
 
                 message:
-                    "ADMIN_TELEGRAM_ID is not configured"
+                    "ADMIN_TELEGRAM_ID در تنظیمات سرور ثبت نشده است"
 
             });
 
         }
 
 
+        // =================================
+        // Check Admin Telegram ID
+        // =================================
+
         if (
-            String(req.telegramUser.id) !==
+            telegramId !==
             String(adminTelegramId)
         ) {
 
@@ -216,15 +243,83 @@ export function requireAdmin(
 
                 authenticated: true,
 
+                admin: false,
+
                 message:
-                    "Admin access required"
+                    "دسترسی مدیر لازم است"
 
             });
 
         }
 
 
-        req.isAdmin = true;
+        // =================================
+        // Find Admin In Database
+        // =================================
+
+        const user =
+            await User.findOne({
+
+                telegramId
+
+            });
+
+
+        if (!user) {
+
+            return res.status(403).json({
+
+                success: false,
+
+                authenticated: true,
+
+                admin: false,
+
+                message:
+                    "حساب مدیر در سیستم پیدا نشد"
+
+            });
+
+        }
+
+
+        // =================================
+        // Database Admin Check
+        // =================================
+
+        if (
+            user.isAdmin !== true
+        ) {
+
+            return res.status(403).json({
+
+                success: false,
+
+                authenticated: true,
+
+                admin: false,
+
+                message:
+                    "این حساب به عنوان مدیر ثبت نشده است"
+
+            });
+
+        }
+
+
+        // =================================
+        // Admin Request Data
+        // =================================
+
+        req.user =
+            user;
+
+        req.isAdmin =
+            true;
+
+        req.telegramId =
+            telegramId;
+
 
         return next();
 
@@ -243,7 +338,7 @@ export function requireAdmin(
             success: false,
 
             message:
-                "Admin authentication failed"
+                "بررسی دسترسی مدیر انجام نشد"
 
         });
 
@@ -253,7 +348,7 @@ export function requireAdmin(
 
 
 // =====================================
-// Required Admin
+// Required Admin :: M
 // =====================================
 
 export const requiredAdmin =
@@ -261,7 +356,12 @@ export const requiredAdmin =
 
 
 // =====================================
-// Require Approved User
+// Require Approved User :: M
+// =====================================
+// کاربران عادی فقط در صورت تأیید
+// صریح مدیریت اجازه استفاده دارند.
+//
+// Admin از این محدودیت عبور می‌کند.
 // =====================================
 
 export async function requireApprovedUser(
@@ -272,6 +372,10 @@ export async function requireApprovedUser(
 
     try {
 
+        // =================================
+        // Telegram Authentication
+        // =================================
+
         if (!req.telegramUser) {
 
             return res.status(401).json({
@@ -280,21 +384,30 @@ export async function requireApprovedUser(
 
                 authenticated: false,
 
+                approved: false,
+
                 message:
-                    "Telegram authentication required"
+                    "احراز هویت Telegram لازم است"
 
             });
 
         }
 
 
+        const telegramId =
+            String(
+                req.telegramUser.id
+            );
+
+
+        // =================================
+        // Find User
+        // =================================
+
         const user =
             await User.findOne({
 
-                telegramId:
-                    String(
-                        req.telegramUser.id
-                    )
+                telegramId
 
             });
 
@@ -310,16 +423,21 @@ export async function requireApprovedUser(
                 approved: false,
 
                 message:
-                    "User not found"
+                    "حساب کاربری پیدا نشد"
 
             });
 
         }
 
 
+        // =================================
+        // Blocked User
+        // =================================
+
         if (
-            String(user.status)
-                .toUpperCase() ===
+            String(
+                user.status
+            ).toUpperCase() ===
             "BLOCKED"
         ) {
 
@@ -332,23 +450,54 @@ export async function requireApprovedUser(
                 approved: false,
 
                 message:
-                    "User account is blocked"
+                    "حساب کاربری مسدود شده است"
 
             });
 
         }
 
 
-        const approved =
-            user.accessEnabled === true ||
-            user.botAccess === true ||
-            String(user.approvalStatus)
-                .toUpperCase() ===
-                "APPROVED" ||
-            String(user.status)
-                .toUpperCase() ===
-                "ACTIVE";
+        // =================================
+        // ADMIN BYPASS :: M
+        // =================================
 
+        if (
+            user.isAdmin === true
+        ) {
+
+            req.user =
+                user;
+
+            req.telegramId =
+                telegramId;
+
+            req.isAdmin =
+                true;
+
+            return next();
+
+        }
+
+
+        // =================================
+        // Explicit Approval :: M
+        // =================================
+
+        const approved =
+            user.accessEnabled === true &&
+            String(
+                user.approvalStatus
+            ).toUpperCase() ===
+            "APPROVED" &&
+            String(
+                user.status
+            ).toUpperCase() ===
+            "ACTIVE";
+
+
+        // =================================
+        // Not Approved
+        // =================================
 
         if (!approved) {
 
@@ -360,22 +509,35 @@ export async function requireApprovedUser(
 
                 approved: false,
 
+                status:
+                    user.status,
+
+                approvalStatus:
+                    user.approvalStatus,
+
+                accessEnabled:
+                    user.accessEnabled,
+
                 message:
-                    "User approval is required"
+                    "حساب شما هنوز توسط مدیریت تأیید نشده است"
 
             });
 
         }
 
 
+        // =================================
+        // Approved User
+        // =================================
+
         req.user =
             user;
 
-
         req.telegramId =
-            String(
-                req.telegramUser.id
-            );
+            telegramId;
+
+        req.isAdmin =
+            false;
 
 
         return next();
@@ -395,7 +557,7 @@ export async function requireApprovedUser(
             success: false,
 
             message:
-                "User approval verification failed"
+                "بررسی تأیید کاربر انجام نشد"
 
         });
 
@@ -405,7 +567,7 @@ export async function requireApprovedUser(
 
 
 // =====================================
-// Optional Telegram User
+// Optional Telegram User :: M
 // =====================================
 
 export function optionalTelegramUser(
@@ -471,7 +633,7 @@ export function optionalTelegramUser(
 
 
 // =====================================
-// Default Export
+// Default Export :: M
 // =====================================
 
 export default {
