@@ -1,6 +1,6 @@
 // =====================================
-// AutoTrade AI
-// Deposit Routes:: M
+// ..M AutoTrade AI
+// Deposit Routes
 // مسیرهای واریز برای Mini App
 // File: backend/routes/deposit.js
 // =====================================
@@ -20,14 +20,18 @@ import {
     requiredTelegramUser
 } from "../middleware/auth.js";
 
+import {
+    getUsdToTomanRate
+} from "../services/currencyService.js";
+
 
 const router =
     express.Router();
 
 
 // =====================================
-// Helper: Find Telegram User
-// پیدا کردن کاربر از Telegram ID
+// ..M Find Authenticated User
+// پیدا کردن کاربر احراز شده
 // =====================================
 
 async function getAuthenticatedUser(req) {
@@ -71,50 +75,77 @@ async function getAuthenticatedUser(req) {
 
 
 // =====================================
-// CREATE DEPOSIT
+// ..M Positive Number
+// بررسی عدد مثبت
+// =====================================
+
+function toPositiveNumber(
+    value
+) {
+
+    const number =
+        Number(value);
+
+
+    if (
+        !Number.isFinite(number) ||
+        number <= 0
+    ) {
+
+        return null;
+
+    }
+
+
+    return number;
+
+}
+
+
+// =====================================
+// ..M CREATE DEPOSIT
 // ایجاد درخواست واریز
 // POST /api/deposit
 // =====================================
 //
-// نکته مهم:
+// نکته امنیتی:
 //
-// userId از Body به عنوان هویت کاربر
-// پذیرفته نمی‌شود.
+// userId از Body پذیرفته نمی‌شود.
 //
-// کاربر از Telegram Authentication
-// شناسایی می‌شود.
+// exchangeRate نیز از Client پذیرفته
+// نمی‌شود.
+//
+// نرخ تبدیل مستقیماً از Backend گرفته می‌شود.
 // =====================================
 
 router.post(
     "/",
     requiredTelegramUser,
-    async (req, res) => {
+    async (
+        req,
+        res
+    ) => {
 
         try {
 
             const user =
-                await getAuthenticatedUser(req);
+                await getAuthenticatedUser(
+                    req
+                );
 
 
-            const {
+            // =================================
+            // ..M Amount
+            // =================================
 
-                amountToman,
+            const amountToman =
+                toPositiveNumber(
+                    req.body?.amountToman
+                );
 
-                exchangeRate,
-
-                method,
-
-                gateway
-
-            } = req.body;
-
-
-            // =====================================
-            // بررسی مبلغ
-            // =====================================
 
             if (
-                amountToman == null
+                amountToman === null
             ) {
 
                 return res.status(400).json({
@@ -123,19 +154,28 @@ router.post(
                         false,
 
                     message:
-                        "مبلغ واریز مشخص نشده است"
+                        "مبلغ واریز باید یک عدد مثبت باشد"
 
                 });
 
             }
 
 
-            // =====================================
-            // بررسی نرخ
-            // =====================================
+            // =================================
+            // ..M Minimum Amount
+            // حداقل مبلغ واریز
+            // =================================
+
+            const minimumDeposit =
+                Number(
+                    process.env.MIN_DEPOSIT_TOMAN ||
+                    100000
+                );
+
 
             if (
-                exchangeRate == null
+                amountToman <
+                minimumDeposit
             ) {
 
                 return res.status(400).json({
@@ -144,16 +184,72 @@ router.post(
                         false,
 
                     message:
-                        "نرخ تبدیل دلار مشخص نشده است"
+                        `حداقل مبلغ واریز ${minimumDeposit.toLocaleString("fa-IR")} تومان است`
 
                 });
 
             }
 
 
-            // =====================================
-            // ایجاد Deposit
-            // =====================================
+            // =================================
+            // ..M Server Exchange Rate
+            // نرخ واقعی Backend
+            // =================================
+
+            const exchangeRate =
+                Number(
+                    await getUsdToTomanRate()
+                );
+
+
+            if (
+                !Number.isFinite(
+                    exchangeRate
+                ) ||
+                exchangeRate <= 0
+            ) {
+
+                return res.status(503).json({
+
+                    success:
+                        false,
+
+                    message:
+                        "نرخ تبدیل دلار در حال حاضر در دسترس نیست"
+
+                });
+
+            }
+
+
+            // =================================
+            // ..M Payment Method
+            // =================================
+
+            const method =
+                typeof req.body?.method ===
+                "string"
+
+                    ? req.body.method
+                        .trim()
+                        .toUpperCase()
+
+                    : "GATEWAY";
+
+
+            const gateway =
+                typeof req.body?.gateway ===
+                "string"
+
+                    ? req.body.gateway
+                        .trim()
+
+                    : null;
+
+
+            // =================================
+            // ..M Create Deposit
+            // =================================
 
             const deposit =
                 await createDeposit({
@@ -165,9 +261,7 @@ router.post(
 
                     exchangeRate,
 
-                    method:
-                        method ||
-                        "GATEWAY",
+                    method,
 
                     gateway:
                         gateway ||
@@ -176,9 +270,9 @@ router.post(
                 });
 
 
-            // =====================================
-            // پاسخ
-            // =====================================
+            // =================================
+            // ..M Response
+            // =================================
 
             return res.status(201).json({
 
@@ -229,7 +323,7 @@ router.post(
         catch (error) {
 
             console.error(
-                "Create Deposit Error:",
+                "[CREATE DEPOSIT ERROR]",
                 error
             );
 
@@ -252,20 +346,25 @@ router.post(
 
 
 // =====================================
-// GET MY DEPOSITS
-// دریافت واریزهای کاربر فعلی
+// ..M GET MY DEPOSITS
+// دریافت واریزهای کاربر
 // GET /api/deposit/my
 // =====================================
 
 router.get(
     "/my",
     requiredTelegramUser,
-    async (req, res) => {
+    async (
+        req,
+        res
+    ) => {
 
         try {
 
             const user =
-                await getAuthenticatedUser(req);
+                await getAuthenticatedUser(
+                    req
+                );
 
 
             const deposits =
@@ -291,7 +390,7 @@ router.get(
         catch (error) {
 
             console.error(
-                "Get My Deposits Error:",
+                "[GET MY DEPOSITS ERROR]",
                 error
             );
 
@@ -314,20 +413,25 @@ router.get(
 
 
 // =====================================
-// GET MY DEPOSIT STATUS
-// دریافت وضعیت واریز خود کاربر
+// ..M GET MY DEPOSIT
+// دریافت وضعیت یک واریز
 // GET /api/deposit/:depositId
 // =====================================
 
 router.get(
     "/:depositId",
     requiredTelegramUser,
-    async (req, res) => {
+    async (
+        req,
+        res
+    ) => {
 
         try {
 
             const user =
-                await getAuthenticatedUser(req);
+                await getAuthenticatedUser(
+                    req
+                );
 
 
             const {
@@ -335,9 +439,9 @@ router.get(
             } = req.params;
 
 
-            // =====================================
-            // Validate Deposit ID
-            // =====================================
+            // =================================
+            // ..M Validate Deposit ID
+            // =================================
 
             if (
                 !mongoose.Types.ObjectId.isValid(
@@ -358,9 +462,9 @@ router.get(
             }
 
 
-            // =====================================
-            // فقط واریز متعلق به همین کاربر
-            // =====================================
+            // =================================
+            // ..M Get Deposit
+            // =================================
 
             const deposit =
                 await getDepositById({
@@ -373,9 +477,9 @@ router.get(
                 });
 
 
-            // =====================================
-            // پاسخ
-            // =====================================
+            // =================================
+            // ..M Response
+            // =================================
 
             return res.status(200).json({
 
@@ -435,13 +539,18 @@ router.get(
         catch (error) {
 
             console.error(
-                "Get Deposit Status Error:",
+                "[GET DEPOSIT ERROR]",
                 error
             );
 
 
+            const message =
+                error.message ||
+                "";
+
+
             const statusCode =
-                error.message ===
+                message ===
                 "واریز پیدا نشد"
                     ? 404
                     : 500;
@@ -455,7 +564,7 @@ router.get(
                     false,
 
                 message:
-                    error.message ||
+                    message ||
                     "دریافت وضعیت واریز ناموفق بود"
 
             });
@@ -467,7 +576,7 @@ router.get(
 
 
 // =====================================
-// EXPORT ROUTER
+// ..M EXPORT
 // =====================================
 
 export default router;
