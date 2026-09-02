@@ -1,7 +1,7 @@
 // =====================================
-// ..M AutoTrade AI
+// ..M
+// AutoTrade AI
 // Withdraw Model
-// مدل برداشت تومان
 // File: backend/models/Withdraw.js
 // =====================================
 
@@ -9,238 +9,185 @@ import mongoose from "mongoose";
 
 
 // =====================================
-// WITHDRAW SCHEMA
+// ..M
+// Schema
 // =====================================
 
 const withdrawSchema = new mongoose.Schema(
     {
-
-        // =====================================
+        // ---------------------------------
+        // ..M
         // کاربر
-        // =====================================
+        // ---------------------------------
 
         userId: {
-
-            type:
-                mongoose.Schema.Types.ObjectId,
-
-            ref:
-                "User",
-
-            required:
-                true,
-
-            index:
-                true
-
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            required: true,
+            index: true
         },
 
+        // ---------------------------------
+        // ..M
+        // کیف پول
+        // ---------------------------------
 
-        // =====================================
-        // مبلغ برداشت
-        // واحد: تومان
-        // =====================================
+        walletId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Wallet",
+            required: true,
+            index: true
+        },
+
+        // ---------------------------------
+        // ..M
+        // مقدار برداشت
+        // ---------------------------------
+
+        amountUSD: {
+            type: Number,
+            required: true,
+            min: 0
+        },
 
         amountToman: {
-
-            type:
-                Number,
-
-            required:
-                true,
-
-            min:
-                1
-
+            type: Number,
+            required: true,
+            min: 0
         },
 
+        // ---------------------------------
+        // ..M
+        // نرخ تبدیل
+        // ---------------------------------
 
-        // =====================================
-        // شماره شبا
-        // =====================================
-
-        iban: {
-
-            type:
-                String,
-
-            required:
-                true,
-
-            trim:
-                true,
-
-            uppercase:
-                true
-
+        usdToTomanRate: {
+            type: Number,
+            required: true,
+            min: 0
         },
 
+        // ---------------------------------
+        // ..M
+        // روش برداشت
+        // ---------------------------------
 
-        // =====================================
-        // توضیحات کاربر
-        // =====================================
-
-        description: {
-
-            type:
-                String,
-
-            default:
-                "",
-
-            trim:
-                true,
-
-            maxlength:
-                500
-
+        method: {
+            type: String,
+            enum: [
+                "BANK",
+                "GATEWAY",
+                "OTHER"
+            ],
+            default: "BANK",
+            required: true
         },
 
+        // ---------------------------------
+        // ..M
+        // اطلاعات بانکی
+        // ---------------------------------
 
-        // =====================================
+        bankAccount: {
+            type: String,
+            trim: true,
+            default: ""
+        },
+
+        accountHolderName: {
+            type: String,
+            trim: true,
+            maxlength: 150,
+            default: ""
+        },
+
+        // ---------------------------------
+        // ..M
         // وضعیت برداشت
-        // =====================================
+        // ---------------------------------
 
         status: {
-
-            type:
-                String,
-
+            type: String,
             enum: [
-
                 "PENDING",
-
-                "APPROVED",
-
-                "REJECTED",
-
-                "PAID"
-
+                "PROCESSING",
+                "COMPLETED",
+                "FAILED",
+                "CANCELLED"
             ],
-
-            default:
-                "PENDING",
-
-            index:
-                true
-
+            default: "PENDING",
+            required: true,
+            index: true
         },
 
-
-        // =====================================
+        // ---------------------------------
+        // ..M
         // شناسه تراکنش پرداخت
-        // در صورت پرداخت واقعی
-        // =====================================
+        // ---------------------------------
 
         transactionId: {
-
-            type:
-                String,
-
-            default:
-                null,
-
-            trim:
-                true
-
+            type: String,
+            trim: true,
+            default: ""
         },
 
+        // ---------------------------------
+        // ..M
+        // توضیحات
+        // ---------------------------------
 
-        // =====================================
-        // دلیل رد شدن
-        // =====================================
-
-        rejectionReason: {
-
-            type:
-                String,
-
-            default:
-                null,
-
-            trim:
-                true,
-
-            maxlength:
-                500
-
+        description: {
+            type: String,
+            trim: true,
+            maxlength: 1000,
+            default: ""
         },
 
-
-        // =====================================
+        // ---------------------------------
+        // ..M
         // زمان پردازش
-        // =====================================
+        // ---------------------------------
 
         processedAt: {
-
-            type:
-                Date,
-
-            default:
-                null
-
-        },
-
-
-        // =====================================
-        // زمان پرداخت واقعی
-        // =====================================
-
-        paidAt: {
-
-            type:
-                Date,
-
-            default:
-                null
-
+            type: Date,
+            default: null
         }
-
     },
 
     {
-
-        // =====================================
-        // زمان ایجاد و بروزرسانی
-        // =====================================
-
-        timestamps:
-            true
-
+        timestamps: true
     }
 );
 
 
 // =====================================
-// INDEX
-// جستجوی سریع برداشت‌های کاربر
+// ..M
+// Indexها
 // =====================================
 
 withdrawSchema.index({
+    userId: 1,
+    createdAt: -1
+});
 
-    userId:
-        1,
+withdrawSchema.index({
+    status: 1,
+    createdAt: -1
+});
 
-    createdAt:
-        -1
-
+withdrawSchema.index({
+    walletId: 1,
+    createdAt: -1
 });
 
 
 // =====================================
-// جلوگیری از مدل تکراری در محیط توسعه
+// ..M
+// Export
 // =====================================
 
 const Withdraw =
     mongoose.models.Withdraw ||
-    mongoose.model(
-        "Withdraw",
-        withdrawSchema
-    );
-
-
-// =====================================
-// EXPORT
-// =====================================
+    mongoose.model("Withdraw", withdrawSchema);
 
 export default Withdraw;
