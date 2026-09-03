@@ -1,285 +1,227 @@
 // =====================================
-// Currency Service:: M
+// ..M
 // AutoTrade AI
-// Currency Conversion & Wallet Display
+// Currency Service
 // File: backend/services/currencyService.js
 // =====================================
 
 
 // =====================================
-// Configuration:: M
+// ..M
+// نرخ پیش‌فرض
+// مقدار به تومان برای هر 1 دلار
 // =====================================
 
-const DEFAULT_USD_TO_IRR =
-    Number(process.env.USD_TO_IRR || 100000);
+const DEFAULT_USD_TO_TOMAN =
+    Number(process.env.USD_TO_IRR || 100000) / 10;
 
 
 // =====================================
-// Get USD → IRR Rate:: M
+// ..M
+// تبدیل مقدار به عدد معتبر
 // =====================================
 
-export function getUsdIrrRate() {
+function toValidNumber(value, fallback = 0) {
 
-    return DEFAULT_USD_TO_IRR;
+    const number = Number(value);
 
+    if (!Number.isFinite(number)) {
+        return fallback;
+    }
+
+    return number;
 }
 
 
 // =====================================
-// Get USD → Toman Rate:: M
+// ..M
+// دریافت نرخ USD → Toman
 // =====================================
 
-export function getUsdToTomanRate() {
+export async function getUsdToTomanRate() {
 
-    return DEFAULT_USD_TO_IRR / 10;
+    const envRate =
+        Number(process.env.USD_TO_TOMAN);
 
+    if (
+        Number.isFinite(envRate) &&
+        envRate > 0
+    ) {
+        return envRate;
+    }
+
+    return DEFAULT_USD_TO_TOMAN;
 }
 
 
 // =====================================
-// Convert USD → Toman:: M
+// ..M
+// دریافت نرخ USD → Rial
 // =====================================
 
-export function convertUsdToToman(
+export async function getUsdToIrrRate() {
+
+    const rateToman =
+        await getUsdToTomanRate();
+
+    return rateToman * 10;
+}
+
+
+// =====================================
+// ..M
+// تبدیل USD به Toman
+// =====================================
+
+export async function usdToToman(
     usd
 ) {
 
-    const numericUsd =
-        Number(usd);
+    const amount =
+        toValidNumber(usd);
 
-    if (
-        !Number.isFinite(numericUsd)
-    ) {
-        return 0;
-    }
+    const rate =
+        await getUsdToTomanRate();
 
-    return (
-        numericUsd *
-        getUsdToTomanRate()
-    );
-
+    return amount * rate;
 }
 
 
 // =====================================
-// Convert Toman → USD:: M
+// ..M
+// تبدیل Toman به USD
 // =====================================
 
-export function convertTomanToUsd(
+export async function tomanToUsd(
     toman
 ) {
 
-    const numericToman =
-        Number(toman);
-
-    if (
-        !Number.isFinite(numericToman)
-    ) {
-        return 0;
-    }
+    const amount =
+        toValidNumber(toman);
 
     const rate =
-        getUsdToTomanRate();
+        await getUsdToTomanRate();
 
-    if (
-        !Number.isFinite(rate) ||
-        rate <= 0
-    ) {
+    if (rate <= 0) {
         return 0;
     }
 
-    return (
-        numericToman / rate
-    );
-
+    return amount / rate;
 }
 
 
 // =====================================
-// Convert IRR → USD:: M
-// =====================================
-
-export function convertIrrToUsd(
-    irr
-) {
-
-    const numericIrr =
-        Number(irr);
-
-    if (
-        !Number.isFinite(numericIrr)
-    ) {
-        return 0;
-    }
-
-    if (
-        DEFAULT_USD_TO_IRR <= 0
-    ) {
-        return 0;
-    }
-
-    return (
-        numericIrr /
-        DEFAULT_USD_TO_IRR
-    );
-
-}
-
-
-// =====================================
-// Convert USD → IRR:: M
-// =====================================
-
-export function convertUsdToIrr(
-    usd
-) {
-
-    const numericUsd =
-        Number(usd);
-
-    if (
-        !Number.isFinite(numericUsd)
-    ) {
-        return 0;
-    }
-
-    return (
-        numericUsd *
-        DEFAULT_USD_TO_IRR
-    );
-
-}
-
-
-// =====================================
-// Format USD:: M
-// =====================================
-
-export function formatUSD(
-    usd
-) {
-
-    const numericUsd =
-        Number(usd);
-
-    if (
-        !Number.isFinite(numericUsd)
-    ) {
-        return "$0.00";
-    }
-
-    return new Intl.NumberFormat(
-        "en-US",
-        {
-            style: "currency",
-            currency: "USD",
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        }
-    ).format(
-        numericUsd
-    );
-
-}
-
-
-// =====================================
-// Format Toman:: M
+// ..M
+// فرمت تومان
 // =====================================
 
 export function formatToman(
-    toman
+    amount
 ) {
 
-    const numericToman =
-        Number(toman);
+    const value =
+        toValidNumber(amount);
 
-    if (
-        !Number.isFinite(numericToman)
-    ) {
-        return "۰ تومان";
-    }
-
-    return (
-        new Intl.NumberFormat(
-            "fa-IR"
-        ).format(
-            Math.round(numericToman)
-        ) +
-        " تومان"
-    );
-
+    return `${Math.round(value).toLocaleString("fa-IR")} تومان`;
 }
 
 
 // =====================================
-// Get Wallet Display Values:: M
+// ..M
+// فرمت دلار
 // =====================================
 
-export function getWalletDisplayValues(
-    usd
+export function formatUSD(
+    amount
 ) {
 
-    const numericUsd =
-        Number(usd);
+    const value =
+        toValidNumber(amount);
 
-    const safeUsd =
-        Number.isFinite(numericUsd)
-            ? numericUsd
-            : 0;
+    return `$${value.toLocaleString(
+        "en-US",
+        {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 8
+        }
+    )}`;
+}
 
-    const toman =
-        convertUsdToToman(
-            safeUsd
-        );
+
+// =====================================
+// ..M
+// دریافت تمام مقادیر نمایشی Wallet
+// =====================================
+
+export async function getWalletDisplayValues(
+    wallet
+) {
+
+    const balanceUSD =
+        toValidNumber(wallet?.balance);
+
+    const withdrawableUSD =
+        toValidNumber(wallet?.withdrawable);
+
+    const exchangeRate =
+        await getUsdToTomanRate();
+
+    const balanceToman =
+        balanceUSD * exchangeRate;
+
+    const withdrawableToman =
+        withdrawableUSD * exchangeRate;
+
 
     return {
 
-        usd:
-            safeUsd,
+        // ---------------------------------
+        // ..M
+        // موجودی
+        // ---------------------------------
 
-        toman,
+        balanceUSD,
 
-        usdFormatted:
-            formatUSD(
-                safeUsd
-            ),
+        balanceToman,
 
-        tomanFormatted:
-            formatToman(
-                toman
-            ),
+        balanceUSDText:
+            formatUSD(balanceUSD),
 
-        exchangeRate:
-            getUsdToTomanRate()
+        balanceTomanText:
+            formatToman(balanceToman),
 
+
+        // ---------------------------------
+        // ..M
+        // قابل برداشت
+        // ---------------------------------
+
+        withdrawableUSD,
+
+        withdrawableToman,
+
+        withdrawableUSDText:
+            formatUSD(withdrawableUSD),
+
+        withdrawableTomanText:
+            formatToman(withdrawableToman),
+
+
+        // ---------------------------------
+        // ..M
+        // نرخ تبدیل
+        // ---------------------------------
+
+        exchangeRate
     };
-
 }
 
 
 // =====================================
-// Default Export:: M
+// ..M
+// Export
 // =====================================
 
-export default {
-
-    getUsdIrrRate,
-
-    getUsdToTomanRate,
-
-    convertUsdToToman,
-
-    convertTomanToUsd,
-
-    convertIrrToUsd,
-
-    convertUsdToIrr,
-
-    formatUSD,
-
-    formatToman,
-
-    getWalletDisplayValues
-
+export {
+    DEFAULT_USD_TO_TOMAN
 };
