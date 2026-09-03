@@ -1,6 +1,7 @@
 // =====================================
+// ..M
 // AutoTrade AI
-// Deposit Service :: M
+// Deposit Service
 // سرویس مدیریت واریز
 // File: backend/services/depositService.js
 // =====================================
@@ -11,12 +12,13 @@ import Deposit from "../models/Deposit.js";
 import Wallet from "../models/Wallet.js";
 
 import {
-    getUsdIrrRate
+    getUsdToIrrRate
 } from "./currencyService.js";
 
 
 // =====================================
-// Helpers :: M
+// ..M
+// Helpers
 // =====================================
 
 function toPositiveNumber(
@@ -26,7 +28,6 @@ function toPositiveNumber(
 
     const number =
         Number(value);
-
 
     if (
         !Number.isFinite(number) ||
@@ -39,14 +40,14 @@ function toPositiveNumber(
 
     }
 
-
     return number;
 
 }
 
 
 // =====================================
-// Round Money :: M
+// ..M
+// Round Money
 // =====================================
 
 function round8(
@@ -61,19 +62,9 @@ function round8(
 
 
 // =====================================
-// Create Deposit :: M
+// ..M
+// Create Deposit
 // ایجاد درخواست واریز
-// =====================================
-//
-// تومان
-//   ↓
-// نرخ واقعی سرور
-//   ↓
-// USD
-//   ↓
-// USDT
-//
-// Wallet در این مرحله شارژ نمی‌شود.
 // =====================================
 
 export async function createDeposit({
@@ -91,7 +82,8 @@ export async function createDeposit({
 }) {
 
     // =====================================
-    // Validate User ID :: M
+    // ..M
+    // Validate User ID
     // =====================================
 
     if (
@@ -108,7 +100,8 @@ export async function createDeposit({
 
 
     // =====================================
-    // Validate Amount :: M
+    // ..M
+    // Validate Amount
     // =====================================
 
     const toman =
@@ -119,22 +112,21 @@ export async function createDeposit({
 
 
     // =====================================
-    // Get Server Exchange Rate :: M
-    // =====================================
-    //
-    // اگر نرخ از Mini App ارسال شود،
-    // به آن اعتماد نمی‌کنیم.
-    //
-    // نرخ معتبر از سرور دریافت می‌شود.
+    // ..M
+    // Get Server Exchange Rate
     // =====================================
 
     let rate;
 
-
     try {
 
+        // ---------------------------------
+        // ..M
+        // نرخ فقط از Currency Service
+        // ---------------------------------
+
         rate =
-            await getUsdIrrRate();
+            await getUsdToIrrRate();
 
     }
 
@@ -147,7 +139,8 @@ export async function createDeposit({
 
 
         // ---------------------------------
-        // فقط برای سازگاری داخلی
+        // ..M
+        // Fallback داخلی
         // ---------------------------------
 
         if (
@@ -174,6 +167,11 @@ export async function createDeposit({
     }
 
 
+    // =====================================
+    // ..M
+    // Validate Rate
+    // =====================================
+
     rate =
         toPositiveNumber(
             rate,
@@ -182,7 +180,8 @@ export async function createDeposit({
 
 
     // =====================================
-    // Validate Payment Method :: M
+    // ..M
+    // Validate Payment Method
     // =====================================
 
     const allowedMethods = [
@@ -216,7 +215,8 @@ export async function createDeposit({
 
 
     // =====================================
-    // Calculate USD :: M
+    // ..M
+    // Calculate USD
     // =====================================
 
     const amountUSD =
@@ -238,13 +238,8 @@ export async function createDeposit({
 
 
     // =====================================
-    // USDT = USD :: M
-    // =====================================
-    //
-    // در سیستم فعلی:
-    //
-    // 1 USD = 1 USDT
-    //
+    // ..M
+    // USD = USDT
     // =====================================
 
     const amountUSDT =
@@ -254,7 +249,8 @@ export async function createDeposit({
 
 
     // =====================================
-    // Create Deposit :: M
+    // ..M
+    // Create Deposit
     // =====================================
 
     const deposit =
@@ -298,19 +294,9 @@ export async function createDeposit({
 
 
 // =====================================
-// Confirm Deposit :: M
-// تأیید واقعی و شارژ کیف پول
-// =====================================
-//
-// هشدار:
-//
-// این تابع نباید مستقیماً توسط Mini App
-// قابل دسترسی باشد.
-//
-// فقط Webhook / Callback معتبر درگاه
-// یا سیستم داخلی مورد اعتماد باید آن را
-// فراخوانی کند.
-//
+// ..M
+// Confirm Deposit
+// تأیید واریز و شارژ کیف پول
 // =====================================
 
 export async function confirmDeposit({
@@ -326,7 +312,8 @@ export async function confirmDeposit({
 }) {
 
     // =====================================
-    // Validate Deposit ID :: M
+    // ..M
+    // Validate Deposit ID
     // =====================================
 
     if (
@@ -343,7 +330,8 @@ export async function confirmDeposit({
 
 
     // =====================================
-    // Find Deposit :: M
+    // ..M
+    // Find Deposit
     // =====================================
 
     const deposit =
@@ -362,7 +350,8 @@ export async function confirmDeposit({
 
 
     // =====================================
-    // Already Credited :: M
+    // ..M
+    // Already Credited
     // =====================================
 
     if (
@@ -395,8 +384,8 @@ export async function confirmDeposit({
 
             creditedAmountUSDT:
                 Number(
-                    deposit.amountUSDT ||
-                    deposit.amountUSD ||
+                    deposit.amountUSDT ??
+                    deposit.amountUSD ??
                     0
                 ),
 
@@ -413,7 +402,8 @@ export async function confirmDeposit({
 
 
     // =====================================
-    // Validate Status :: M
+    // ..M
+    // Validate Status
     // =====================================
 
     if (
@@ -429,7 +419,8 @@ export async function confirmDeposit({
 
 
     // =====================================
-    // Validate Amount :: M
+    // ..M
+    // Validate Amount
     // =====================================
 
     const amountUSDT =
@@ -452,7 +443,8 @@ export async function confirmDeposit({
 
 
     // =====================================
-    // Find Wallet :: M
+    // ..M
+    // Find Wallet
     // =====================================
 
     const wallet =
@@ -474,7 +466,8 @@ export async function confirmDeposit({
 
 
     // =====================================
-    // Validate Wallet :: M
+    // ..M
+    // Validate Wallet
     // =====================================
 
     if (
@@ -529,16 +522,8 @@ export async function confirmDeposit({
 
 
     // =====================================
-    // Atomic Deposit Claim :: M
-    // گرفتن مالکیت عملیات تأیید
-    // =====================================
-    //
-    // فقط اولین درخواست می‌تواند Deposit
-    // را از PENDING/PROCESSING به COMPLETED
-    // تغییر دهد.
-    //
-    // درخواست تکراری دیگر وارد شارژ Wallet
-    // نمی‌شود.
+    // ..M
+    // Atomic Deposit Claim
     // =====================================
 
     const claimedDeposit =
@@ -581,28 +566,34 @@ export async function confirmDeposit({
 
                     ...(paymentId
                         ? {
+
                             paymentId:
                                 String(
                                     paymentId
                                 )
+
                         }
                         : {}),
 
                     ...(transactionId
                         ? {
+
                             transactionId:
                                 String(
                                     transactionId
                                 )
+
                         }
                         : {}),
 
                     ...(gateway
                         ? {
+
                             gateway:
                                 String(
                                     gateway
                                 )
+
                         }
                         : {})
 
@@ -624,6 +615,7 @@ export async function confirmDeposit({
 
 
     // =====================================
+    // ..M
     // Another Request Already Confirmed
     // =====================================
 
@@ -647,10 +639,8 @@ export async function confirmDeposit({
         if (
             latestDeposit &&
             (
-                latestDeposit.walletCredited ===
-                true ||
-                latestDeposit.status ===
-                "COMPLETED"
+                latestDeposit.walletCredited === true ||
+                latestDeposit.status === "COMPLETED"
             )
         ) {
 
@@ -699,7 +689,8 @@ export async function confirmDeposit({
 
 
     // =====================================
-    // Credit Wallet :: M
+    // ..M
+    // Credit Wallet
     // =====================================
 
     const newBalance =
@@ -725,14 +716,16 @@ export async function confirmDeposit({
 
 
     // =====================================
-    // Save Wallet :: M
+    // ..M
+    // Save Wallet
     // =====================================
 
     await wallet.save();
 
 
     // =====================================
-    // Result :: M
+    // ..M
+    // Result
     // =====================================
 
     return {
@@ -766,8 +759,8 @@ export async function confirmDeposit({
 
 
 // =====================================
-// Get User Deposits :: M
-// دریافت واریزهای کاربر
+// ..M
+// Get User Deposits
 // =====================================
 
 export async function getUserDeposits(
@@ -808,8 +801,8 @@ export async function getUserDeposits(
 
 
 // =====================================
-// Get Deposit By ID :: M
-// دریافت یک واریز
+// ..M
+// Get Deposit By ID
 // =====================================
 
 export async function getDepositById({
@@ -842,7 +835,8 @@ export async function getDepositById({
 
 
     // =====================================
-    // User Ownership :: M
+    // ..M
+    // User Ownership
     // =====================================
 
     if (
@@ -889,8 +883,8 @@ export async function getDepositById({
 
 
 // =====================================
-// Mark Deposit Processing :: M
-// انتقال به پردازش
+// ..M
+// Mark Deposit Processing
 // =====================================
 
 export async function markDepositProcessing({
@@ -992,8 +986,8 @@ export async function markDepositProcessing({
 
 
 // =====================================
-// Fail Deposit :: M
-// ناموفق کردن واریز
+// ..M
+// Fail Deposit
 // =====================================
 
 export async function failDeposit({
@@ -1051,10 +1045,12 @@ export async function failDeposit({
 
                     ...(description
                         ? {
+
                             description:
                                 String(
                                     description
                                 )
+
                         }
                         : {})
 
@@ -1117,8 +1113,8 @@ export async function failDeposit({
 
 
 // =====================================
-// Cancel Deposit :: M
-// لغو واریز
+// ..M
+// Cancel Deposit
 // =====================================
 
 export async function cancelDeposit({
@@ -1176,10 +1172,12 @@ export async function cancelDeposit({
 
                     ...(description
                         ? {
+
                             description:
                                 String(
                                     description
                                 )
+
                         }
                         : {})
 
@@ -1242,7 +1240,8 @@ export async function cancelDeposit({
 
 
 // =====================================
-// Default Export :: M
+// ..M
+// Default Export
 // =====================================
 
 export default {
