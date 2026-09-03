@@ -1,7 +1,7 @@
 // =====================================
-// ..M AutoTrade AI
-// Withdraw Service :: M
-// سرویس مدیریت برداشت تومان
+// ..M
+// AutoTrade AI
+// Withdraw Service
 // File: backend/services/withdrawService.js
 // =====================================
 
@@ -16,1717 +16,861 @@ import {
 
 
 // =====================================
-// Helpers :: M
+// ..M
+// تنظیمات
 // =====================================
 
-function toPositiveNumber(
-    value,
-    message
-) {
+const MIN_WITHDRAW_TOMAN = 100000;
 
-    const number =
-        Number(value);
+const MAX_DECIMALS = 8;
 
-    if (
-        !Number.isFinite(number) ||
-        number <= 0
-    ) {
+const WITHDRAW_METHODS = [
+    "BANK",
+    "GATEWAY",
+    "OTHER"
+];
 
-        throw new Error(
-            message
+
+// =====================================
+// ..M
+// تبدیل عدد
+// =====================================
+
+function toPositiveNumber(value, fieldName) {
+    const number = Number(value);
+
+    if (!Number.isFinite(number) || number <= 0) {
+        const error = new Error(
+            `${fieldName} must be greater than zero`
         );
 
+        error.statusCode = 400;
+
+        throw error;
     }
 
     return number;
-
 }
 
 
 // =====================================
-// Round Money :: M
+// ..M
+// گرد کردن مقدار
 // =====================================
 
-function round8(
-    value
-) {
-
-    return Number(
-        Number(value).toFixed(8)
-    );
-
+function round8(value) {
+    return Math.round(
+        (Number(value) + Number.EPSILON) *
+        10 ** MAX_DECIMALS
+    ) / 10 ** MAX_DECIMALS;
 }
 
 
 // =====================================
-// Normalize Toman Amount :: M
+// ..M
+// نرمال‌سازی شماره حساب
 // =====================================
 
-function normalizeToman(
-    value
-) {
-
-    const number =
-        Number(
-            String(value)
-                .replace(/,/g, "")
-                .replace(/\s/g, "")
-        );
-
-    if (
-        !Number.isFinite(number) ||
-        number <= 0
-    ) {
-
-        throw new Error(
-            "مبلغ برداشت نامعتبر است"
-        );
-
+function normalizeBankAccount(value) {
+    if (value === undefined || value === null) {
+        return "";
     }
 
-    return Math.floor(number);
-
+    return String(value)
+        .trim()
+        .replace(/\s+/g, "");
 }
 
 
 // =====================================
-// Normalize Bank Account :: M
+// ..M
+// نرمال‌سازی شبا
 // =====================================
 
-function normalizeBankAccount(
-    value
-) {
+function normalizeIban(value) {
+    if (!value) {
+        return "";
+    }
 
-    return String(
-        value || ""
-    )
-        .trim();
-
+    return String(value)
+        .trim()
+        .replace(/\s+/g, "")
+        .toUpperCase();
 }
 
 
 // =====================================
-// Create Withdraw Request :: M
+// ..M
+// اعتبارسنجی شبا
+// =====================================
+
+function isValidIranianIban(value) {
+    const iban = normalizeIban(value);
+
+    return /^IR\d{24}$/.test(iban);
+}
+
+
+// =====================================
+// ..M
+// اعتبارسنجی ObjectId
+// =====================================
+
+function validateObjectId(id, fieldName) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        const error = new Error(
+            `Invalid ${fieldName}`
+        );
+
+        error.statusCode = 400;
+
+        throw error;
+    }
+}
+
+
+// =====================================
+// ..M
 // ایجاد درخواست برداشت
 // =====================================
 
 export async function createWithdrawRequest({
-
     userId,
-
     amountToman,
-
     withdrawAll = false,
-
     method = "BANK",
-
     bankAccount = "",
-
     accountHolderName = ""
-
 }) {
+    validateObjectId(userId, "user ID");
 
-    // =====================================
-    // Validate User ID :: M
-    // =====================================
+    // ---------------------------------
+    // ..M
+    // بررسی روش برداشت
+    // ---------------------------------
 
-    if (
-        !mongoose.Types.ObjectId.isValid(
-            userId
-        )
-    ) {
+    const normalizedMethod =
+        String(method || "BANK")
+            .trim()
+            .toUpperCase();
 
-        throw new Error(
-            "شناسه کاربر نامعتبر است"
+    if (!WITHDRAW_METHODS.includes(normalizedMethod)) {
+        const error = new Error(
+            "Invalid withdrawal method"
         );
 
+        error.statusCode = 400;
+
+        throw error;
     }
 
 
-    // =====================================
-    // Find Wallet :: M
-    // =====================================
+    // ---------------------------------
+    // ..M
+    // پیدا کردن کیف پول
+    // ---------------------------------
 
-    const wallet =
-        await Wallet.findOne({
-
-            userId
-
-        });
-
+    const wallet = await Wallet.findOne({
+        userId
+    });
 
     if (!wallet) {
-
-        throw new Error(
-            "کیف پول پیدا نشد"
+        const error = new Error(
+            "Wallet not found"
         );
 
+        error.statusCode = 404;
+
+        throw error;
     }
 
 
-    // =====================================
-    // Wallet Status :: M
-    // =====================================
+    // ---------------------------------
+    // ..M
+    // بررسی وضعیت کیف پول
+    // ---------------------------------
 
     if (
         wallet.status &&
-        wallet.status !== "ACTIVE"
+        String(wallet.status).toUpperCase() !== "ACTIVE"
     ) {
-
-        throw new Error(
-            "کیف پول فعال نیست"
+        const error = new Error(
+            "Wallet is not active"
         );
 
+        error.statusCode = 403;
+
+        throw error;
     }
 
 
-    // =====================================
-    // Available Withdrawable :: M
-    // =====================================
+    // ---------------------------------
+    // ..M
+    // دریافت نرخ واقعی سرور
+    // ---------------------------------
 
-    const available =
-        Number(
-            wallet.withdrawable || 0
-        );
-
-
-    if (
-        !Number.isFinite(
-            available
-        ) ||
-        available <= 0
-    ) {
-
-        throw new Error(
-            "موجودی قابل برداشت وجود ندارد"
-        );
-
-    }
-
-
-    // =====================================
-    // Exchange Rate :: M
-    // =====================================
-
-    const exchange =
+    const usdToTomanRate =
         await getUsdToTomanRate();
 
+    const rate = Number(usdToTomanRate);
 
-    const rate =
-        toPositiveNumber(
-
-            exchange?.rate ??
-            exchange,
-
-            "نرخ دلار برای برداشت نامعتبر است"
-
+    if (!Number.isFinite(rate) || rate <= 0) {
+        const error = new Error(
+            "Unable to determine current USD to Toman rate"
         );
 
+        error.statusCode = 503;
 
-    // =====================================
-    // Calculate Amount :: M
-    // =====================================
-
-    let numericAmountToman;
-
-    let numericAmountUSD;
-
-
-    if (
-        withdrawAll === true
-    ) {
-
-        numericAmountUSD =
-            round8(
-                available
-            );
-
-
-        numericAmountToman =
-            Math.floor(
-                numericAmountUSD *
-                rate
-            );
-
-    }
-
-    else {
-
-        numericAmountToman =
-            normalizeToman(
-                amountToman
-            );
-
-
-        numericAmountUSD =
-            round8(
-
-                numericAmountToman /
-                rate
-
-            );
-
+        throw error;
     }
 
 
-    // =====================================
-    // Validate USD Amount :: M
-    // =====================================
+    // ---------------------------------
+    // ..M
+    // موجودی قابل برداشت
+    // ---------------------------------
+
+    const withdrawable =
+        Number(wallet.withdrawable || 0);
 
     if (
-        !Number.isFinite(
-            numericAmountUSD
-        ) ||
-        numericAmountUSD <= 0
+        !Number.isFinite(withdrawable) ||
+        withdrawable <= 0
     ) {
-
-        throw new Error(
-            "مبلغ معادل دلاری برداشت نامعتبر است"
+        const error = new Error(
+            "Insufficient withdrawable balance"
         );
 
+        error.statusCode = 400;
+
+        throw error;
     }
 
 
-    // =====================================
-    // Check Balance :: M
-    // =====================================
+    // ---------------------------------
+    // ..M
+    // محاسبه مبلغ برداشت
+    // ---------------------------------
 
-    if (
-        numericAmountUSD >
-        available
-    ) {
+    let requestedToman;
 
-        throw new Error(
-            "موجودی قابل برداشت برای این مبلغ کافی نیست"
-        );
-
+    if (withdrawAll === true) {
+        requestedToman =
+            round8(withdrawable * rate);
+    } else {
+        requestedToman =
+            toPositiveNumber(
+                amountToman,
+                "amountToman"
+            );
     }
 
 
-    // =====================================
-    // Minimum Withdrawal :: M
-    // =====================================
-
-    const MIN_WITHDRAW_TOMAN =
-        100000;
-
+    // ---------------------------------
+    // ..M
+    // حداقل برداشت
+    // ---------------------------------
 
     if (
-        numericAmountToman <
+        requestedToman <
         MIN_WITHDRAW_TOMAN
     ) {
-
-        throw new Error(
-
-            `حداقل مبلغ برداشت ${MIN_WITHDRAW_TOMAN.toLocaleString("fa-IR")} تومان است`
-
+        const error = new Error(
+            `Minimum withdrawal is ${MIN_WITHDRAW_TOMAN.toLocaleString("en-US")} Toman`
         );
 
+        error.statusCode = 400;
+
+        throw error;
     }
 
 
-    // =====================================
-    // Normalize Method :: M
-    // =====================================
+    // ---------------------------------
+    // ..M
+    // تبدیل تومان به USD
+    // ---------------------------------
 
-    const normalizedMethod =
-        String(
-            method || "BANK"
-        )
-            .toUpperCase()
+    let amountUSD =
+        requestedToman / rate;
+
+    amountUSD = round8(amountUSD);
+
+
+    // ---------------------------------
+    // ..M
+    // بررسی موجودی
+    // ---------------------------------
+
+    if (amountUSD <= 0) {
+        const error = new Error(
+            "Invalid withdrawal amount"
+        );
+
+        error.statusCode = 400;
+
+        throw error;
+    }
+
+    if (amountUSD > withdrawable) {
+        const error = new Error(
+            "Withdrawal amount exceeds withdrawable balance"
+        );
+
+        error.statusCode = 400;
+
+        throw error;
+    }
+
+
+    // ---------------------------------
+    // ..M
+    // اطلاعات بانکی
+    // ---------------------------------
+
+    const normalizedBank =
+        normalizeBankAccount(bankAccount);
+
+    const normalizedHolder =
+        String(accountHolderName || "")
             .trim();
 
 
-    const allowedMethods = [
+    // ---------------------------------
+    // ..M
+    // برای BANK شبا الزامی است
+    // ---------------------------------
 
-        "BANK",
+    if (normalizedMethod === "BANK") {
+        if (!normalizedBank) {
+            const error = new Error(
+                "Bank account / IBAN is required"
+            );
 
-        "GATEWAY",
+            error.statusCode = 400;
 
-        "OTHER"
+            throw error;
+        }
 
-    ];
+        if (
+            !isValidIranianIban(
+                normalizedBank
+            )
+        ) {
+            const error = new Error(
+                "Invalid Iranian IBAN. Example: IR123456789012345678901234"
+            );
 
+            error.statusCode = 400;
 
-    if (
-        !allowedMethods.includes(
-            normalizedMethod
-        )
-    ) {
+            throw error;
+        }
 
-        throw new Error(
-            "روش برداشت نامعتبر است"
-        );
+        if (!normalizedHolder) {
+            const error = new Error(
+                "Account holder name is required"
+            );
 
+            error.statusCode = 400;
+
+            throw error;
+        }
     }
 
 
-    // =====================================
-    // Bank Account :: M
-    // =====================================
+    // ---------------------------------
+    // ..M
+    // جلوگیری از چند برداشت همزمان
+    // ---------------------------------
 
-    const normalizedBankAccount =
-        normalizeBankAccount(
-            bankAccount
-        );
-
-
-    if (
-        normalizedMethod === "BANK" &&
-        !normalizedBankAccount
-    ) {
-
-        throw new Error(
-            "شماره شبا یا حساب بانکی وارد نشده است"
-        );
-
-    }
-
-
-    // =====================================
-    // Account Holder :: M
-    // =====================================
-
-    const normalizedHolderName =
-        String(
-            accountHolderName || ""
-        )
-            .trim();
-
-
-    // =====================================
-    // Prevent Multiple Pending :: M
-    // =====================================
-
-    const pendingWithdraw =
+    const existingPending =
         await Withdraw.findOne({
-
             userId,
+            status: {
+                $in: [
+                    "PENDING",
+                    "PROCESSING"
+                ]
+            }
+        }).lean();
 
-            status:
-                "PENDING"
-
-        });
-
-
-    if (pendingWithdraw) {
-
-        throw new Error(
-            "شما یک درخواست برداشت در حال بررسی دارید"
+    if (existingPending) {
+        const error = new Error(
+            "You already have a pending withdrawal request"
         );
 
+        error.statusCode = 409;
+
+        throw error;
     }
 
 
-    // =====================================
-    // Atomic Reserve Balance :: M
+    // ---------------------------------
+    // ..M
     // رزرو اتمیک موجودی
-    // =====================================
+    // ---------------------------------
 
     const updatedWallet =
         await Wallet.findOneAndUpdate(
-
             {
-
-                _id:
-                    wallet._id,
-
-                status:
-                    "ACTIVE",
-
+                _id: wallet._id,
                 withdrawable: {
-
-                    $gte:
-                        numericAmountUSD
-
+                    $gte: amountUSD
                 }
-
             },
-
             {
-
                 $inc: {
-
-                    withdrawable:
-                        -numericAmountUSD
-
+                    withdrawable: -amountUSD
                 }
-
             },
-
             {
-
-                returnDocument:
-                    "after",
-
-                runValidators:
-                    true
-
+                returnDocument: "after"
             }
-
         );
-
 
     if (!updatedWallet) {
-
-        throw new Error(
-            "موجودی کافی نیست یا کیف پول همزمان تغییر کرده است"
+        const error = new Error(
+            "Withdrawable balance changed. Please try again."
         );
 
-    }
-
-
-    // =====================================
-    // Create Withdraw :: M
-    // =====================================
-
-    let withdraw;
-
-
-    try {
-
-        withdraw =
-            await Withdraw.create({
-
-                userId,
-
-                walletId:
-                    wallet._id,
-
-                amountUSD:
-                    numericAmountUSD,
-
-                amountToman:
-                    numericAmountToman,
-
-                usdToTomanRate:
-                    rate,
-
-                method:
-                    normalizedMethod,
-
-                bankAccount:
-                    normalizedBankAccount,
-
-                accountHolderName:
-                    normalizedHolderName,
-
-                status:
-                    "PENDING"
-
-            });
-
-    }
-
-    catch (error) {
-
-        // =================================
-        // Rollback Reserved Balance :: M
-        // =================================
-
-        await Wallet.findOneAndUpdate(
-
-            {
-
-                _id:
-                    wallet._id
-
-            },
-
-            {
-
-                $inc: {
-
-                    withdrawable:
-                        numericAmountUSD
-
-                }
-
-            },
-
-            {
-
-                returnDocument:
-                    "after",
-
-                runValidators:
-                    true
-
-            }
-
-        );
-
+        error.statusCode = 409;
 
         throw error;
-
     }
 
 
-    // =====================================
-    // Return Result :: M
-    // =====================================
+    // ---------------------------------
+    // ..M
+    // ایجاد درخواست
+    // ---------------------------------
 
-    return {
+    try {
+        const withdraw =
+            await Withdraw.create({
+                userId,
+                walletId: wallet._id,
 
-        withdraw,
+                amountUSD,
+                amountToman: round8(requestedToman),
 
-        wallet:
-            updatedWallet,
+                usdToTomanRate: rate,
 
-        amountUSD:
-            numericAmountUSD,
+                method: normalizedMethod,
 
-        amountToman:
-            numericAmountToman,
+                bankAccount: normalizedBank,
 
-        exchangeRate:
-            rate
+                accountHolderName:
+                    normalizedHolder,
 
-    };
+                status: "PENDING",
 
-}
+                transactionId: "",
 
+                description:
+                    "Withdrawal request created"
+            });
 
-// =====================================
-// Get User Withdraws :: M
-// دریافت برداشت‌های کاربر
-// =====================================
+        return withdraw;
 
-export async function getUserWithdraws(
-    userId
-) {
+    } catch (error) {
 
-    if (
-        !mongoose.Types.ObjectId.isValid(
-            userId
-        )
-    ) {
+        // ---------------------------------
+        // ..M
+        // اگر ساخت درخواست شکست خورد
+        // موجودی رزرو شده برگردانده شود
+        // ---------------------------------
 
-        throw new Error(
-            "شناسه کاربر نامعتبر است"
+        await Wallet.updateOne(
+            {
+                _id: wallet._id
+            },
+            {
+                $inc: {
+                    withdrawable: amountUSD
+                }
+            }
         );
 
+        throw error;
     }
-
-
-    return await Withdraw.find({
-
-        userId
-
-    })
-    .sort({
-
-        createdAt:
-            -1
-
-    })
-    .limit(100);
-
 }
 
 
 // =====================================
-// Get Withdraw By ID :: M
+// ..M
+// برداشت‌های کاربر
+// =====================================
+
+export async function getUserWithdraws({
+    userId,
+    limit = 50
+}) {
+    validateObjectId(userId, "user ID");
+
+    const safeLimit = Math.min(
+        Math.max(Number(limit) || 50, 1),
+        100
+    );
+
+    return Withdraw.find({
+        userId
+    })
+        .sort({
+            createdAt: -1
+        })
+        .limit(safeLimit)
+        .lean();
+}
+
+
+// =====================================
+// ..M
 // دریافت یک برداشت
 // =====================================
 
 export async function getWithdrawById({
-
     withdrawId,
-
-    userId = null
-
-}) {
-
-    if (
-        !mongoose.Types.ObjectId.isValid(
-            withdrawId
-        )
-    ) {
-
-        throw new Error(
-            "شناسه برداشت نامعتبر است"
-        );
-
-    }
-
-
-    const query = {
-
-        _id:
-            withdrawId
-
-    };
-
-
-    if (
-        userId !== null
-    ) {
-
-        if (
-            !mongoose.Types.ObjectId.isValid(
-                userId
-            )
-        ) {
-
-            throw new Error(
-                "شناسه کاربر نامعتبر است"
-            );
-
-        }
-
-
-        query.userId =
-            userId;
-
-    }
-
-
-    const withdraw =
-        await Withdraw.findOne(
-            query
-        );
-
-
-    if (!withdraw) {
-
-        throw new Error(
-            "درخواست برداشت پیدا نشد"
-        );
-
-    }
-
-
-    return withdraw;
-
-}
-
-
-// =====================================
-// Approve Withdraw :: M
-// تأیید برداشت توسط سیستم/Admin
-// =====================================
-
-export async function approveWithdraw({
-
-    withdrawId,
-
-    transactionId = null,
-
-    description = ""
-
-}) {
-
-    if (
-        !mongoose.Types.ObjectId.isValid(
-            withdrawId
-        )
-    ) {
-
-        throw new Error(
-            "شناسه برداشت نامعتبر است"
-        );
-
-    }
-
-
-    const withdraw =
-        await Withdraw.findOneAndUpdate(
-
-            {
-
-                _id:
-                    withdrawId,
-
-                status:
-                    "PENDING"
-
-            },
-
-            {
-
-                $set: {
-
-                    status:
-                        "COMPLETED",
-
-                    processedAt:
-                        new Date(),
-
-                    ...(transactionId
-                        ? {
-
-                            transactionId:
-                                String(
-                                    transactionId
-                                )
-
-                        }
-                        : {}),
-
-                    ...(description
-                        ? {
-
-                            description:
-                                String(
-                                    description
-                                )
-
-                        }
-                        : {})
-
-                }
-
-            },
-
-            {
-
-                returnDocument:
-                    "after",
-
-                runValidators:
-                    true
-
-            }
-
-        );
-
-
-    if (!withdraw) {
-
-        const existing =
-            await Withdraw.findById(
-                withdrawId
-            );
-
-
-        if (!existing) {
-
-            throw new Error(
-                "درخواست برداشت پیدا نشد"
-            );
-
-        }
-
-
-        if (
-            existing.status ===
-            "COMPLETED"
-        ) {
-
-            return {
-
-                withdraw:
-                    existing,
-
-                alreadyCompleted:
-                    true
-
-            };
-
-        }
-
-
-        throw new Error(
-            "این برداشت قابل تأیید نیست"
-        );
-
-    }
-
-
-    return {
-
-        withdraw,
-
-        alreadyCompleted:
-            false
-
-    };
-
-}
-
-
-// =====================================
-// Reject Withdraw :: M
-// رد برداشت و برگشت موجودی
-// =====================================
-
-export async function rejectWithdraw({
-
-    withdrawId,
-
-    description = ""
-
-}) {
-
-    if (
-        !mongoose.Types.ObjectId.isValid(
-            withdrawId
-        )
-    ) {
-
-        throw new Error(
-            "شناسه برداشت نامعتبر است"
-        );
-
-    }
-
-
-    const withdraw =
-        await Withdraw.findOne({
-
-            _id:
-                withdrawId,
-
-            status:
-                "PENDING"
-
-        });
-
-
-    if (!withdraw) {
-
-        const existing =
-            await Withdraw.findById(
-                withdrawId
-            );
-
-
-        if (!existing) {
-
-            throw new Error(
-                "درخواست برداشت پیدا نشد"
-            );
-
-        }
-
-
-        if (
-            existing.status ===
-            "REJECTED"
-        ) {
-
-            return {
-
-                withdraw:
-                    existing,
-
-                alreadyRejected:
-                    true
-
-            };
-
-        }
-
-
-        throw new Error(
-            "این برداشت قابل رد کردن نیست"
-        );
-
-    }
-
-
-    const amountUSD =
-        Number(
-            withdraw.amountUSD || 0
-        );
-
-
-    if (
-        !Number.isFinite(
-            amountUSD
-        ) ||
-        amountUSD <= 0
-    ) {
-
-        throw new Error(
-            "مبلغ برداشت نامعتبر است"
-        );
-
-    }
-
-
-    // =====================================
-    // Return Reserved Balance :: M
-    // برگشت موجودی رزرو شده
-    // =====================================
-
-    const wallet =
-        await Wallet.findOneAndUpdate(
-
-            {
-
-                _id:
-                    withdraw.walletId,
-
-                status:
-                    "ACTIVE"
-
-            },
-
-            {
-
-                $inc: {
-
-                    withdrawable:
-                        amountUSD
-
-                }
-
-            },
-
-            {
-
-                returnDocument:
-                    "after",
-
-                runValidators:
-                    true
-
-            }
-
-        );
-
-
-    if (!wallet) {
-
-        throw new Error(
-            "کیف پول برای برگشت موجودی پیدا نشد"
-        );
-
-    }
-
-
-    // =====================================
-    // Atomic Reject :: M
-    // =====================================
-
-    const rejected =
-        await Withdraw.findOneAndUpdate(
-
-            {
-
-                _id:
-                    withdrawId,
-
-                status:
-                    "PENDING"
-
-            },
-
-            {
-
-                $set: {
-
-                    status:
-                        "REJECTED",
-
-                    processedAt:
-                        new Date(),
-
-                    ...(description
-                        ? {
-
-                            description:
-                                String(
-                                    description
-                                )
-
-                        }
-                        : {})
-
-                }
-
-            },
-
-            {
-
-                returnDocument:
-                    "after",
-
-                runValidators:
-                    true
-
-            }
-
-        );
-
-
-    if (!rejected) {
-
-        // =================================
-        // Rollback Wallet Refund :: M
-        // =================================
-
-        await Wallet.findOneAndUpdate(
-
-            {
-
-                _id:
-                    withdraw.walletId
-
-            },
-
-            {
-
-                $inc: {
-
-                    withdrawable:
-                        -amountUSD
-
-                }
-
-            }
-
-        );
-
-
-        throw new Error(
-            "وضعیت برداشت همزمان تغییر کرده است"
-        );
-
-    }
-
-
-    return {
-
-        withdraw:
-            rejected,
-
-        wallet,
-
-        refundedAmountUSD:
-            amountUSD,
-
-        alreadyRejected:
-            false
-
-    };
-
-}
-
-
-// =====================================
-// Cancel Withdraw :: M
-// لغو برداشت توسط کاربر
-// =====================================
-
-export async function cancelWithdraw({
-
-    withdrawId,
-
     userId
-
 }) {
+    validateObjectId(
+        withdrawId,
+        "withdraw ID"
+    );
 
-    if (
-        !mongoose.Types.ObjectId.isValid(
-            withdrawId
-        )
-    ) {
-
-        throw new Error(
-            "شناسه برداشت نامعتبر است"
-        );
-
-    }
-
-
-    if (
-        !mongoose.Types.ObjectId.isValid(
-            userId
-        )
-    ) {
-
-        throw new Error(
-            "شناسه کاربر نامعتبر است"
-        );
-
-    }
-
+    validateObjectId(
+        userId,
+        "user ID"
+    );
 
     const withdraw =
         await Withdraw.findOne({
-
-            _id:
-                withdrawId,
-
-            userId,
-
-            status:
-                "PENDING"
-
-        });
-
+            _id: withdrawId,
+            userId
+        }).lean();
 
     if (!withdraw) {
-
-        throw new Error(
-            "این برداشت قابل لغو نیست"
+        const error = new Error(
+            "Withdrawal not found"
         );
 
+        error.statusCode = 404;
+
+        throw error;
     }
 
-
-    const amountUSD =
-        Number(
-            withdraw.amountUSD || 0
-        );
-
-
-    if (
-        !Number.isFinite(
-            amountUSD
-        ) ||
-        amountUSD <= 0
-    ) {
-
-        throw new Error(
-            "مبلغ برداشت نامعتبر است"
-        );
-
-    }
-
-
-    // =====================================
-    // Atomic Cancel :: M
-    // =====================================
-
-    const cancelled =
-        await Withdraw.findOneAndUpdate(
-
-            {
-
-                _id:
-                    withdrawId,
-
-                userId,
-
-                status:
-                    "PENDING"
-
-            },
-
-            {
-
-                $set: {
-
-                    status:
-                        "CANCELLED",
-
-                    processedAt:
-                        new Date()
-
-                }
-
-            },
-
-            {
-
-                returnDocument:
-                    "after",
-
-                runValidators:
-                    true
-
-            }
-
-        );
-
-
-    if (!cancelled) {
-
-        throw new Error(
-            "برداشت همزمان تغییر کرده است"
-        );
-
-    }
-
-
-    // =====================================
-    // Return Reserved Balance :: M
-    // =====================================
-
-    const wallet =
-        await Wallet.findOneAndUpdate(
-
-            {
-
-                _id:
-                    withdraw.walletId,
-
-                status:
-                    "ACTIVE"
-
-            },
-
-            {
-
-                $inc: {
-
-                    withdrawable:
-                        amountUSD
-
-                }
-
-            },
-
-            {
-
-                returnDocument:
-                    "after",
-
-                runValidators:
-                    true
-
-            }
-
-        );
-
-
-    if (!wallet) {
-
-        // =================================
-        // تلاش برای بازگردانی وضعیت
-        // =================================
-
-        await Withdraw.findOneAndUpdate(
-
-            {
-
-                _id:
-                    withdrawId,
-
-                status:
-                    "CANCELLED"
-
-            },
-
-            {
-
-                $set: {
-
-                    status:
-                        "PENDING",
-
-                    processedAt:
-                        null
-
-                }
-
-            }
-
-        );
-
-
-        throw new Error(
-            "کیف پول برای برگشت موجودی پیدا نشد"
-        );
-
-    }
-
-
-    return {
-
-        withdraw:
-            cancelled,
-
-        wallet,
-
-        refundedAmountUSD:
-            amountUSD
-
-    };
-
+    return withdraw;
 }
 
 
 // =====================================
-// Mark Withdraw Processing :: M
-// انتقال برداشت به پردازش
+// ..M
+// تکمیل برداشت
 // =====================================
 
-export async function markWithdrawProcessing({
-
-    withdrawId
-
+export async function completeWithdraw({
+    withdrawId,
+    transactionId,
+    description = ""
 }) {
+    validateObjectId(
+        withdrawId,
+        "withdraw ID"
+    );
 
-    if (
-        !mongoose.Types.ObjectId.isValid(
-            withdrawId
-        )
-    ) {
+    const txId =
+        String(transactionId || "").trim();
 
-        throw new Error(
-            "شناسه برداشت نامعتبر است"
+    if (!txId) {
+        const error = new Error(
+            "Transaction ID is required"
         );
 
+        error.statusCode = 400;
+
+        throw error;
     }
 
+
+    // ---------------------------------
+    // ..M
+    // فقط PENDING یا PROCESSING
+    // ---------------------------------
 
     const withdraw =
         await Withdraw.findOneAndUpdate(
-
             {
-
-                _id:
-                    withdrawId,
-
-                status:
-                    "PENDING"
-
-            },
-
-            {
-
-                $set: {
-
-                    status:
+                _id: withdrawId,
+                status: {
+                    $in: [
+                        "PENDING",
                         "PROCESSING"
-
+                    ]
                 }
-
             },
-
             {
-
-                returnDocument:
-                    "after",
-
-                runValidators:
-                    true
-
+                $set: {
+                    status: "COMPLETED",
+                    transactionId: txId,
+                    description:
+                        description ||
+                        "Withdrawal completed",
+                    processedAt: new Date()
+                }
+            },
+            {
+                returnDocument: "after"
             }
-
         );
 
-
     if (!withdraw) {
-
         const existing =
             await Withdraw.findById(
                 withdrawId
-            );
-
+            ).lean();
 
         if (!existing) {
-
-            throw new Error(
-                "درخواست برداشت پیدا نشد"
+            const error = new Error(
+                "Withdrawal not found"
             );
 
+            error.statusCode = 404;
+
+            throw error;
         }
 
-
-        if (
-            existing.status ===
-            "PROCESSING"
-        ) {
-
-            return existing;
-
-        }
-
-
-        throw new Error(
-            "این برداشت قابل پردازش نیست"
+        const error = new Error(
+            `Withdrawal cannot be completed from status ${existing.status}`
         );
 
+        error.statusCode = 409;
+
+        throw error;
     }
 
-
     return withdraw;
-
 }
 
 
 // =====================================
-// Fail Withdraw :: M
-// ناموفق کردن برداشت
+// ..M
+// شکست برداشت
+// موجودی رزرو شده برگردانده می‌شود
 // =====================================
 
 export async function failWithdraw({
-
     withdrawId,
-
-    description = ""
-
+    description = "Withdrawal failed"
 }) {
+    validateObjectId(
+        withdrawId,
+        "withdraw ID"
+    );
 
-    if (
-        !mongoose.Types.ObjectId.isValid(
-            withdrawId
-        )
-    ) {
 
-        throw new Error(
-            "شناسه برداشت نامعتبر است"
-        );
-
-    }
-
+    // ---------------------------------
+    // ..M
+    // ابتدا برداشت را Claim می‌کنیم
+    // ---------------------------------
 
     const withdraw =
-        await Withdraw.findOne({
-
-            _id:
-                withdrawId,
-
-            status: {
-
-                $in: [
-
-                    "PENDING",
-
-                    "PROCESSING"
-
-                ]
-
+        await Withdraw.findOneAndUpdate(
+            {
+                _id: withdrawId,
+                status: {
+                    $in: [
+                        "PENDING",
+                        "PROCESSING"
+                    ]
+                }
+            },
+            {
+                $set: {
+                    status: "FAILED",
+                    description,
+                    processedAt: new Date()
+                }
+            },
+            {
+                returnDocument: "after"
             }
-
-        });
-
+        );
 
     if (!withdraw) {
-
         const existing =
             await Withdraw.findById(
                 withdrawId
-            );
-
+            ).lean();
 
         if (!existing) {
-
-            throw new Error(
-                "درخواست برداشت پیدا نشد"
+            const error = new Error(
+                "Withdrawal not found"
             );
 
+            error.statusCode = 404;
+
+            throw error;
         }
 
-
-        if (
-            existing.status ===
-            "FAILED"
-        ) {
-
-            return existing;
-
-        }
-
-
-        throw new Error(
-            "این برداشت قابل ناموفق کردن نیست"
+        const error = new Error(
+            `Withdrawal cannot be failed from status ${existing.status}`
         );
 
+        error.statusCode = 409;
+
+        throw error;
     }
 
 
-    const amountUSD =
-        Number(
-            withdraw.amountUSD || 0
-        );
+    // ---------------------------------
+    // ..M
+    // بازگرداندن موجودی
+    // ---------------------------------
 
+    const walletUpdate =
+        await Wallet.updateOne(
+            {
+                _id: withdraw.walletId
+            },
+            {
+                $inc: {
+                    withdrawable:
+                        Number(withdraw.amountUSD)
+                }
+            }
+        );
 
     if (
-        !Number.isFinite(
-            amountUSD
-        ) ||
-        amountUSD <= 0
+        walletUpdate.modifiedCount !== 1
     ) {
-
-        throw new Error(
-            "مبلغ برداشت نامعتبر است"
+        console.error(
+            "CRITICAL: Failed to restore withdrawable balance",
+            {
+                withdrawId:
+                    withdraw._id.toString(),
+                walletId:
+                    withdraw.walletId?.toString(),
+                amountUSD:
+                    withdraw.amountUSD
+            }
         );
-
     }
 
-
-    // =====================================
-    // Return Reserved Balance :: M
-    // =====================================
-
-    const wallet =
-        await Wallet.findOneAndUpdate(
-
-            {
-
-                _id:
-                    withdraw.walletId,
-
-                status:
-                    "ACTIVE"
-
-            },
-
-            {
-
-                $inc: {
-
-                    withdrawable:
-                        amountUSD
-
-                }
-
-            },
-
-            {
-
-                returnDocument:
-                    "after",
-
-                runValidators:
-                    true
-
-            }
-
-        );
-
-
-    if (!wallet) {
-
-        throw new Error(
-            "کیف پول برای برگشت موجودی پیدا نشد"
-        );
-
-    }
-
-
-    // =====================================
-    // Mark Failed :: M
-    // =====================================
-
-    const failed =
-        await Withdraw.findOneAndUpdate(
-
-            {
-
-                _id:
-                    withdrawId,
-
-                status: {
-
-                    $in: [
-
-                        "PENDING",
-
-                        "PROCESSING"
-
-                    ]
-
-                }
-
-            },
-
-            {
-
-                $set: {
-
-                    status:
-                        "FAILED",
-
-                    processedAt:
-                        new Date(),
-
-                    ...(description
-                        ? {
-
-                            description:
-                                String(
-                                    description
-                                )
-
-                        }
-                        : {})
-
-                }
-
-            },
-
-            {
-
-                returnDocument:
-                    "after",
-
-                runValidators:
-                    true
-
-            }
-
-        );
-
-
-    if (!failed) {
-
-        // =================================
-        // Rollback Wallet Refund :: M
-        // =================================
-
-        await Wallet.findOneAndUpdate(
-
-            {
-
-                _id:
-                    withdraw.walletId
-
-            },
-
-            {
-
-                $inc: {
-
-                    withdrawable:
-                        -amountUSD
-
-                }
-
-            }
-
-        );
-
-
-        throw new Error(
-            "وضعیت برداشت همزمان تغییر کرده است"
-        );
-
-    }
-
-
-    return {
-
-        withdraw:
-            failed,
-
-        wallet,
-
-        refundedAmountUSD:
-            amountUSD
-
-    };
-
+    return withdraw;
 }
 
 
 // =====================================
-// Default Export :: M
+// ..M
+// لغو برداشت
+// موجودی رزرو شده برگردانده می‌شود
 // =====================================
 
-export default {
+export async function cancelWithdraw({
+    withdrawId,
+    description = "Withdrawal cancelled"
+}) {
+    validateObjectId(
+        withdrawId,
+        "withdraw ID"
+    );
 
-    createWithdrawRequest,
 
-    getUserWithdraws,
+    // ---------------------------------
+    // ..M
+    // تغییر وضعیت اتمیک
+    // ---------------------------------
 
-    getWithdrawById,
+    const withdraw =
+        await Withdraw.findOneAndUpdate(
+            {
+                _id: withdrawId,
+                status: {
+                    $in: [
+                        "PENDING",
+                        "PROCESSING"
+                    ]
+                }
+            },
+            {
+                $set: {
+                    status: "CANCELLED",
+                    description,
+                    processedAt: new Date()
+                }
+            },
+            {
+                returnDocument: "after"
+            }
+        );
 
-    approveWithdraw,
+    if (!withdraw) {
+        const existing =
+            await Withdraw.findById(
+                withdrawId
+            ).lean();
 
-    rejectWithdraw,
+        if (!existing) {
+            const error = new Error(
+                "Withdrawal not found"
+            );
 
-    cancelWithdraw,
+            error.statusCode = 404;
 
-    markWithdrawProcessing,
+            throw error;
+        }
 
-    failWithdraw
+        const error = new Error(
+            `Withdrawal cannot be cancelled from status ${existing.status}`
+        );
 
+        error.statusCode = 409;
+
+        throw error;
+    }
+
+
+    // ---------------------------------
+    // ..M
+    // بازگرداندن موجودی
+    // ---------------------------------
+
+    const walletUpdate =
+        await Wallet.updateOne(
+            {
+                _id: withdraw.walletId
+            },
+            {
+                $inc: {
+                    withdrawable:
+                        Number(withdraw.amountUSD)
+                }
+            }
+        );
+
+    if (
+        walletUpdate.modifiedCount !== 1
+    ) {
+        console.error(
+            "CRITICAL: Failed to restore withdrawable balance",
+            {
+                withdrawId:
+                    withdraw._id.toString(),
+                walletId:
+                    withdraw.walletId?.toString(),
+                amountUSD:
+                    withdraw.amountUSD
+            }
+        );
+    }
+
+    return withdraw;
+}
+
+
+// =====================================
+// ..M
+// Export تنظیمات
+// =====================================
+
+export {
+    MIN_WITHDRAW_TOMAN
 };
