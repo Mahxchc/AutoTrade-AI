@@ -1,161 +1,159 @@
 // =====================================
-// Wallet Model:: M
+// ..M
 // AutoTrade AI
-// مدل دیتابیس کیف پول
+// Wallet Model
 // File: backend/models/Wallet.js
 // =====================================
 
 import mongoose from "mongoose";
 
 
+// =====================================
+// ..M
+// Wallet Schema
+// =====================================
+
 const walletSchema = new mongoose.Schema(
-
     {
-
-        // =====================================
-        // User Reference:: M
-        // ارتباط با کاربر
-        // =====================================
+        // ---------------------------------
+        // ..M
+        // مالک کیف پول
+        // ---------------------------------
 
         userId: {
-
-            type:
-                mongoose.Schema.Types.ObjectId,
-
+            type: mongoose.Schema.Types.ObjectId,
             ref: "User",
-
             required: true,
-
             unique: true,
-
             index: true
-
         },
 
-
-        // =====================================
-        // Balance:: M
-        // موجودی کل
-        // =====================================
+        // ---------------------------------
+        // ..M
+        // موجودی اصلی
+        // ---------------------------------
 
         balance: {
-
             type: Number,
-
             default: 0,
-
             min: 0
-
         },
 
-
-        // =====================================
-        // Withdrawable:: M
-        // کل موجودی قابل برداشت
-        // =====================================
-
-        withdrawable: {
-
-            type: Number,
-
-            default: 0,
-
-            min: 0
-
-        },
-
-
-        // =====================================
-        // Total Profit:: M
-        // مجموع سود و زیان معاملات
-        // =====================================
+        // ---------------------------------
+        // ..M
+        // سود کل
+        // ---------------------------------
 
         totalProfit: {
-
             type: Number,
-
             default: 0
-
         },
 
-
-        // =====================================
-        // Total Trades:: M
+        // ---------------------------------
+        // ..M
         // تعداد معاملات
-        // =====================================
+        // ---------------------------------
 
         totalTrades: {
-
             type: Number,
-
             default: 0,
-
             min: 0
-
         },
 
+        // ---------------------------------
+        // ..M
+        // موجودی قابل برداشت
+        // ---------------------------------
 
-        // =====================================
-        // Currency:: M
+        withdrawable: {
+            type: Number,
+            default: 0,
+            min: 0
+        },
+
+        // ---------------------------------
+        // ..M
         // واحد پول
-        // =====================================
+        // ---------------------------------
 
         currency: {
-
             type: String,
-
-            default: "USDT",
-
-            uppercase: true,
-
-            trim: true
-
+            enum: [
+                "USDT",
+                "USD"
+            ],
+            default: "USDT"
         },
 
-
-        // =====================================
-        // Wallet Status:: M
+        // ---------------------------------
+        // ..M
         // وضعیت کیف پول
-        // =====================================
+        // ---------------------------------
 
         status: {
-
             type: String,
-
             enum: [
-
                 "ACTIVE",
-
-                "LOCKED"
-
+                "BLOCKED",
+                "FROZEN"
             ],
-
-            default: "ACTIVE"
-
+            default: "ACTIVE",
+            index: true
         }
-
     },
-
     {
-
         timestamps: true
+    }
+);
 
+
+// =====================================
+// ..M
+// Index
+// =====================================
+
+walletSchema.index({
+    userId: 1
+});
+
+
+// =====================================
+// ..M
+// جلوگیری از مقدار NaN
+// =====================================
+
+walletSchema.pre("save", function(next) {
+
+    const fields = [
+        "balance",
+        "totalProfit",
+        "totalTrades",
+        "withdrawable"
+    ];
+
+    for (const field of fields) {
+        const value = Number(this[field]);
+
+        if (!Number.isFinite(value)) {
+            return next(
+                new Error(
+                    `Invalid wallet value: ${field}`
+                )
+            );
+        }
     }
 
-);
+    next();
+});
 
 
 // =====================================
-// Wallet Model:: M
+// ..M
+// Export
 // =====================================
 
-const Wallet = mongoose.model(
-
-    "Wallet",
-
-    walletSchema
-
-);
-
+const Wallet =
+    mongoose.models.Wallet ||
+    mongoose.model("Wallet", walletSchema);
 
 export default Wallet;
