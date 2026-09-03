@@ -1,293 +1,369 @@
 // =====================================
+// ..M
 // AutoTrade AI
-// Currency Routes:: M
-// مسیرهای نرخ ارز
-// File: backend/routes/Currency.js
+// Currency Routes
+// File: backend/routes/currency.js
 // =====================================
 
 import express from "express";
 
 import {
     getUsdToTomanRate,
-    convertUsdToToman,
-    convertTomanToUsd,
-    formatUSD,
-    formatToman
+    getUsdToIrrRate,
+    usdToToman,
+    tomanToUsd,
+    formatToman,
+    formatUSD
 } from "../services/currencyService.js";
 
-
-const router =
-    express.Router();
+const router = express.Router();
 
 
 // =====================================
-// GET USD TO TOMAN RATE:: M
+// ..M
+// GET /api/currency/rate
 // دریافت نرخ دلار به تومان
-// GET /api/currency/usd-toman
+// =====================================
+
+router.get("/rate", async (req, res) => {
+
+    try {
+
+        const usdToToman =
+            await getUsdToTomanRate();
+
+        const usdToIrr =
+            await getUsdToIrrRate();
+
+        return res.json({
+            success: true,
+
+            currency: {
+                USD: {
+                    Toman: usdToToman,
+                    IRR: usdToIrr
+                }
+            },
+
+            exchangeRate: usdToToman
+        });
+
+    } catch (error) {
+
+        console.error(
+            "GET /api/currency/rate error:",
+            error
+        );
+
+        return res.status(500).json({
+            success: false,
+            message:
+                "Failed to get currency rate"
+        });
+    }
+});
+
+
+// =====================================
+// ..M
+// GET /api/currency/exchange-rate
+// سازگاری با Frontend قدیمی
 // =====================================
 
 router.get(
-    "/usd-toman",
+    "/exchange-rate",
     async (req, res) => {
 
         try {
 
-            const currency =
+            const rate =
                 await getUsdToTomanRate();
 
+            return res.json({
+                success: true,
 
-            return res.status(200).json({
+                exchangeRate: rate,
 
-                success:
-                    true,
+                usdToToman: rate,
 
-                currency: {
-
-                    usdToTomanRate:
-                        currency.rate,
-
-                    currency:
-                        currency.currency,
-
-                    targetCurrency:
-                        currency.targetCurrency,
-
-                    updatedAt:
-                        currency.updatedAt
-
-                }
-
+                currency: "TOMAN"
             });
 
-        }
-
-        catch (error) {
+        } catch (error) {
 
             console.error(
-                "Get Currency Rate Error:",
+                "GET /api/currency/exchange-rate error:",
                 error
             );
-
 
             return res.status(500).json({
-
-                success:
-                    false,
-
+                success: false,
                 message:
-                    "Failed to get USD to Toman rate"
-
+                    "Failed to get exchange rate"
             });
-
         }
-
     }
 );
 
 
 // =====================================
-// CONVERT USD TO TOMAN:: M
-// تبدیل دلار به تومان
-// GET /api/currency/convert/usd-to-toman
+// ..M
+// GET /api/currency/usd-to-toman
+// تبدیل USD به Toman
 // =====================================
 
 router.get(
-    "/convert/usd-to-toman",
+    "/usd-to-toman",
+    async (req, res) => {
+
+        try {
+
+            const usd =
+                Number(req.query.usd);
+
+            if (
+                !Number.isFinite(usd) ||
+                usd < 0
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message:
+                        "Invalid USD amount"
+                });
+            }
+
+            const toman =
+                await usdToToman(usd);
+
+            return res.json({
+                success: true,
+
+                usd,
+
+                toman,
+
+                usdText:
+                    formatUSD(usd),
+
+                tomanText:
+                    formatToman(toman)
+            });
+
+        } catch (error) {
+
+            console.error(
+                "GET /api/currency/usd-to-toman error:",
+                error
+            );
+
+            return res.status(500).json({
+                success: false,
+                message:
+                    "Currency conversion failed"
+            });
+        }
+    }
+);
+
+
+// =====================================
+// ..M
+// GET /api/currency/toman-to-usd
+// تبدیل Toman به USD
+// =====================================
+
+router.get(
+    "/toman-to-usd",
+    async (req, res) => {
+
+        try {
+
+            const toman =
+                Number(req.query.toman);
+
+            if (
+                !Number.isFinite(toman) ||
+                toman < 0
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message:
+                        "Invalid Toman amount"
+                });
+            }
+
+            const usd =
+                await tomanToUsd(toman);
+
+            return res.json({
+                success: true,
+
+                toman,
+
+                usd,
+
+                tomanText:
+                    formatToman(toman),
+
+                usdText:
+                    formatUSD(usd)
+            });
+
+        } catch (error) {
+
+            console.error(
+                "GET /api/currency/toman-to-usd error:",
+                error
+            );
+
+            return res.status(500).json({
+                success: false,
+                message:
+                    "Currency conversion failed"
+            });
+        }
+    }
+);
+
+
+// =====================================
+// ..M
+// GET /api/currency/convert
+// تبدیل عمومی
+// =====================================
+
+router.get(
+    "/convert",
     async (req, res) => {
 
         try {
 
             const {
-                amount
+                amount,
+                from,
+                to
             } = req.query;
+
+            const value =
+                Number(amount);
+
+            const source =
+                String(from || "")
+                    .trim()
+                    .toUpperCase();
+
+            const target =
+                String(to || "")
+                    .trim()
+                    .toUpperCase();
 
 
             if (
-                amount == null
+                !Number.isFinite(value) ||
+                value < 0
             ) {
-
                 return res.status(400).json({
-
-                    success:
-                        false,
-
+                    success: false,
                     message:
-                        "USD amount is required"
-
+                        "Invalid amount"
                 });
-
             }
 
 
-            const result =
-                await convertUsdToToman({
+            // ---------------------------------
+            // ..M
+            // USD → TOMAN
+            // ---------------------------------
 
-                    amountUSD:
-                        amount
+            if (
+                source === "USD" &&
+                (
+                    target === "TOMAN" ||
+                    target === "IRT"
+                )
+            ) {
 
+                const result =
+                    await usdToToman(value);
+
+                return res.json({
+                    success: true,
+
+                    from: "USD",
+                    to: "TOMAN",
+
+                    amount: value,
+                    result,
+
+                    amountText:
+                        formatUSD(value),
+
+                    resultText:
+                        formatToman(result)
                 });
+            }
 
 
-            return res.status(200).json({
+            // ---------------------------------
+            // ..M
+            // TOMAN → USD
+            // ---------------------------------
 
-                success:
-                    true,
+            if (
+                (
+                    source === "TOMAN" ||
+                    source === "IRT"
+                ) &&
+                target === "USD"
+            ) {
 
-                conversion: {
+                const result =
+                    await tomanToUsd(value);
 
-                    amountUSD:
-                        result.amountUSD,
+                return res.json({
+                    success: true,
 
-                    usdToTomanRate:
-                        result.usdToTomanRate,
+                    from: "TOMAN",
+                    to: "USD",
 
-                    amountToman:
-                        result.amountToman,
+                    amount: value,
+                    result,
 
-                    usd:
-                        formatUSD(
-                            result.amountUSD
-                        ),
+                    amountText:
+                        formatToman(value),
 
-                    toman:
-                        formatToman(
-                            result.amountToman
-                        )
-
-                }
-
-            });
-
-        }
-
-        catch (error) {
-
-            console.error(
-                "USD To Toman Error:",
-                error
-            );
+                    resultText:
+                        formatUSD(result)
+                });
+            }
 
 
             return res.status(400).json({
-
-                success:
-                    false,
-
+                success: false,
                 message:
-                    error.message ||
-                    "Failed to convert USD to Toman"
-
+                    "Unsupported currency conversion"
             });
 
-        }
+        } catch (error) {
 
+            console.error(
+                "GET /api/currency/convert error:",
+                error
+            );
+
+            return res.status(500).json({
+                success: false,
+                message:
+                    "Currency conversion failed"
+            });
+        }
     }
 );
 
 
 // =====================================
-// CONVERT TOMAN TO USD:: M
-// تبدیل تومان به دلار
-// GET /api/currency/convert/toman-to-usd
-// =====================================
-
-router.get(
-    "/convert/toman-to-usd",
-    async (req, res) => {
-
-        try {
-
-            const {
-                amount
-            } = req.query;
-
-
-            if (
-                amount == null
-            ) {
-
-                return res.status(400).json({
-
-                    success:
-                        false,
-
-                    message:
-                        "Toman amount is required"
-
-                });
-
-            }
-
-
-            const result =
-                await convertTomanToUsd({
-
-                    amountToman:
-                        amount
-
-                });
-
-
-            return res.status(200).json({
-
-                success:
-                    true,
-
-                conversion: {
-
-                    amountToman:
-                        result.amountToman,
-
-                    usdToTomanRate:
-                        result.usdToTomanRate,
-
-                    amountUSD:
-                        result.amountUSD,
-
-                    toman:
-                        formatToman(
-                            result.amountToman
-                        ),
-
-                    usd:
-                        formatUSD(
-                            result.amountUSD
-                        )
-
-                }
-
-            });
-
-        }
-
-        catch (error) {
-
-            console.error(
-                "Toman To USD Error:",
-                error
-            );
-
-
-            return res.status(400).json({
-
-                success:
-                    false,
-
-                message:
-                    error.message ||
-                    "Failed to convert Toman to USD"
-
-            });
-
-        }
-
-    }
-);
-
-
-// =====================================
-// EXPORT ROUTER:: M
-// خروجی مسیرهای ارز
+// ..M
+// Export
 // =====================================
 
 export default router;
