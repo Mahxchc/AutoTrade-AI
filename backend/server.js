@@ -36,6 +36,17 @@ import {
 
 
 // =====================================
+// Telegram Bot :: M
+// =====================================
+
+import {
+    handleTelegramUpdate,
+    setupTelegramWebhook,
+    setupTelegramCommands
+} from "./bot.js";
+
+
+// =====================================
 // Routes :: M
 // =====================================
 
@@ -352,6 +363,97 @@ app.get(
 
 
 // =====================================
+// Telegram Webhook :: M
+// =====================================
+//
+// Telegram -> Render
+//
+// POST /api/telegram/webhook
+//
+// این مسیر نباید با
+// requireTelegramUser
+// محافظت شود.
+//
+// چون درخواست مستقیم از Telegram
+// Bot API دریافت می‌شود.
+//
+// =====================================
+
+app.post(
+    "/api/telegram/webhook",
+    async (
+        req,
+        res
+    ) => {
+
+        try {
+
+            // ---------------------------------
+            // Validate update body
+            // ---------------------------------
+
+            if (
+                !req.body ||
+                typeof req.body !== "object"
+            ) {
+
+                return res.status(400).json({
+
+                    success:
+                        false,
+
+                    message:
+                        "Invalid Telegram update"
+
+                });
+
+            }
+
+
+            // ---------------------------------
+            // Process Telegram update
+            // ---------------------------------
+
+            await handleTelegramUpdate(
+                req.body
+            );
+
+
+            // ---------------------------------
+            // Telegram expects successful response
+            // ---------------------------------
+
+            return res.status(200).json({
+
+                success:
+                    true
+
+            });
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "TELEGRAM WEBHOOK ERROR:",
+                error
+            );
+
+
+            return res.status(200).json({
+
+                success:
+                    false
+
+            });
+
+        }
+
+    }
+);
+
+
+// =====================================
 // Telegram Authentication :: M
 // =====================================
 //
@@ -440,7 +542,7 @@ app.use(
 
 
 // =====================================
-// Bot :: M
+// Bot API :: M
 // =====================================
 
 app.use(
@@ -588,6 +690,54 @@ async function startServer() {
         console.log(
             "MongoDB connected successfully"
         );
+
+
+        // ---------------------------------
+        // Telegram Bot Commands
+        // ---------------------------------
+
+        try {
+
+            await setupTelegramCommands();
+
+            console.log(
+                "Telegram bot commands configured successfully"
+            );
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "TELEGRAM COMMAND SETUP ERROR:",
+                error
+            );
+
+        }
+
+
+        // ---------------------------------
+        // Telegram Webhook
+        // ---------------------------------
+
+        try {
+
+            await setupTelegramWebhook();
+
+            console.log(
+                "Telegram webhook configured successfully"
+            );
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "TELEGRAM WEBHOOK SETUP ERROR:",
+                error
+            );
+
+        }
 
 
         // ---------------------------------
