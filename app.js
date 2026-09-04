@@ -2,8 +2,8 @@
 // ..M AutoTrade AI
 // Mini App Application
 // File: MiniApp/app.js
-// مرحله ۲۲ از ۲۰
-// کنترل کامل وضعیت دسترسی کاربر
+// مرحله ۲۰ از ۲۰
+// کنترل نهایی دسترسی + احراز هویت + داشبورد
 // =====================================
 
 
@@ -82,7 +82,9 @@ function numberValue(value) {
     const number =
         Number(value);
 
-    if (!Number.isFinite(number)) {
+    if (
+        !Number.isFinite(number)
+    ) {
 
         return 0;
 
@@ -141,11 +143,26 @@ function escapeHtml(value) {
     return String(
         value ?? ""
     )
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /'/g,
+            "&#039;"
+        );
 
 }
 
@@ -247,6 +264,11 @@ async function apiRequest(
 
     };
 
+
+    // ---------------------------------
+    // Telegram Init Data
+    // ---------------------------------
+
     if (
         tg &&
         tg.initData
@@ -259,6 +281,7 @@ async function apiRequest(
 
     }
 
+
     const response =
         await fetch(
             url,
@@ -268,8 +291,10 @@ async function apiRequest(
             }
         );
 
+
     let data =
         null;
+
 
     try {
 
@@ -285,7 +310,10 @@ async function apiRequest(
 
     }
 
-    if (!response.ok) {
+
+    if (
+        !response.ok
+    ) {
 
         const error =
             new Error(
@@ -296,15 +324,19 @@ async function apiRequest(
 
             );
 
+
         error.status =
             response.status;
+
 
         error.data =
             data;
 
+
         throw error;
 
     }
+
 
     return data;
 
@@ -320,8 +352,10 @@ async function authenticateTelegram() {
     const user =
         getTelegramUser();
 
+
     state.telegramUser =
         user;
+
 
     if (!tg) {
 
@@ -329,14 +363,17 @@ async function authenticateTelegram() {
 
     }
 
+
     const initData =
         tg.initData;
+
 
     if (!initData) {
 
         return null;
 
     }
+
 
     try {
 
@@ -358,10 +395,18 @@ async function authenticateTelegram() {
                 }
             );
 
+
+        /*
+         * Backend ممکن است user را
+         * مستقیماً یا داخل data برگرداند.
+         */
+
         state.backendUser =
             result?.user ||
+            result?.data?.user ||
             result?.data ||
             null;
+
 
         return result;
 
@@ -374,14 +419,18 @@ async function authenticateTelegram() {
             error
         );
 
-        if (
-            error?.data?.user
-        ) {
 
-            state.backendUser =
-                error.data.user;
+        /*
+         * اگر Backend در پاسخ خطا
+         * اطلاعات کاربر را فرستاده باشد،
+         * وضعیت را نگه می‌داریم.
+         */
 
-        }
+        state.backendUser =
+            error?.data?.user ||
+            error?.data?.data?.user ||
+            null;
+
 
         return null;
 
@@ -408,18 +457,6 @@ function getBackendUserId() {
 // =====================================
 // Get User Access Status :: M
 // =====================================
-// ..M
-// کاربر عادی فقط در صورتی دسترسی دارد که:
-//
-// 1. نام ثبت شده باشد
-// 2. نام خانوادگی ثبت شده باشد
-// 3. شماره تلفن ثبت شده باشد
-// 4. accessEnabled = true
-// 5. approvalStatus = APPROVED
-// 6. status = ACTIVE
-//
-// Admin مستقیماً مجاز است.
-// =====================================
 
 function getAccessStatus() {
 
@@ -432,7 +469,7 @@ function getAccessStatus() {
             user.status ||
             "PENDING"
         )
-        .toUpperCase();
+            .toUpperCase();
 
 
     const approvalStatus =
@@ -440,7 +477,7 @@ function getAccessStatus() {
             user.approvalStatus ||
             "PENDING"
         )
-        .toUpperCase();
+            .toUpperCase();
 
 
     const accessEnabled =
@@ -451,65 +488,42 @@ function getAccessStatus() {
         user.isAdmin === true;
 
 
-    const firstName =
-        String(
-            user.firstName ||
-            ""
-        ).trim();
+    const hasFirstName =
+        Boolean(
+            String(
+                user.firstName ||
+                ""
+            )
+                .trim()
+        );
 
 
-    const lastName =
-        String(
-            user.lastName ||
-            ""
-        ).trim();
+    const hasLastName =
+        Boolean(
+            String(
+                user.lastName ||
+                ""
+            )
+                .trim()
+        );
 
 
-    const phoneNumber =
-        String(
-            user.phoneNumber ||
-            user.phone ||
-            user.mobile ||
-            ""
-        ).trim();
+    const hasPhone =
+        Boolean(
+            String(
+                user.phoneNumber ||
+                user.phone ||
+                user.mobile ||
+                ""
+            )
+                .trim()
+        );
 
 
     const registrationComplete =
-        Boolean(
-            firstName &&
-            lastName &&
-            phoneNumber
-        );
-
-
-    const approved =
-        approvalStatus ===
-        "APPROVED";
-
-
-    const active =
-        status ===
-        "ACTIVE";
-
-
-    const blocked =
-        status ===
-        "BLOCKED";
-
-
-    const rejected =
-        approvalStatus ===
-        "REJECTED";
-
-
-    const allowed =
-        isAdmin ||
-        (
-            registrationComplete &&
-            accessEnabled &&
-            approved &&
-            active
-        );
+        hasFirstName &&
+        hasLastName &&
+        hasPhone;
 
 
     return {
@@ -522,23 +536,36 @@ function getAccessStatus() {
 
         isAdmin,
 
-        firstName,
+        hasFirstName,
 
-        lastName,
+        hasLastName,
 
-        phoneNumber,
+        hasPhone,
 
         registrationComplete,
 
-        blocked,
+        blocked:
+            status === "BLOCKED",
 
-        rejected,
+        rejected:
+            approvalStatus === "REJECTED",
 
-        approved,
+        approved:
+            approvalStatus === "APPROVED",
 
-        active,
+        active:
+            status === "ACTIVE",
 
-        allowed
+        allowed:
+
+            isAdmin ||
+
+            (
+                registrationComplete &&
+                accessEnabled &&
+                approvalStatus === "APPROVED" &&
+                status === "ACTIVE"
+            )
 
     };
 
@@ -548,13 +575,28 @@ function getAccessStatus() {
 // =====================================
 // Check Access :: M
 // =====================================
+//
+// کاربر عادی فقط زمانی مجاز است:
+//
+// 1. نام داشته باشد
+// 2. نام خانوادگی داشته باشد
+// 3. شماره تلفن داشته باشد
+// 4. accessEnabled = true
+// 5. approvalStatus = APPROVED
+// 6. status = ACTIVE
+//
+// مدیر مجاز است.
+//
+// =====================================
 
 function isAccessAllowed() {
 
     const access =
         getAccessStatus();
 
-    return access.allowed;
+    return (
+        access.allowed === true
+    );
 
 }
 
@@ -598,20 +640,40 @@ function getAccessMessage() {
     ) {
 
         return (
-            "برای استفاده از AutoTrade AI ابتدا باید نام، نام خانوادگی و شماره تلفن شما ثبت شود."
+            "برای استفاده از AutoTrade AI ابتدا ثبت‌نام خود را کامل کنید."
         );
 
     }
 
 
     if (
-        !access.approved ||
-        !access.active ||
-        !access.accessEnabled
+        !access.approved
     ) {
 
         return (
             "حساب شما در انتظار تأیید مدیریت است."
+        );
+
+    }
+
+
+    if (
+        !access.active
+    ) {
+
+        return (
+            "حساب شما هنوز فعال نشده است."
+        );
+
+    }
+
+
+    if (
+        !access.accessEnabled
+    ) {
+
+        return (
+            "دسترسی حساب شما هنوز فعال نشده است."
         );
 
     }
@@ -631,6 +693,7 @@ async function loadWallet() {
     const userId =
         getBackendUserId();
 
+
     if (!userId) {
 
         state.wallet =
@@ -639,6 +702,19 @@ async function loadWallet() {
         return;
 
     }
+
+
+    if (
+        !isAccessAllowed()
+    ) {
+
+        state.wallet =
+            null;
+
+        return;
+
+    }
+
 
     try {
 
@@ -650,10 +726,13 @@ async function loadWallet() {
                 )
             );
 
+
         const wallet =
             result?.wallet ||
+            result?.data?.wallet ||
             result?.data ||
             result;
+
 
         state.wallet =
             wallet || null;
@@ -666,6 +745,7 @@ async function loadWallet() {
             "Wallet error:",
             error
         );
+
 
         state.wallet =
             null;
@@ -684,6 +764,7 @@ async function loadBot() {
     const userId =
         getBackendUserId();
 
+
     if (!userId) {
 
         state.bot =
@@ -692,6 +773,19 @@ async function loadBot() {
         return;
 
     }
+
+
+    if (
+        !isAccessAllowed()
+    ) {
+
+        state.bot =
+            null;
+
+        return;
+
+    }
+
 
     try {
 
@@ -703,8 +797,10 @@ async function loadBot() {
                 )
             );
 
+
         state.bot =
             result?.bot ||
+            result?.data?.bot ||
             result?.data ||
             result ||
             null;
@@ -717,6 +813,7 @@ async function loadBot() {
             "Bot error:",
             error
         );
+
 
         state.bot =
             null;
@@ -735,6 +832,7 @@ async function loadTrades() {
     const userId =
         getBackendUserId();
 
+
     if (!userId) {
 
         state.trades =
@@ -743,6 +841,19 @@ async function loadTrades() {
         return;
 
     }
+
+
+    if (
+        !isAccessAllowed()
+    ) {
+
+        state.trades =
+            [];
+
+        return;
+
+    }
+
 
     try {
 
@@ -754,14 +865,20 @@ async function loadTrades() {
                 )
             );
 
+
         state.trades =
+
             Array.isArray(result)
+
                 ? result
+
                 : (
                     result?.trades ||
+                    result?.data?.trades ||
                     result?.data ||
                     []
                 );
+
 
     }
 
@@ -771,6 +888,7 @@ async function loadTrades() {
             "Trades error:",
             error
         );
+
 
         state.trades =
             [];
@@ -829,8 +947,10 @@ async function loadExchangeRate() {
             error
         );
 
+
         state.exchangeRate =
             0;
+
 
         return 0;
 
@@ -844,6 +964,24 @@ async function loadExchangeRate() {
 // =====================================
 
 async function loadData() {
+
+    if (
+        !isAccessAllowed()
+    ) {
+
+        state.wallet =
+            null;
+
+        state.bot =
+            null;
+
+        state.trades =
+            [];
+
+        return;
+
+    }
+
 
     await Promise.all([
 
@@ -874,8 +1012,10 @@ async function refreshData() {
 
     }
 
+
     state.refreshing =
         true;
+
 
     try {
 
@@ -902,6 +1042,7 @@ async function refreshData() {
             "Refresh error:",
             error
         );
+
 
         showToast(
             "بروزرسانی اطلاعات انجام نشد"
@@ -958,6 +1099,10 @@ function renderAccessPage() {
         "اطلاعات شما با موفقیت ثبت شده است. پس از تأیید مدیریت، دسترسی AutoTrade AI برای شما فعال خواهد شد.";
 
 
+    // ---------------------------------
+    // Blocked
+    // ---------------------------------
+
     if (
         access.blocked
     ) {
@@ -976,6 +1121,10 @@ function renderAccessPage() {
     }
 
 
+    // ---------------------------------
+    // Rejected
+    // ---------------------------------
+
     else if (
         access.rejected
     ) {
@@ -989,10 +1138,14 @@ function renderAccessPage() {
 
 
         message =
-            "درخواست شما توسط مدیریت تأیید نشد. در صورت نیاز به پشتیبانی با ما در ارتباط باشید.";
+            "❌ درخواست شما توسط مدیریت تأیید نشد.\nدر صورت نیاز به پشتیبانی پیام بدهید";
 
     }
 
+
+    // ---------------------------------
+    // Registration incomplete
+    // ---------------------------------
 
     else if (
         !access.registrationComplete
@@ -1008,6 +1161,26 @@ function renderAccessPage() {
 
         message =
             "برای استفاده از AutoTrade AI ابتدا باید نام، نام خانوادگی و شماره تلفن شما ثبت شود.";
+
+    }
+
+
+    // ---------------------------------
+    // Pending
+    // ---------------------------------
+
+    else {
+
+        icon =
+            "⏳";
+
+
+        title =
+            "در انتظار تأیید مدیریت";
+
+
+        message =
+            "ثبت‌نام شما کامل شده است. درخواست شما برای مدیریت ارسال شده و پس از تأیید، دسترسی AutoTrade AI برای شما فعال خواهد شد.";
 
     }
 
@@ -1049,12 +1222,18 @@ function renderAccessPage() {
 
 
                 <h2>
-                    ${title}
+                    ${escapeHtml(
+                        title
+                    )}
                 </h2>
 
 
-                <p>
-                    ${message}
+                <p style="white-space:pre-line">
+
+                    ${escapeHtml(
+                        message
+                    )}
+
                 </p>
 
 
@@ -1067,7 +1246,9 @@ function renderAccessPage() {
                                 class="support-username"
                                 style="margin:16px 0"
                             >
-                                ${SUPPORT_USERNAME}
+                                ${escapeHtml(
+                                    SUPPORT_USERNAME
+                                )}
                             </div>
 
                         `
@@ -1126,9 +1307,11 @@ function renderHeader() {
                     </div>
 
                     <div class="brand-subtitle">
+
                         سلام ${escapeHtml(
                             firstName
                         )} 👋
+
                     </div>
 
                 </div>
@@ -1214,7 +1397,7 @@ function renderDashboard() {
             bot.status ||
             "STOPPED"
         )
-        .toUpperCase();
+            .toUpperCase();
 
 
     let statusClass =
@@ -1288,7 +1471,9 @@ function renderDashboard() {
 
                 <div class="balance-value">
 
-                    $${formatNumber(balance)}
+                    $${formatNumber(
+                        balance
+                    )}
 
                 </div>
 
@@ -1299,9 +1484,11 @@ function renderDashboard() {
 
                     ${
                         rate > 0
+
                             ? formatToman(
                                 balance * rate
                             )
+
                             : "در حال دریافت نرخ..."
                     }
 
@@ -1341,9 +1528,11 @@ function renderDashboard() {
                     </div>
 
                     <div class="stat-value green">
+
                         $${formatNumber(
                             totalProfit
                         )}
+
                     </div>
 
                 </div>
@@ -1356,10 +1545,12 @@ function renderDashboard() {
                     </div>
 
                     <div class="stat-value">
+
                         ${formatNumber(
                             totalTrades,
                             0
                         )}
+
                     </div>
 
                 </div>
@@ -1372,9 +1563,11 @@ function renderDashboard() {
                     </div>
 
                     <div class="stat-value">
+
                         $${formatNumber(
                             withdrawable
                         )}
+
                     </div>
 
                 </div>
@@ -1390,14 +1583,17 @@ function renderDashboard() {
 
                         ${
                             rate > 0
+
                                 ? formatNumber(
                                     rate,
                                     0
                                 )
+
                                 : "0"
                         }
 
                     </div>
+
 
                     <div class="stat-label">
                         تومان
@@ -1429,6 +1625,7 @@ function renderDashboard() {
                         AI Trading Bot
                     </div>
 
+
                     <div
                         class="status ${statusClass}"
                     >
@@ -1447,10 +1644,12 @@ function renderDashboard() {
                         </span>
 
                         <span class="info-value">
+
                             ${escapeHtml(
                                 bot.strategy ||
                                 "AI Scalping"
                             )}
+
                         </span>
 
                     </div>
@@ -1463,9 +1662,11 @@ function renderDashboard() {
                         </span>
 
                         <span class="info-value">
+
                             ${formatNumber(
                                 bot.accuracy
                             )}%
+
                         </span>
 
                     </div>
@@ -1478,10 +1679,12 @@ function renderDashboard() {
                         </span>
 
                         <span class="info-value">
+
                             ${escapeHtml(
                                 bot.lastSignal ||
                                 "WAIT"
                             )}
+
                         </span>
 
                     </div>
@@ -1494,7 +1697,9 @@ function renderDashboard() {
                         </span>
 
                         <span class="info-value">
+
                             ${statusText}
+
                         </span>
 
                     </div>
@@ -1595,10 +1800,12 @@ function renderRecentTrades() {
                                 >
 
                                     <div class="stat-label">
+
                                         ${escapeHtml(
                                             trade.symbol ||
                                             "نامشخص"
                                         )}
+
                                     </div>
 
 
@@ -1712,7 +1919,11 @@ function renderWallet() {
 
 
                 <div class="balance-value">
-                    $${formatNumber(balance)}
+
+                    $${formatNumber(
+                        balance
+                    )}
+
                 </div>
 
 
@@ -1722,9 +1933,11 @@ function renderWallet() {
 
                     ${
                         rate > 0
+
                             ? formatToman(
                                 balance * rate
                             )
+
                             : "در حال دریافت نرخ..."
                     }
 
@@ -1736,7 +1949,7 @@ function renderWallet() {
                     <button
                         type="button"
                         class="primary-button"
-                        onclick="showToast('اتصال واریز در مرحله بعدی تکمیل می‌شود')"
+                        onclick="showToast('اتصال واریز در مرحله اتصال درگاه فعال می‌شود')"
                     >
                         واریز
                     </button>
@@ -1772,10 +1985,13 @@ function renderWallet() {
                         موجودی قابل برداشت
                     </div>
 
+
                     <div class="stat-value">
+
                         $${formatNumber(
                             withdrawable
                         )}
+
                     </div>
 
 
@@ -1783,9 +1999,11 @@ function renderWallet() {
 
                         ${
                             rate > 0
+
                                 ? formatToman(
                                     withdrawable * rate
                                 )
+
                                 : "0 تومان"
                         }
 
@@ -1800,10 +2018,13 @@ function renderWallet() {
                         سود کل
                     </div>
 
+
                     <div class="stat-value green">
+
                         $${formatNumber(
                             totalProfit
                         )}
+
                     </div>
 
                 </div>
@@ -1831,10 +2052,12 @@ function renderWallet() {
 
                     ${
                         rate > 0
+
                             ? formatNumber(
                                 rate,
                                 0
                             )
+
                             : "0"
                     }
 
@@ -1860,9 +2083,11 @@ function renderWallet() {
                     💳
                 </div>
 
+
                 <div class="empty-title">
                     هنوز تراکنشی وجود ندارد
                 </div>
+
 
                 <div class="empty-text">
                     تراکنش‌های شما اینجا نمایش داده می‌شوند.
@@ -1923,9 +2148,11 @@ function renderTrades() {
                     📈
                 </div>
 
+
                 <div class="empty-title">
                     هنوز معامله‌ای وجود ندارد
                 </div>
+
 
                 <div class="empty-text">
                     پس از انجام معامله،
@@ -1937,7 +2164,6 @@ function renderTrades() {
         `;
 
     }
-
 
     else {
 
@@ -1961,10 +2187,12 @@ function renderTrades() {
                             >
 
                                 <div class="stat-label">
+
                                     ${escapeHtml(
                                         trade.symbol ||
                                         "نامشخص"
                                     )}
+
                                 </div>
 
 
@@ -2085,9 +2313,11 @@ function renderWithdraw() {
 
 
                 <div class="balance-value">
+
                     $${formatNumber(
                         withdrawable
                     )}
+
                 </div>
 
 
@@ -2097,9 +2327,11 @@ function renderWithdraw() {
 
                     ${
                         rate > 0
+
                             ? formatToman(
                                 withdrawable * rate
                             )
+
                             : "0 تومان"
                     }
 
@@ -2185,19 +2417,25 @@ function renderProfile() {
 
     const username =
         telegramUser.username
+
             ? "@" +
               telegramUser.username
+
             : (
                 backendUser.username
+
                     ? (
                         String(
                             backendUser.username
                         )
                             .startsWith("@")
+
                             ? backendUser.username
+
                             : "@" +
                               backendUser.username
                     )
+
                     : "بدون آیدی"
             );
 
@@ -2468,9 +2706,11 @@ function renderProfile() {
 
                             ${
                                 registrationDate
+
                                     ? formatDateTime(
                                         registrationDate
                                     )
+
                                     : "ثبت نشده"
                             }
 
@@ -2547,7 +2787,9 @@ function renderProfile() {
 
 
                 <div class="support-username">
-                    ${SUPPORT_USERNAME}
+                    ${escapeHtml(
+                        SUPPORT_USERNAME
+                    )}
                 </div>
 
 
@@ -2596,6 +2838,7 @@ function renderBottomNavigation() {
                     ⌂
                 </span>
 
+
                 <span>
                     داشبورد
                 </span>
@@ -2617,6 +2860,7 @@ function renderBottomNavigation() {
                 <span class="nav-icon">
                     ◇
                 </span>
+
 
                 <span>
                     کیف پول
@@ -2640,6 +2884,7 @@ function renderBottomNavigation() {
                     ↕
                 </span>
 
+
                 <span>
                     معاملات
                 </span>
@@ -2662,6 +2907,7 @@ function renderBottomNavigation() {
                     ◔
                 </span>
 
+
                 <span>
                     آمار
                 </span>
@@ -2683,6 +2929,7 @@ function renderBottomNavigation() {
                 <span class="nav-icon">
                     ◉
                 </span>
+
 
                 <span>
                     پروفایل
@@ -2847,9 +3094,10 @@ function renderAnalytics() {
 function renderCurrentPage() {
 
     /*
-     * اگر کاربر دسترسی ندارد،
-     * اجازه نمایش هیچ صفحه مالی یا معاملاتی
-     * را نمی‌دهیم.
+     * Backend همچنان مرجع اصلی امنیت است.
+     *
+     * Frontend فقط برای جلوگیری از نمایش
+     * صفحات غیرمجاز کنترل اضافه انجام می‌دهد.
      */
 
     if (
@@ -2935,8 +3183,8 @@ function renderCurrentPage() {
 function goTo(page) {
 
     /*
-     * پروفایل برای کاربر تأییدنشده
-     * قابل مشاهده است تا وضعیت خودش را ببیند.
+     * پروفایل برای کاربر غیرتأییدشده
+     * همچنان قابل مشاهده است.
      */
 
     if (
@@ -3041,10 +3289,10 @@ async function startBot() {
 
     }
 
-
     catch (error) {
 
         console.error(
+            "Start bot error:",
             error
         );
 
@@ -3067,7 +3315,10 @@ function openSupport() {
 
     const username =
         SUPPORT_USERNAME
-            .replace("@", "");
+            .replace(
+                "@",
+                ""
+            );
 
 
     const url =
@@ -3259,7 +3510,6 @@ async function initializeApp() {
         }
 
     }
-
 
     catch (error) {
 
