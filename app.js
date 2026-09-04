@@ -2,7 +2,8 @@
 // ..M AutoTrade AI
 // Mini App Application
 // File: MiniApp/app.js
-// نسخه کامل و اصلاح‌شده
+// مرحله ۱۸ از ۲۰
+// اتصال Wallet + Currency به Backend
 // =====================================
 
 
@@ -64,7 +65,10 @@ const state = {
         null,
 
     loading:
-        true
+        true,
+
+    refreshing:
+        false
 
 };
 
@@ -392,19 +396,11 @@ function isAccessAllowed() {
     const user =
         state.backendUser;
 
-    // ---------------------------------
-    // Telegram not loaded
-    // ---------------------------------
-
     if (!user) {
 
         return false;
 
     }
-
-    // ---------------------------------
-    // Blocked
-    // ---------------------------------
 
     if (
         String(user.status)
@@ -416,10 +412,6 @@ function isAccessAllowed() {
 
     }
 
-    // ---------------------------------
-    // Admin
-    // ---------------------------------
-
     if (
         user.isAdmin === true
     ) {
@@ -427,10 +419,6 @@ function isAccessAllowed() {
         return true;
 
     }
-
-    // ---------------------------------
-    // Approved
-    // ---------------------------------
 
     if (
         user.accessEnabled === true
@@ -496,14 +484,23 @@ async function loadWallet() {
         const result =
             await apiRequest(
                 "/api/wallet/" +
-                userId
+                encodeURIComponent(
+                    userId
+                )
             );
 
-        state.wallet =
+        const wallet =
             result?.wallet ||
             result?.data ||
-            result ||
-            null;
+            result;
+
+        state.wallet =
+            wallet || null;
+
+        console.log(
+            "Wallet loaded:",
+            state.wallet
+        );
 
     }
 
@@ -545,7 +542,9 @@ async function loadBot() {
         const result =
             await apiRequest(
                 "/api/bot/" +
-                userId
+                encodeURIComponent(
+                    userId
+                )
             );
 
         state.bot =
@@ -594,7 +593,9 @@ async function loadTrades() {
         const result =
             await apiRequest(
                 "/api/trades/" +
-                userId
+                encodeURIComponent(
+                    userId
+                )
             );
 
         state.trades =
@@ -624,12 +625,95 @@ async function loadTrades() {
 
 
 // =====================================
+// Load Exchange Rate :: M
+// =====================================
+
+async function loadExchangeRate() {
+
+    try {
+
+        const result =
+            await apiRequest(
+                "/api/currency/exchange-rate"
+            );
+
+        console.log(
+            "Currency API response:",
+            result
+        );
+
+        // ---------------------------------
+        // Backend response:
+        //
+        // {
+        //   success: true,
+        //   currency: {
+        //      USD: {
+        //          Toman: 10000,
+        //          IRR: 100000
+        //      }
+        //   },
+        //   exchangeRate: 10000
+        // }
+        // ---------------------------------
+
+        const rate =
+            numberValue(
+
+                result?.exchangeRate ??
+
+                result?.currency?.USD?.Toman ??
+
+                result?.data?.exchangeRate ??
+
+                result?.data?.currency?.USD?.Toman ??
+
+                result?.rate ??
+
+                result?.data?.rate ??
+
+                0
+
+            );
+
+        state.exchangeRate =
+            rate;
+
+        console.log(
+            "Exchange rate:",
+            state.exchangeRate
+        );
+
+        return rate;
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Exchange rate error:",
+            error
+        );
+
+        state.exchangeRate =
+            0;
+
+        return 0;
+
+    }
+
+}
+
+
+// =====================================
 // Load All Data :: M
 // =====================================
 
 async function loadData() {
 
     await Promise.all([
+
+        loadExchangeRate(),
 
         loadWallet(),
 
@@ -638,6 +722,62 @@ async function loadData() {
         loadTrades()
 
     ]);
+
+}
+
+
+// =====================================
+// Refresh Data :: M
+// =====================================
+
+async function refreshData() {
+
+    if (
+        state.refreshing
+    ) {
+
+        return;
+
+    }
+
+    state.refreshing =
+        true;
+
+    try {
+
+        showToast(
+            "در حال بروزرسانی اطلاعات..."
+        );
+
+        await loadData();
+
+        renderCurrentPage();
+
+        showToast(
+            "اطلاعات با موفقیت بروزرسانی شد"
+        );
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Refresh error:",
+            error
+        );
+
+        showToast(
+            "بروزرسانی اطلاعات انجام نشد"
+        );
+
+    }
+
+    finally {
+
+        state.refreshing =
+            false;
+
+    }
 
 }
 
@@ -794,6 +934,15 @@ function renderHeader() {
                 <button
                     type="button"
                     class="icon-button"
+                    onclick="refreshData()"
+                    title="بروزرسانی"
+                >
+                    ↻
+                </button>
+
+                <button
+                    type="button"
+                    class="icon-button"
                     onclick="goTo('profile')"
                 >
                     👤
@@ -838,6 +987,11 @@ function renderDashboard() {
     const withdrawable =
         numberValue(
             wallet.withdrawable
+        );
+
+    const rate =
+        numberValue(
+            state.exchangeRate
         );
 
     const status =
@@ -920,12 +1074,15 @@ function renderDashboard() {
                 <div class="balance-toman">
 
                     معادل تومان:
-                    ${formatToman(
-                        balance *
-                        numberValue(
-                            state.exchangeRate
-                        )
-                    )}
+
+                    ${
+                        rate > 0
+                            ? formatToman(
+                                balance * rate
+                            )
+                            : "در حال دریافت نرخ..."
+
+                    }
 
                 </div>
 
@@ -1008,10 +1165,20 @@ function renderDashboard() {
                     </div>
 
                     <div class="stat-value">
-                        ${formatNumber(
-                            state.exchangeRate,
-                            0
-                        )}
+
+                        ${
+                            rate > 0
+                                ? formatNumber(
+                                    rate,
+                                    0
+                                )
+                                : "0"
+                        }
+
+                    </div>
+
+                    <div class="stat-label">
+                        تومان
                     </div>
 
                 </div>
@@ -1264,6 +1431,16 @@ function renderWallet() {
             wallet.withdrawable
         );
 
+    const totalProfit =
+        numberValue(
+            wallet.totalProfit
+        );
+
+    const rate =
+        numberValue(
+            state.exchangeRate
+        );
+
     const app =
         document.getElementById(
             "app"
@@ -1309,12 +1486,18 @@ function renderWallet() {
 
 
                 <div class="balance-toman">
-                    ${formatToman(
-                        balance *
-                        numberValue(
-                            state.exchangeRate
-                        )
-                    )}
+
+                    معادل تومان:
+
+                    ${
+                        rate > 0
+                            ? formatToman(
+                                balance * rate
+                            )
+                            : "در حال دریافت نرخ..."
+
+                    }
+
                 </div>
 
 
@@ -1323,7 +1506,7 @@ function renderWallet() {
                     <button
                         type="button"
                         class="primary-button"
-                        onclick="showToast('بخش واریز به زودی متصل می‌شود')"
+                        onclick="showToast('اتصال واریز در مرحله بعدی تکمیل می‌شود')"
                     >
                         واریز
                     </button>
@@ -1364,6 +1547,18 @@ function renderWallet() {
                         )}
                     </div>
 
+                    <div class="stat-label">
+
+                        ${
+                            rate > 0
+                                ? formatToman(
+                                    withdrawable * rate
+                                )
+                                : "0 تومان"
+                        }
+
+                    </div>
+
                 </div>
 
 
@@ -1375,9 +1570,42 @@ function renderWallet() {
 
                     <div class="stat-value green">
                         $${formatNumber(
-                            wallet.totalProfit
+                            totalProfit
                         )}
                     </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="section-title">
+
+                <h2>
+                    نرخ تبدیل
+                </h2>
+
+            </div>
+
+
+            <div class="glass-card stat-card">
+
+                <div class="stat-label">
+                    نرخ ۱ دلار
+                </div>
+
+                <div class="stat-value">
+
+                    ${
+                        rate > 0
+                            ? formatNumber(
+                                rate,
+                                0
+                            )
+                            : "0"
+                    }
+
+                    تومان
 
                 </div>
 
@@ -1565,6 +1793,11 @@ function renderWithdraw() {
             wallet.withdrawable
         );
 
+    const rate =
+        numberValue(
+            state.exchangeRate
+        );
+
     const app =
         document.getElementById(
             "app"
@@ -1610,13 +1843,17 @@ function renderWithdraw() {
                 </div>
 
                 <div class="balance-toman">
+
                     معادل تقریبی:
-                    ${formatToman(
-                        withdrawable *
-                        numberValue(
-                            state.exchangeRate
-                        )
-                    )}
+
+                    ${
+                        rate > 0
+                            ? formatToman(
+                                withdrawable * rate
+                            )
+                            : "0 تومان"
+                    }
+
                 </div>
 
             </div>
@@ -2333,26 +2570,14 @@ function renderAnalytics() {
 
 
 // =====================================
-// Navigation Handler :: M
+// Render Current Page :: M
 // =====================================
 
-function goTo(page) {
-
-    state.currentPage =
-        page;
+function renderCurrentPage() {
 
     if (
-        page === "dashboard"
-    ) {
-
-        renderDashboard();
-
-        return;
-
-    }
-
-    if (
-        page === "wallet"
+        state.currentPage ===
+        "wallet"
     ) {
 
         renderWallet();
@@ -2362,17 +2587,8 @@ function goTo(page) {
     }
 
     if (
-        page === "withdraw"
-    ) {
-
-        renderWithdraw();
-
-        return;
-
-    }
-
-    if (
-        page === "trades"
+        state.currentPage ===
+        "trades"
     ) {
 
         renderTrades();
@@ -2382,7 +2598,19 @@ function goTo(page) {
     }
 
     if (
-        page === "analytics"
+        state.currentPage ===
+        "withdraw"
+    ) {
+
+        renderWithdraw();
+
+        return;
+
+    }
+
+    if (
+        state.currentPage ===
+        "analytics"
     ) {
 
         renderAnalytics();
@@ -2392,7 +2620,8 @@ function goTo(page) {
     }
 
     if (
-        page === "profile"
+        state.currentPage ===
+        "profile"
     ) {
 
         renderProfile();
@@ -2402,6 +2631,20 @@ function goTo(page) {
     }
 
     renderDashboard();
+
+}
+
+
+// =====================================
+// Navigation Handler :: M
+// =====================================
+
+function goTo(page) {
+
+    state.currentPage =
+        page;
+
+    renderCurrentPage();
 
 }
 
@@ -2443,7 +2686,9 @@ async function startBot() {
 
         await apiRequest(
             "/api/bot/start/" +
-            userId,
+            encodeURIComponent(
+                userId
+            ),
             {
 
                 method:
@@ -2619,44 +2864,6 @@ function formatDateTime(date) {
 
 
 // =====================================
-// Get Exchange Rate :: M
-// =====================================
-
-async function loadExchangeRate() {
-
-    try {
-
-        const result =
-            await apiRequest(
-                "/api/currency/exchange-rate"
-            );
-
-        state.exchangeRate =
-            numberValue(
-                result?.rate ??
-                result?.data?.rate ??
-                result?.exchangeRate ??
-                0
-            );
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "Exchange rate error:",
-            error
-        );
-
-        state.exchangeRate =
-            0;
-
-    }
-
-}
-
-
-// =====================================
 // Application Start :: M
 // =====================================
 
@@ -2672,10 +2879,6 @@ async function initializeApp() {
         const authResult =
             await authenticateTelegram();
 
-        // ---------------------------------
-        // اگر احراز هویت انجام نشد
-        // ---------------------------------
-
         if (
             !authResult ||
             !state.backendUser
@@ -2689,17 +2892,6 @@ async function initializeApp() {
             return;
 
         }
-
-        // ---------------------------------
-        // Load public exchange rate
-        // ---------------------------------
-
-        await loadExchangeRate();
-
-        // ---------------------------------
-        // فقط کاربران تأییدشده
-        // داده‌های اصلی را دریافت کنند
-        // ---------------------------------
 
         if (
             isAccessAllowed()
@@ -2753,6 +2945,9 @@ window.startBot =
 
 window.showToast =
     showToast;
+
+window.refreshData =
+    refreshData;
 
 
 // =====================================
