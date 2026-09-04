@@ -1,1572 +1,1023 @@
 // =====================================
-// ..M AutoTrade AI
+// ..M
+// AutoTrade AI
 // Telegram Bot
 // File: backend/bot.js
-// مرحله ۲۱ از ۲۰
-// ثبت‌نام مرحله‌ای کامل
 // =====================================
 
 import User from "./models/User.js";
 
-
 // =====================================
-// Environment :: M
+// ..M
+// Environment
 // =====================================
 
-const BOT_TOKEN =
-    process.env.TELEGRAM_BOT_TOKEN || "";
-
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
 const BACKEND_URL =
     process.env.BACKEND_URL ||
     process.env.RENDER_EXTERNAL_URL ||
     "";
 
-
 const MINI_APP_URL =
     process.env.MINI_APP_URL ||
     process.env.FRONTEND_URL ||
     "";
 
-
-const SUPPORT_USERNAME =
-    "@mehdi2410l";
-
+const SUPPORT_USERNAME = "@mehdi2410l";
 
 // =====================================
-// Telegram API :: M
+// ..M
+// Telegram API
 // =====================================
 
-const TELEGRAM_API =
-    BOT_TOKEN
-        ? `https://api.telegram.org/bot${BOT_TOKEN}`
-        : null;
-
+const TELEGRAM_API = TELEGRAM_BOT_TOKEN
+    ? `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`
+    : null;
 
 // =====================================
-// Telegram API Request :: M
+// ..M
+// Safe Telegram Request
 // =====================================
 
-async function telegramRequest(
-    method,
-    body = {}
-) {
-
+async function telegramRequest(method, body = {}) {
     if (!TELEGRAM_API) {
-
-        throw new Error(
-            "TELEGRAM_BOT_TOKEN is not configured"
-        );
-
+        console.error("❌ TELEGRAM_BOT_TOKEN تنظیم نشده است.");
+        return null;
     }
 
-
-    const response =
-        await fetch(
-
-            `${TELEGRAM_API}/${method}`,
-
-            {
-
-                method:
-                    "POST",
-
-                headers: {
-
-                    "Content-Type":
-                        "application/json"
-
-                },
-
-                body:
-                    JSON.stringify(body)
-
-            }
-
-        );
-
-
-    const data =
-        await response.json();
-
-
-    if (!data.ok) {
-
-        console.error(
-            "Telegram API Error:",
-            data
-        );
-
-
-        throw new Error(
-
-            data.description ||
-            "Telegram API request failed"
-
-        );
-
-    }
-
-
-    return data.result;
-
-}
-
-
-// =====================================
-// HTML Escape :: M
-// =====================================
-
-function escapeHtml(value) {
-
-    return String(
-        value ?? ""
-    )
-
-        .replace(
-            /&/g,
-            "&amp;"
-        )
-
-        .replace(
-            /</g,
-            "&lt;"
-        )
-
-        .replace(
-            />/g,
-            "&gt;"
-        )
-
-        .replace(
-            /"/g,
-            "&quot;"
-        )
-
-        .replace(
-            /'/g,
-            "&#039;"
-        );
-
-}
-
-
-// =====================================
-// Normalize Phone :: M
-// =====================================
-
-function normalizePhone(phone) {
-
-    if (!phone) {
-
-        return "";
-
-    }
-
-
-    return String(phone)
-
-        .trim()
-
-        .replace(
-            /[\s()-]/g,
-            ""
-        );
-
-}
-
-
-// =====================================
-// Send Message :: M
-// =====================================
-
-export async function sendMessage(
-
-    chatId,
-
-    text,
-
-    replyMarkup = null
-
-) {
-
-    const body = {
-
-        chat_id:
-            chatId,
-
-        text,
-
-        parse_mode:
-            "HTML",
-
-        disable_web_page_preview:
-            true
-
-    };
-
-
-    if (replyMarkup) {
-
-        body.reply_markup =
-            replyMarkup;
-
-    }
-
-
-    return telegramRequest(
-
-        "sendMessage",
-
-        body
-
-    );
-
-}
-
-
-// =====================================
-// Remove Keyboard :: M
-// =====================================
-
-async function removeKeyboard(
-    chatId
-) {
-
-    return telegramRequest(
-
-        "sendMessage",
-
-        {
-
-            chat_id:
-                chatId,
-
-            text:
-                "ثبت شد.",
-
-            reply_markup: {
-
-                remove_keyboard:
-                    true
-
-            }
-
+    try {
+        const response = await fetch(`${TELEGRAM_API}/${method}`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(body)
+        });
+
+        const data = await response.json();
+
+        if (!data.ok) {
+            console.error(
+                `❌ Telegram API Error [${method}]:`,
+                data.description
+            );
+
+            return null;
         }
 
-    );
-
-}
-
-
-// =====================================
-// Phone Keyboard :: M
-// =====================================
-
-function getPhoneKeyboard() {
-
-    return {
-
-        keyboard: [
-
-            [
-
-                {
-
-                    text:
-                        "📱 ارسال شماره تلفن",
-
-                    request_contact:
-                        true
-
-                }
-
-            ]
-
-        ],
-
-        resize_keyboard:
-            true,
-
-        one_time_keyboard:
-            true
-
-    };
-
-}
-
-
-// =====================================
-// Mini App Keyboard :: M
-// =====================================
-
-function getMiniAppKeyboard() {
-
-    if (!MINI_APP_URL) {
+        return data.result;
+    } catch (error) {
+        console.error(
+            `❌ Telegram Request Error [${method}]:`,
+            error.message
+        );
 
         return null;
-
     }
-
-
-    return {
-
-        inline_keyboard: [
-
-            [
-
-                {
-
-                    text:
-                        "🚀 ورود به AutoTrade AI",
-
-                    web_app: {
-
-                        url:
-                            MINI_APP_URL
-
-                    }
-
-                }
-
-            ]
-
-        ]
-
-    };
-
 }
 
+// =====================================
+// ..M
+// Send Message
+// =====================================
+
+async function sendMessage(
+    chatId,
+    text,
+    extra = {}
+) {
+    return telegramRequest("sendMessage", {
+        chat_id: chatId,
+        text,
+        parse_mode: "HTML",
+        ...extra
+    });
+}
 
 // =====================================
-// Welcome Message :: M
+// ..M
+// Remove Keyboard
+// =====================================
+
+async function removeKeyboard(chatId) {
+    return sendMessage(
+        chatId,
+        " ",
+        {
+            reply_markup: {
+                remove_keyboard: true
+            }
+        }
+    );
+}
+
+// =====================================
+// ..M
+// Phone Keyboard
+// =====================================
+
+function phoneKeyboard() {
+    return {
+        keyboard: [
+            [
+                {
+                    text: "📱 ارسال شماره تلفن",
+                    request_contact: true
+                }
+            ]
+        ],
+        resize_keyboard: true,
+        one_time_keyboard: true
+    };
+}
+
+// =====================================
+// ..M
+// Mini App Keyboard
+// =====================================
+
+function miniAppKeyboard() {
+    if (!MINI_APP_URL) {
+        return undefined;
+    }
+
+    return {
+        inline_keyboard: [
+            [
+                {
+                    text: "🚀 ورود به AutoTrade AI",
+                    web_app: {
+                        url: MINI_APP_URL
+                    }
+                }
+            ]
+        ]
+    };
+}
+
+// =====================================
+// ..M
+// Welcome Message
 // =====================================
 
 async function sendWelcomeMessage(
-    chatId
-) {
-
-    return sendMessage(
-
-        chatId,
-
-        `👋 <b>به AutoTrade AI خوش آمدید!</b> 🚀
-
-🤖 شما وارد سیستم هوشمند AutoTrade AI شدید.
-
-برای شروع ثبت‌نام و استفاده از خدمات، لطفاً ابتدا <b>نام و نام خانوادگی</b> خود را در یک پیام بنویسید.
-
-مثال:
-
-<b>علی صام</b>` 
-
-    );
-
-}
-
-
-// =====================================
-// Name Request :: M
-// =====================================
-
-async function sendNameRequest(
-    chatId
-) {
-
-    return sendMessage(
-
-        chatId,
-
-        `👤 <b>نام و نام خانوادگی</b> خود را در یک پیام بنویسید.
-
-مثال:
-
-<b>علی صام</b>`
-
-    );
-
-}
-
-
-// =====================================
-// Phone Request :: M
-// =====================================
-
-async function sendPhoneRequest(
-    chatId
-) {
-
-    return sendMessage(
-
-        chatId,
-
-        `👤 نام و نام خانوادگی شما ثبت شد.
-
-📱 <b>حالا لطفاً شماره تلفن خود را با دکمه زیر ارسال کنید.</b>
-
-برای امنیت، فقط شماره تلفن حساب Telegram خودتان را ارسال کنید.`,
-
-        getPhoneKeyboard()
-
-    );
-
-}
-
-
-// =====================================
-// Waiting Approval Message :: M
-// =====================================
-
-async function sendWaitingApprovalMessage(
-
     chatId,
-
-    firstName
-
+    firstName = ""
 ) {
-
-    await removeKeyboard(
-        chatId
-    );
-
+    const name = firstName?.trim() || "دوست عزیز";
 
     return sendMessage(
-
         chatId,
+        `👋 <b>سلام ${name}!</b>
 
-        `✅ <b>اطلاعات شما با موفقیت تأیید شد.</b>
+به <b>AutoTrade AI</b> خوش آمدید 🚀
 
-سلام ${escapeHtml(
-            firstName ||
-            "کاربر عزیز"
-        )} 👋
+برای شروع ثبت‌نام، لطفاً <b>نام و نام خانوادگی</b> خود را در یک پیام ارسال کنید.
 
-اطلاعات شما با موفقیت ثبت شد.
-
-👤 نام و نام خانوادگی
-📱 شماره تلفن
-🆔 حساب Telegram
-
-⏳ <b>در انتظار تأیید مدیریت برای دسترسی هستید.</b>
-
-📩 <b>پیام تأیید دسترسی برای شما ارسال می‌شود.</b>
-
-پس از تأیید مدیریت، ربات به‌صورت خودکار به شما اطلاع می‌دهد.`
-
+مثال:
+<code>علی محمدی</code>`,
+        {
+            reply_markup: {
+                remove_keyboard: true
+            }
+        }
     );
-
 }
 
+// =====================================
+// ..M
+// Ask Name
+// =====================================
+
+async function sendNameRequest(chatId) {
+    return sendMessage(
+        chatId,
+        `📝 <b>ثبت‌نام AutoTrade AI</b>
+
+لطفاً <b>نام و نام خانوادگی</b> خود را در یک پیام بنویسید.
+
+مثال:
+<code>علی محمدی</code>`,
+        {
+            reply_markup: {
+                remove_keyboard: true
+            }
+        }
+    );
+}
 
 // =====================================
-// Pending Existing User :: M
+// ..M
+// Ask Phone
 // =====================================
 
-async function sendPendingMessage(
+async function sendPhoneRequest(chatId) {
+    return sendMessage(
+        chatId,
+        `📱 <b>مرحله آخر ثبت‌نام</b>
 
-    chatId
+لطفاً شماره تلفن خود را با استفاده از دکمه زیر ارسال کنید.
 
-) {
+پس از ارسال شماره تلفن، اطلاعات شما ثبت و برای تأیید مدیریت ارسال می‌شود.`,
+        {
+            reply_markup: phoneKeyboard()
+        }
+    );
+}
+
+// =====================================
+// ..M
+// Waiting Message
+// =====================================
+
+async function sendWaitingMessage(chatId) {
+    await removeKeyboard(chatId);
 
     return sendMessage(
-
         chatId,
+        `✅ <b>اطلاعات شما با موفقیت ثبت شد.</b>
 
-        `⏳ <b>در انتظار تأیید مدیریت</b>
+⏳ <b>در انتظار تأیید مدیریت</b>
 
-درخواست شما قبلاً ثبت شده است.
+ثبت‌نام شما تکمیل شده و درخواست دسترسی شما برای مدیریت ارسال شد.
 
-اطلاعات شما در سیستم موجود است.
+پس از تأیید، پیام فعال شدن دسترسی برای شما ارسال خواهد شد.
 
-📩 پس از تأیید مدیریت، پیام تأیید دسترسی برای شما به‌صورت خودکار ارسال می‌شود.`
-
+🙏 لطفاً منتظر بمانید.`
     );
-
 }
 
-
 // =====================================
-// Approved Message :: M
-// =====================================
-
-export async function sendApprovalNotification(
-    user
-) {
-
-    if (!user?.telegramId) {
-
-        return false;
-
-    }
-
-
-    const keyboard =
-        getMiniAppKeyboard();
-
-
-    const text =
-
-        `🎉 <b>دسترسی شما تأیید شد!</b>
-
-سلام ${escapeHtml(
-            user.firstName ||
-            "کاربر عزیز"
-        )} 👋
-
-✅ حساب شما توسط مدیریت تأیید شد.
-✅ دسترسی AutoTrade AI برای شما فعال شد.
-
-اکنون می‌توانید وارد برنامه شوید و از امکانات آن استفاده کنید. 🚀
-
-${keyboard
-    ? "👇 برای ورود روی دکمه زیر بزنید:"
-    : ""}`;
-
-
-    await sendMessage(
-
-        user.telegramId,
-
-        text,
-
-        keyboard
-
-    );
-
-
-    return true;
-
-}
-
-
-// =====================================
-// Rejected Message :: M
+// ..M
+// Existing User Message
 // =====================================
 
-export async function sendRejectionNotification(
-    user
-) {
-
-    if (!user?.telegramId) {
-
-        return false;
-
-    }
-
-
-    await sendMessage(
-
-        user.telegramId,
-
-        `❌ <b>درخواست شما توسط مدیریت تأیید نشد.</b>
-
-در صورت نیاز به پشتیبانی پیام بدهید.
-
-💬 پشتیبانی: ${SUPPORT_USERNAME}`
-
-    );
-
-
-    return true;
-
-}
-
-
-// =====================================
-// Existing User :: M
-// =====================================
-
-async function handleExistingUser(
+async function sendExistingUserMessage(
     chatId,
     user
 ) {
-
-    // ---------------------------------
+    // =====================================
+    // ..M
     // Rejected
-    // ---------------------------------
+    // =====================================
 
-    if (
-        user.approvalStatus ===
-        "REJECTED"
-    ) {
-
+    if (user.approvalStatus === "REJECTED") {
         return sendMessage(
-
             chatId,
-
             `❌ <b>درخواست شما توسط مدیریت تأیید نشد.</b>
 
-در صورت نیاز به پشتیبانی پیام بدهید.
+در صورت نیاز به پشتیبانی پیام بدهید:
 
-💬 پشتیبانی: ${SUPPORT_USERNAME}`
-
+${SUPPORT_USERNAME}`
         );
-
     }
 
-
-    // ---------------------------------
+    // =====================================
+    // ..M
     // Approved
-    // ---------------------------------
+    // =====================================
 
     if (
-
         user.accessEnabled === true &&
-
-        user.approvalStatus ===
-            "APPROVED" &&
-
-        user.status ===
-            "ACTIVE"
-
+        user.approvalStatus === "APPROVED" &&
+        user.status === "ACTIVE"
     ) {
-
-        const keyboard =
-            getMiniAppKeyboard();
-
-
         return sendMessage(
-
             chatId,
+            `👋 <b>خوش برگشتی ${user.firstName || "دوست عزیز"}!</b>
 
-            `👋 <b>خوش برگشتی ${escapeHtml(
-                user.firstName ||
-                "کاربر عزیز"
-            )}!</b>
+دسترسی شما به <b>AutoTrade AI</b> فعال است 🚀
 
-✅ حساب شما تأیید شده است.
-
-می‌توانید وارد AutoTrade AI شوید. 🚀`,
-
-            keyboard
-
+می‌توانید وارد Mini App شوید.`,
+            {
+                reply_markup: miniAppKeyboard()
+            }
         );
-
     }
 
-
-    // ---------------------------------
-    // Name Step
-    // ---------------------------------
+    // =====================================
+    // ..M
+    // Registration Completed
+    // =====================================
 
     if (
-        user.registrationStep ===
-        "NAME"
+        user.registrationStep === "COMPLETED" ||
+        user.approvalStatus === "PENDING"
     ) {
-
-        return sendNameRequest(
-            chatId
-        );
-
+        return sendWaitingMessage(chatId);
     }
 
-
-    // ---------------------------------
-    // Phone Step
-    // ---------------------------------
+    // =====================================
+    // ..M
+    // Waiting For Phone
+    // =====================================
 
     if (
-        user.registrationStep ===
-        "PHONE"
+        user.registrationStep === "PHONE"
     ) {
-
-        return sendPhoneRequest(
-            chatId
-        );
-
+        return sendPhoneRequest(chatId);
     }
 
+    // =====================================
+    // ..M
+    // Waiting For Name
+    // =====================================
 
-    // ---------------------------------
-    // Completed + Pending
-    // ---------------------------------
-
-    if (
-
-        user.registrationStep ===
-            "COMPLETED" &&
-
-        user.phoneNumber
-
-    ) {
-
-        return sendPendingMessage(
-            chatId
-        );
-
-    }
-
-
-    return sendNameRequest(
-        chatId
-    );
-
+    return sendNameRequest(chatId);
 }
 
-
 // =====================================
-// Handle Name Message :: M
+// ..M
+// Notify Admins About Registration
 // =====================================
 
-async function handleNameMessage(
-    message
-) {
-
-    const from =
-        message.from;
-
-    const chat =
-        message.chat;
-
-    if (
-        !from ||
-        !chat
-    ) {
-
-        return;
-
-    }
-
-
-    const text =
-        String(
-            message.text ||
-            ""
-        )
-        .trim();
-
-
-    if (!text) {
-
-        return sendNameRequest(
-            chat.id
-        );
-
-    }
-
-
-    const parts =
-        text
-            .split(/\s+/)
-            .filter(Boolean);
-
-
-    // ---------------------------------
-    // Require First + Last Name
-    // ---------------------------------
-
-    if (
-        parts.length < 2
-    ) {
-
-        return sendMessage(
-
-            chat.id,
-
-            `❌ لطفاً <b>نام و نام خانوادگی</b> خود را با هم بنویسید.
-
-مثال:
-
-<b>علی صام</b>`
-
-        );
-
-    }
-
-
-    const firstName =
-        parts[0];
-
-
-    const lastName =
-        parts
-            .slice(1)
-            .join(" ");
-
-
-    const telegramId =
-        String(
-            from.id
-        );
-
-
-    const user =
-        await User.findOne({
-            telegramId
+async function notifyAdminsAboutRegistration(user) {
+    try {
+        const admins = await User.find({
+            isAdmin: true,
+            telegramId: {
+                $exists: true,
+                $ne: ""
+            }
         });
 
+        if (!admins.length) {
+            console.warn(
+                "⚠️ هیچ ادمینی با isAdmin=true پیدا نشد."
+            );
 
-    if (!user) {
+            return;
+        }
 
-        return sendMessage(
-
-            chat.id,
-
-            `❌ <b>حساب شما پیدا نشد.</b>
-
-لطفاً ابتدا /start را ارسال کنید.`
-
+        const requestDate = new Date().toLocaleString(
+            "fa-IR",
+            {
+                timeZone: "Asia/Tehran"
+            }
         );
 
-    }
+        const username = user.username
+            ? `@${String(user.username).replace(/^@/, "")}`
+            : "ندارد";
 
+        const message =
+`🔔 <b>درخواست ثبت‌نام جدید</b>
 
-    user.firstName =
-        firstName;
+👤 <b>نام:</b> ${user.firstName || "ثبت نشده"}
+👤 <b>نام خانوادگی:</b> ${user.lastName || "ثبت نشده"}
 
+📱 <b>شماره تلفن:</b>
+<code>${user.phoneNumber || "ثبت نشده"}</code>
 
-    user.lastName =
-        lastName;
+🆔 <b>Telegram ID:</b>
+<code>${user.telegramId}</code>
 
+🔹 <b>Username:</b> ${username}
 
-    user.username =
-        String(
-            from.username ||
-            user.username ||
-            ""
-        ).trim();
+📅 <b>تاریخ درخواست:</b>
+${requestDate}
 
+📌 <b>وضعیت:</b> ⏳ در انتظار تأیید مدیریت
 
-    user.registrationStep =
-        "PHONE";
+لطفاً درخواست کاربر را در پنل مدیریت بررسی کنید.`;
 
-
-    user.lastLogin =
-        new Date();
-
-
-    await user.save();
-
-
-    console.log(
-
-        "NAME REGISTERED:",
-
-        telegramId
-
-    );
-
-
-    return sendPhoneRequest(
-        chat.id
-    );
-
-}
-
-
-// =====================================
-// Handle /start :: M
-// =====================================
-
-async function handleStart(
-    message
-) {
-
-    const from =
-        message.from;
-
-    const chat =
-        message.chat;
-
-
-    if (
-        !from ||
-        !chat
-    ) {
-
-        return;
-
-    }
-
-
-    const telegramId =
-        String(
-            from.id
-        );
-
-
-    const telegramFirstName =
-        String(
-            from.first_name ||
-            ""
-        ).trim();
-
-
-    const telegramLastName =
-        String(
-            from.last_name ||
-            ""
-        ).trim();
-
-
-    const username =
-        String(
-            from.username ||
-            ""
-        ).trim();
-
-
-    let user =
-        await User.findOne({
-            telegramId
-        });
-
-
-    // =================================
-    // NEW USER :: M
-    // =================================
-
-    if (!user) {
-
-        user =
-            await User.create({
-
-                telegramId,
-
-                username,
-
-                firstName:
-                    "",
-
-                lastName:
-                    "",
-
-                phoneNumber:
-                    "",
-
-                registrationStep:
-                    "NAME",
-
-                accessEnabled:
-                    false,
-
-                approvalStatus:
-                    "PENDING",
-
-                isAdmin:
-                    false,
-
-                botAccess:
-                    false,
-
-                botActive:
-                    false,
-
-                walletId:
-                    null,
-
-                status:
-                    "PENDING",
-
-                lastLogin:
-                    new Date()
-
-            });
-
+        for (const admin of admins) {
+            await sendMessage(
+                admin.telegramId,
+                message
+            );
+        }
 
         console.log(
-
-            "NEW TELEGRAM USER:",
-
-            telegramId
-
+            `✅ Registration notification sent to ${admins.length} admin(s).`
         );
-
-
-        // ---------------------------------
-        // Welcome
-        // ---------------------------------
-
-        await sendWelcomeMessage(
-            chat.id
+    } catch (error) {
+        console.error(
+            "❌ Admin registration notification error:",
+            error.message
         );
+    }
+}
 
+// =====================================
+// ..M
+// Approval Notification
+// =====================================
 
-        // ---------------------------------
-        // Name
-        // ---------------------------------
+async function sendApprovalNotification(
+    telegramId,
+    firstName = ""
+) {
+    return sendMessage(
+        telegramId,
+        `🎉 <b>دسترسی شما تأیید شد!</b>
 
-        return sendNameRequest(
-            chat.id
-        );
+سلام ${firstName || "دوست عزیز"} 👋
 
+مدیریت درخواست شما را تأیید کرد.
+
+🚀 اکنون دسترسی شما به <b>AutoTrade AI</b> فعال است.
+
+برای ورود به Mini App روی دکمه زیر بزنید.`,
+        {
+            reply_markup: miniAppKeyboard()
+        }
+    );
+}
+
+// =====================================
+// ..M
+// Rejection Notification
+// =====================================
+
+async function sendRejectionNotification(
+    telegramId
+) {
+    return sendMessage(
+        telegramId,
+        `❌ <b>درخواست شما توسط مدیریت تأیید نشد.</b>
+
+در صورت نیاز به پشتیبانی پیام بدهید:
+
+${SUPPORT_USERNAME}`
+    );
+}
+
+// =====================================
+// ..M
+// Find User By Telegram ID
+// =====================================
+
+async function findUserByTelegramId(
+    telegramId
+) {
+    return User.findOne({
+        telegramId: String(telegramId)
+    });
+}
+
+// =====================================
+// ..M
+// Parse Full Name
+// =====================================
+
+function parseFullName(text) {
+    const clean = String(text || "")
+        .trim()
+        .replace(/\s+/g, " ");
+
+    if (!clean) {
+        return null;
     }
 
+    const parts = clean.split(" ");
 
-    // =================================
-    // UPDATE TELEGRAM DATA :: M
-    // =================================
+    if (parts.length < 2) {
+        return null;
+    }
 
-    user.username =
-        username;
+    const firstName = parts.shift();
+    const lastName = parts.join(" ");
 
+    if (!firstName || !lastName) {
+        return null;
+    }
 
-    user.lastLogin =
-        new Date();
+    return {
+        firstName,
+        lastName
+    };
+}
 
+// =====================================
+// ..M
+// Handle Start
+// =====================================
 
-    // فقط برای اطلاعات Telegram
-    // نام قبلی ثبت‌شده توسط کاربر را
-    // بدون دلیل تغییر نمی‌دهیم.
+async function handleStart(message) {
+    if (!message?.chat?.id) {
+        return;
+    }
+
+    const chatId = message.chat.id;
+
+    const telegramUser = message.from || {};
+
+    const telegramId = String(
+        telegramUser.id || chatId
+    );
+
+    let user = await findUserByTelegramId(
+        telegramId
+    );
+
+    // =====================================
+    // ..M
+    // New User
+    // =====================================
+
+    if (!user) {
+        user = await User.create({
+            telegramId,
+
+            username:
+                telegramUser.username || "",
+
+            firstName:
+                telegramUser.first_name || "",
+
+            lastName:
+                telegramUser.last_name || "",
+
+            phoneNumber: "",
+
+            registrationStep: "NAME",
+
+            accessEnabled: false,
+
+            approvalStatus: "PENDING",
+
+            isAdmin: false,
+
+            botAccess: false,
+
+            botActive: false,
+
+            status: "PENDING"
+        });
+
+        // اول خوش‌آمدگویی
+        await sendWelcomeMessage(
+            chatId,
+            telegramUser.first_name || ""
+        );
+
+        return;
+    }
+
+    // =====================================
+    // ..M
+    // Update Telegram Basic Info
+    // =====================================
+
+    let changed = false;
 
     if (
-        !user.firstName &&
-        telegramFirstName
+        telegramUser.username &&
+        user.username !== telegramUser.username
     ) {
-
-        user.firstName =
-            telegramFirstName;
-
+        user.username = telegramUser.username;
+        changed = true;
     }
 
+    // فقط اگر اسم قبلی خالی باشد
+    if (
+        !user.firstName &&
+        telegramUser.first_name
+    ) {
+        user.firstName = telegramUser.first_name;
+        changed = true;
+    }
 
     if (
         !user.lastName &&
-        telegramLastName
+        telegramUser.last_name
     ) {
-
-        user.lastName =
-            telegramLastName;
-
+        user.lastName = telegramUser.last_name;
+        changed = true;
     }
 
+    if (changed) {
+        await user.save();
+    }
 
-    await user.save();
-
-
-    // =================================
+    // =====================================
+    // ..M
     // Existing User
-    // =================================
+    // =====================================
 
-    return handleExistingUser(
-
-        chat.id,
-
+    return sendExistingUserMessage(
+        chatId,
         user
-
     );
-
 }
 
-
 // =====================================
-// Handle Phone Contact :: M
+// ..M
+// Handle Name Message
 // =====================================
 
-async function handlePhoneContact(
-    message
-) {
-
-    const from =
-        message.from;
-
-    const contact =
-        message.contact;
-
-    const chat =
-        message.chat;
-
-
-    if (
-        !from ||
-        !contact ||
-        !chat
-    ) {
-
+async function handleNameMessage(message) {
+    if (!message?.chat?.id || !message?.from?.id) {
         return;
-
     }
 
+    const chatId = message.chat.id;
 
-    // =================================
-    // Security Check :: M
-    // =================================
+    const telegramId = String(
+        message.from.id
+    );
 
-    if (
-
-        contact.user_id &&
-
-        String(
-            contact.user_id
-        ) !==
-
-        String(
-            from.id
-        )
-
-    ) {
-
-        return sendMessage(
-
-            chat.id,
-
-            `❌ <b>شماره تلفن معتبر نیست.</b>
-
-لطفاً فقط شماره تلفن حساب Telegram خودتان را ارسال کنید.`
-
-        );
-
-    }
-
-
-    const telegramId =
-        String(
-            from.id
-        );
-
-
-    const phoneNumber =
-        normalizePhone(
-            contact.phone_number
-        );
-
-
-    if (!phoneNumber) {
-
-        return sendPhoneRequest(
-            chat.id
-        );
-
-    }
-
-
-    const user =
-        await User.findOne({
-            telegramId
-        });
-
+    const user = await findUserByTelegramId(
+        telegramId
+    );
 
     if (!user) {
-
-        return sendMessage(
-
-            chat.id,
-
-            `❌ <b>حساب شما پیدا نشد.</b>
-
-لطفاً ابتدا /start را ارسال کنید.`
-
-        );
-
+        await sendNameRequest(chatId);
+        return;
     }
 
-
-    // =================================
-    // Registration Check :: M
-    // =================================
+    // =====================================
+    // ..M
+    // Ignore If Already Completed
+    // =====================================
 
     if (
-        user.registrationStep !==
-        "PHONE"
+        user.registrationStep === "COMPLETED" ||
+        user.approvalStatus === "APPROVED"
     ) {
-
-        if (
-            user.registrationStep ===
-            "NAME"
-        ) {
-
-            return sendNameRequest(
-                chat.id
-            );
-
-        }
-
+        return sendExistingUserMessage(
+            chatId,
+            user
+        );
     }
 
+    const parsed = parseFullName(
+        message.text
+    );
 
-    // =================================
-    // Save Phone
-    // =================================
+    if (!parsed) {
+        await sendMessage(
+            chatId,
+            `⚠️ لطفاً <b>نام و نام خانوادگی</b> خود را کامل در یک پیام بنویسید.
 
-    user.phoneNumber =
-        phoneNumber;
+مثال:
+<code>علی محمدی</code>`
+        );
 
+        return;
+    }
 
-    user.username =
-        String(
-            from.username ||
-            user.username ||
-            ""
-        ).trim();
+    user.firstName = parsed.firstName;
+    user.lastName = parsed.lastName;
 
+    user.registrationStep = "PHONE";
 
-    user.registrationStep =
-        "COMPLETED";
-
-
-    user.accessEnabled =
-        false;
-
-
-    user.approvalStatus =
-        "PENDING";
-
-
-    user.botAccess =
-        false;
-
-
-    user.botActive =
-        false;
-
-
-    user.status =
-        "PENDING";
-
-
-    user.lastLogin =
-        new Date();
-
+    user.accessEnabled = false;
+    user.approvalStatus = "PENDING";
+    user.status = "PENDING";
+    user.botAccess = false;
+    user.botActive = false;
 
     await user.save();
 
+    await sendPhoneRequest(chatId);
+}
 
-    console.log(
+// =====================================
+// ..M
+// Handle Phone Contact
+// =====================================
 
-        "REGISTRATION COMPLETED - WAITING ADMIN:",
+async function handlePhoneContact(message) {
+    if (
+        !message?.chat?.id ||
+        !message?.from?.id ||
+        !message?.contact?.phone_number
+    ) {
+        return;
+    }
 
+    const chatId = message.chat.id;
+
+    const telegramId = String(
+        message.from.id
+    );
+
+    const user = await findUserByTelegramId(
         telegramId
-
     );
 
-
-    return sendWaitingApprovalMessage(
-
-        chat.id,
-
-        user.firstName
-
-    );
-
-}
-
-
-// =====================================
-// Handle Telegram Update :: M
-// =====================================
-
-export async function handleTelegramUpdate(
-    update
-) {
-
-    if (!update) {
-
+    if (!user) {
+        await sendNameRequest(chatId);
         return;
-
     }
 
+    // =====================================
+    // ..M
+    // Normalize Phone
+    // =====================================
 
-    const message =
-        update.message;
+    let phone = String(
+        message.contact.phone_number
+    ).trim();
 
-
-    if (!message) {
-
-        return;
-
+    if (phone.startsWith("+")) {
+        phone = phone.substring(1);
     }
 
-
-    // =================================
-    // Contact
-    // =================================
+    // =====================================
+    // ..M
+    // Security Check
+    // =====================================
 
     if (
-        message.contact
+        message.contact.user_id &&
+        String(message.contact.user_id) !== telegramId
     ) {
-
-        await handlePhoneContact(
-            message
-        );
-
-        return;
-
-    }
-
-
-    const text =
-        String(
-            message.text ||
-            ""
-        ).trim();
-
-
-    // =================================
-    // /start
-    // =================================
-
-    if (
-
-        text === "/start" ||
-
-        text.startsWith(
-            "/start "
-        )
-
-    ) {
-
-        await handleStart(
-            message
-        );
-
-        return;
-
-    }
-
-
-    // =================================
-    // Name Registration
-    // =================================
-
-    if (
-        text &&
-        message.from
-    ) {
-
-        const user =
-            await User.findOne({
-
-                telegramId:
-                    String(
-                        message.from.id
-                    )
-
-            });
-
-
-        if (
-            user &&
-            user.registrationStep ===
-                "NAME"
-        ) {
-
-            await handleNameMessage(
-                message
-            );
-
-            return;
-
-        }
-
-
-        if (
-            user &&
-            user.registrationStep ===
-                "PHONE"
-        ) {
-
-            await sendPhoneRequest(
-                message.chat.id
-            );
-
-            return;
-
-        }
-
-    }
-
-
-    // =================================
-    // Default Message
-    // =================================
-
-    if (text) {
-
         await sendMessage(
-
-            message.chat.id,
-
-            `👋 <b>سلام!</b>
-
-برای شروع کار با AutoTrade AI، دستور زیر را ارسال کنید:
-
-/start`
-
-        );
-
-    }
-
-}
-
-
-// =====================================
-// Setup Telegram Webhook :: M
-// =====================================
-
-export async function setupTelegramWebhook() {
-
-    if (!BOT_TOKEN) {
-
-        console.warn(
-
-            "Telegram Bot disabled: TELEGRAM_BOT_TOKEN is missing"
-
+            chatId,
+            "⚠️ لطفاً شماره تلفن متعلق به همین حساب تلگرام را ارسال کنید."
         );
 
         return;
-
     }
 
+    // =====================================
+    // ..M
+    // Save Registration
+    // =====================================
 
-    if (!BACKEND_URL) {
+    user.phoneNumber = phone;
 
-        console.warn(
+    user.registrationStep = "COMPLETED";
 
-            "Telegram webhook skipped: BACKEND_URL or RENDER_EXTERNAL_URL is missing"
+    user.accessEnabled = false;
+    user.approvalStatus = "PENDING";
+    user.status = "PENDING";
 
-        );
+    user.botAccess = false;
+    user.botActive = false;
 
-        return;
+    user.lastLogin = new Date();
 
-    }
+    await user.save();
 
+    // =====================================
+    // ..M
+    // Remove Phone Keyboard
+    // =====================================
 
-    const webhookUrl =
+    await removeKeyboard(chatId);
 
-        `${BACKEND_URL.replace(
-            /\/$/,
-            ""
-        )}/api/telegram/webhook`;
+    // =====================================
+    // ..M
+    // Registration Completed Message
+    // =====================================
 
+    await sendWaitingMessage(chatId);
 
-    try {
+    // =====================================
+    // ..M
+    // Notify Admins
+    // =====================================
 
-        const result =
-            await telegramRequest(
-
-                "setWebhook",
-
-                {
-
-                    url:
-                        webhookUrl,
-
-                    allowed_updates: [
-
-                        "message"
-
-                    ],
-
-                    drop_pending_updates:
-                        false
-
-                }
-
-            );
-
-
-        console.log(
-
-            "TELEGRAM WEBHOOK:",
-
-            webhookUrl
-
-        );
-
-
-        console.log(
-
-            "TELEGRAM WEBHOOK RESULT:",
-
-            result
-
-        );
-
-    }
-
-    catch (error) {
-
-        console.error(
-
-            "TELEGRAM WEBHOOK ERROR:",
-
-            error.message
-
-        );
-
-    }
-
+    await notifyAdminsAboutRegistration(
+        user
+    );
 }
 
-
 // =====================================
-// Get Telegram Bot Information :: M
+// ..M
+// Handle Text
 // =====================================
 
-export async function getTelegramBotInfo() {
-
-    if (!BOT_TOKEN) {
-
-        return null;
-
+async function handleTextMessage(message) {
+    if (
+        !message?.chat?.id ||
+        !message?.from?.id ||
+        !message?.text
+    ) {
+        return;
     }
 
+    const text = String(
+        message.text
+    ).trim();
 
-    return telegramRequest(
-        "getMe"
+    // =====================================
+    // ..M
+    // Commands
+    // =====================================
+
+    if (text.startsWith("/start")) {
+        return handleStart(message);
+    }
+
+    // =====================================
+    // ..M
+    // User
+    // =====================================
+
+    const user = await findUserByTelegramId(
+        String(message.from.id)
     );
 
-}
-
-
-// =====================================
-// Set Telegram Bot Commands :: M
-// =====================================
-
-export async function setupTelegramCommands() {
-
-    if (!BOT_TOKEN) {
-
+    if (!user) {
+        await handleStart(message);
         return;
-
     }
 
+    // =====================================
+    // ..M
+    // Name Registration
+    // =====================================
 
+    if (
+        user.registrationStep === "NAME"
+    ) {
+        return handleNameMessage(message);
+    }
+
+    // =====================================
+    // ..M
+    // Completed / Pending
+    // =====================================
+
+    if (
+        user.registrationStep === "COMPLETED" ||
+        user.approvalStatus === "PENDING"
+    ) {
+        return sendWaitingMessage(
+            message.chat.id
+        );
+    }
+
+    // =====================================
+    // ..M
+    // Phone Step
+    // =====================================
+
+    if (
+        user.registrationStep === "PHONE"
+    ) {
+        return sendPhoneRequest(
+            message.chat.id
+        );
+    }
+}
+
+// =====================================
+// ..M
+// Handle Update
+// =====================================
+
+async function handleUpdate(update) {
     try {
+        if (!update) {
+            return;
+        }
 
-        await telegramRequest(
+        // =====================================
+        // ..M
+        // Message
+        // =====================================
 
-            "setMyCommands",
+        if (update.message) {
+            const message = update.message;
 
-            {
-
-                commands: [
-
-                    {
-
-                        command:
-                            "start",
-
-                        description:
-                            "شروع و ثبت‌نام"
-
-                    }
-
-                ]
-
+            // Contact
+            if (message.contact) {
+                return handlePhoneContact(
+                    message
+                );
             }
 
-        );
-
-
-        console.log(
-
-            "TELEGRAM BOT COMMANDS CONFIGURED"
-
-        );
-
-    }
-
-    catch (error) {
-
+            // Text
+            if (message.text) {
+                return handleTextMessage(
+                    message
+                );
+            }
+        }
+    } catch (error) {
         console.error(
+            "❌ Telegram update error:",
+            error
+        );
+    }
+}
 
-            "TELEGRAM COMMAND SETUP ERROR:",
+// =====================================
+// ..M
+// Webhook Handler
+// =====================================
 
-            error.message
+export async function telegramWebhook(req, res) {
+    try {
+        await handleUpdate(req.body);
 
+        return res.status(200).json({
+            success: true
+        });
+    } catch (error) {
+        console.error(
+            "❌ Telegram webhook error:",
+            error
         );
 
+        return res.status(200).json({
+            success: false
+        });
+    }
+}
+
+// =====================================
+// ..M
+// Set Webhook
+// =====================================
+
+export async function setTelegramWebhook() {
+    if (!TELEGRAM_BOT_TOKEN) {
+        console.error(
+            "❌ TELEGRAM_BOT_TOKEN تنظیم نشده است."
+        );
+
+        return false;
     }
 
+    if (!BACKEND_URL) {
+        console.error(
+            "❌ BACKEND_URL یا RENDER_EXTERNAL_URL تنظیم نشده است."
+        );
+
+        return false;
+    }
+
+    const webhookUrl =
+        `${BACKEND_URL.replace(/\/$/, "")}/api/webhook/telegram`;
+
+    const result = await telegramRequest(
+        "setWebhook",
+        {
+            url: webhookUrl,
+            allowed_updates: [
+                "message"
+            ]
+        }
+    );
+
+    if (result) {
+        console.log(
+            `✅ Telegram webhook set: ${webhookUrl}`
+        );
+
+        return true;
+    }
+
+    return false;
 }
+
+// =====================================
+// ..M
+// Bot Commands
+// =====================================
+
+export async function setBotCommands() {
+    const result = await telegramRequest(
+        "setMyCommands",
+        {
+            commands: [
+                {
+                    command: "start",
+                    description: "شروع / ثبت‌نام"
+                }
+            ]
+        }
+    );
+
+    return Boolean(result);
+}
+
+// =====================================
+// ..M
+// Export Notifications
+// =====================================
+
+export {
+    sendMessage,
+    sendWelcomeMessage,
+    sendWaitingMessage,
+    sendApprovalNotification,
+    sendRejectionNotification,
+    notifyAdminsAboutRegistration,
+    removeKeyboard
+};
+
+// =====================================
+// ..M
+// Default Export
+// =====================================
+
+export default {
+    telegramWebhook,
+    setTelegramWebhook,
+    setBotCommands,
+    sendMessage,
+    sendWelcomeMessage,
+    sendWaitingMessage,
+    sendApprovalNotification,
+    sendRejectionNotification,
+    notifyAdminsAboutRegistration
+};
