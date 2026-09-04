@@ -31,7 +31,8 @@ import mongoose from "mongoose";
 // =====================================
 
 import {
-    requireTelegramUser
+    requireTelegramUser,
+    requireApprovedUser
 } from "./middleware/auth.js";
 
 
@@ -76,18 +77,6 @@ import paymentRoutes
 
 import withdrawRoutes
     from "./routes/withdraw.js";
-
-
-// =====================================
-// Admin Routes :: M
-// =====================================
-//
-// فقط سازنده / Admin
-// اجازه استفاده از این مسیرها را دارد.
-//
-// /api/admin
-//
-// =====================================
 
 import adminRoutes
     from "./routes/admin.js";
@@ -370,12 +359,8 @@ app.get(
 //
 // POST /api/telegram/webhook
 //
-// این مسیر نباید با
-// requireTelegramUser
-// محافظت شود.
-//
-// چون درخواست مستقیم از Telegram
-// Bot API دریافت می‌شود.
+// این مسیر عمومی است چون درخواست
+// مستقیماً از Telegram Bot API می‌آید.
 //
 // =====================================
 
@@ -387,10 +372,6 @@ app.post(
     ) => {
 
         try {
-
-            // ---------------------------------
-            // Validate update body
-            // ---------------------------------
 
             if (
                 !req.body ||
@@ -410,18 +391,10 @@ app.post(
             }
 
 
-            // ---------------------------------
-            // Process Telegram update
-            // ---------------------------------
-
             await handleTelegramUpdate(
                 req.body
             );
 
-
-            // ---------------------------------
-            // Telegram expects successful response
-            // ---------------------------------
 
             return res.status(200).json({
 
@@ -457,9 +430,10 @@ app.post(
 // Telegram Authentication :: M
 // =====================================
 //
-// POST /api/auth/telegram
+// این مسیر باید قبل از تأیید مدیریت
+// قابل استفاده باشد.
 //
-// خود auth.js احراز هویت را انجام می‌دهد.
+// چون کاربر ابتدا باید ثبت‌نام شود.
 //
 // =====================================
 
@@ -472,6 +446,10 @@ app.use(
 // =====================================
 // Public Currency Route :: M
 // =====================================
+//
+// نرخ ارز عمومی است.
+//
+// =====================================
 
 app.use(
     "/api/currency",
@@ -483,17 +461,13 @@ app.use(
 // Admin Routes :: M
 // =====================================
 //
-// مهم:
-//
-// این Route داخل خودش:
+// Admin Route داخل خودش:
 //
 // requireTelegramUser
 // +
 // requireAdmin
 //
-// را اجرا می‌کند.
-//
-// بنابراین فقط سازنده اجازه دسترسی دارد.
+// را انجام می‌دهد.
 //
 // =====================================
 
@@ -504,12 +478,14 @@ app.use(
 
 
 // =====================================
-// Protected API Routes :: M
+// Users Routes :: M
 // =====================================
-
-
-// =====================================
-// Users :: M
+//
+// احراز هویت Telegram لازم است.
+//
+// اما برای ثبت‌نام و تکمیل اطلاعات
+// نباید requireApprovedUser بگذاریم.
+//
 // =====================================
 
 app.use(
@@ -520,12 +496,29 @@ app.use(
 
 
 // =====================================
+// APPROVED USER APIs :: M
+// =====================================
+//
+// از این قسمت به بعد:
+//
+// کاربر باید:
+//
+// accessEnabled = true
+// approvalStatus = APPROVED
+// status = ACTIVE
+//
+// باشد.
+//
+// =====================================
+
+
+// =====================================
 // Wallet :: M
 // =====================================
 
 app.use(
     "/api/wallet",
-    requireTelegramUser,
+    requireApprovedUser,
     walletRoutes
 );
 
@@ -536,7 +529,7 @@ app.use(
 
 app.use(
     "/api/trades",
-    requireTelegramUser,
+    requireApprovedUser,
     tradeRoutes
 );
 
@@ -547,7 +540,7 @@ app.use(
 
 app.use(
     "/api/bot",
-    requireTelegramUser,
+    requireApprovedUser,
     botRoutes
 );
 
@@ -558,7 +551,7 @@ app.use(
 
 app.use(
     "/api/deposit",
-    requireTelegramUser,
+    requireApprovedUser,
     depositRoutes
 );
 
@@ -569,7 +562,7 @@ app.use(
 
 app.use(
     "/api/payment",
-    requireTelegramUser,
+    requireApprovedUser,
     paymentRoutes
 );
 
@@ -580,7 +573,7 @@ app.use(
 
 app.use(
     "/api/withdraw",
-    requireTelegramUser,
+    requireApprovedUser,
     withdrawRoutes
 );
 
