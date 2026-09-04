@@ -2,7 +2,7 @@
 // ..M AutoTrade AI
 // Mini App Application
 // File: MiniApp/app.js
-// مرحله ۱۹ از ۲۰
+// مرحله ۲۲ از ۲۰
 // کنترل کامل وضعیت دسترسی کاربر
 // =====================================
 
@@ -374,11 +374,6 @@ async function authenticateTelegram() {
             error
         );
 
-        /*
-         * اگر Backend وضعیت کاربر را برگرداند،
-         * حتی در صورت خطای HTTP آن را نگه می‌داریم.
-         */
-
         if (
             error?.data?.user
         ) {
@@ -413,11 +408,24 @@ function getBackendUserId() {
 // =====================================
 // Get User Access Status :: M
 // =====================================
+// ..M
+// کاربر عادی فقط در صورتی دسترسی دارد که:
+//
+// 1. نام ثبت شده باشد
+// 2. نام خانوادگی ثبت شده باشد
+// 3. شماره تلفن ثبت شده باشد
+// 4. accessEnabled = true
+// 5. approvalStatus = APPROVED
+// 6. status = ACTIVE
+//
+// Admin مستقیماً مجاز است.
+// =====================================
 
 function getAccessStatus() {
 
     const user =
         state.backendUser || {};
+
 
     const status =
         String(
@@ -426,6 +434,7 @@ function getAccessStatus() {
         )
         .toUpperCase();
 
+
     const approvalStatus =
         String(
             user.approvalStatus ||
@@ -433,11 +442,75 @@ function getAccessStatus() {
         )
         .toUpperCase();
 
+
     const accessEnabled =
         user.accessEnabled === true;
 
+
     const isAdmin =
         user.isAdmin === true;
+
+
+    const firstName =
+        String(
+            user.firstName ||
+            ""
+        ).trim();
+
+
+    const lastName =
+        String(
+            user.lastName ||
+            ""
+        ).trim();
+
+
+    const phoneNumber =
+        String(
+            user.phoneNumber ||
+            user.phone ||
+            user.mobile ||
+            ""
+        ).trim();
+
+
+    const registrationComplete =
+        Boolean(
+            firstName &&
+            lastName &&
+            phoneNumber
+        );
+
+
+    const approved =
+        approvalStatus ===
+        "APPROVED";
+
+
+    const active =
+        status ===
+        "ACTIVE";
+
+
+    const blocked =
+        status ===
+        "BLOCKED";
+
+
+    const rejected =
+        approvalStatus ===
+        "REJECTED";
+
+
+    const allowed =
+        isAdmin ||
+        (
+            registrationComplete &&
+            accessEnabled &&
+            approved &&
+            active
+        );
+
 
     return {
 
@@ -449,25 +522,23 @@ function getAccessStatus() {
 
         isAdmin,
 
-        blocked:
-            status === "BLOCKED",
+        firstName,
 
-        rejected:
-            approvalStatus === "REJECTED",
+        lastName,
 
-        approved:
-            approvalStatus === "APPROVED",
+        phoneNumber,
 
-        active:
-            status === "ACTIVE",
+        registrationComplete,
 
-        allowed:
-            isAdmin ||
-            (
-                accessEnabled &&
-                approvalStatus === "APPROVED" &&
-                status === "ACTIVE"
-            )
+        blocked,
+
+        rejected,
+
+        approved,
+
+        active,
+
+        allowed
 
     };
 
@@ -476,17 +547,6 @@ function getAccessStatus() {
 
 // =====================================
 // Check Access :: M
-// =====================================
-//
-// دسترسی کاربر عادی فقط زمانی مجاز است که
-// هر سه شرط زیر برقرار باشد:
-//
-// accessEnabled = true
-// approvalStatus = APPROVED
-// status = ACTIVE
-//
-// Admin مجاز است.
-//
 // =====================================
 
 function isAccessAllowed() {
@@ -508,6 +568,7 @@ function getAccessMessage() {
     const access =
         getAccessStatus();
 
+
     if (
         access.blocked
     ) {
@@ -518,15 +579,30 @@ function getAccessMessage() {
 
     }
 
+
     if (
         access.rejected
     ) {
 
         return (
-            "درخواست شما توسط مدیریت تأیید نشده است."
+            "❌ درخواست شما توسط مدیریت تأیید نشد.\n" +
+            "در صورت نیاز به پشتیبانی پیام بدهید\n" +
+            SUPPORT_USERNAME
         );
 
     }
+
+
+    if (
+        !access.registrationComplete
+    ) {
+
+        return (
+            "برای استفاده از AutoTrade AI ابتدا باید نام، نام خانوادگی و شماره تلفن شما ثبت شود."
+        );
+
+    }
+
 
     if (
         !access.approved ||
@@ -539,6 +615,7 @@ function getAccessMessage() {
         );
 
     }
+
 
     return "";
 
@@ -716,6 +793,7 @@ async function loadExchangeRate() {
                 "/api/currency/exchange-rate"
             );
 
+
         const rate =
             numberValue(
 
@@ -735,8 +813,10 @@ async function loadExchangeRate() {
 
             );
 
+
         state.exchangeRate =
             rate;
+
 
         return rate;
 
@@ -803,9 +883,12 @@ async function refreshData() {
             "در حال بروزرسانی اطلاعات..."
         );
 
+
         await loadData();
 
+
         renderCurrentPage();
+
 
         showToast(
             "اطلاعات با موفقیت بروزرسانی شد"
@@ -845,13 +928,16 @@ function renderAccessPage() {
     const user =
         state.backendUser || {};
 
+
     const access =
         getAccessStatus();
+
 
     const app =
         document.getElementById(
             "app"
         );
+
 
     if (!app) {
 
@@ -859,14 +945,18 @@ function renderAccessPage() {
 
     }
 
+
     let icon =
         "🔐";
+
 
     let title =
         "در انتظار تأیید مدیریت";
 
+
     let message =
         "اطلاعات شما با موفقیت ثبت شده است. پس از تأیید مدیریت، دسترسی AutoTrade AI برای شما فعال خواهد شد.";
+
 
     if (
         access.blocked
@@ -875,13 +965,16 @@ function renderAccessPage() {
         icon =
             "🚫";
 
+
         title =
             "حساب شما مسدود شده است";
+
 
         message =
             "دسترسی حساب شما در حال حاضر مسدود است. برای بررسی وضعیت حساب با پشتیبانی AutoTrade AI ارتباط بگیرید.";
 
     }
+
 
     else if (
         access.rejected
@@ -890,30 +983,34 @@ function renderAccessPage() {
         icon =
             "❌";
 
+
         title =
             "درخواست شما تأیید نشد";
+
 
         message =
             "درخواست شما توسط مدیریت تأیید نشد. در صورت نیاز به پشتیبانی با ما در ارتباط باشید.";
 
     }
 
+
     else if (
-        !user.phoneNumber ||
-        !user.firstName ||
-        !user.lastName
+        !access.registrationComplete
     ) {
 
         icon =
             "📝";
 
+
         title =
             "تکمیل ثبت‌نام";
+
 
         message =
             "برای استفاده از AutoTrade AI ابتدا باید نام، نام خانوادگی و شماره تلفن شما ثبت شود.";
 
     }
+
 
     app.innerHTML = `
 
@@ -950,9 +1047,11 @@ function renderAccessPage() {
                     ${icon}
                 </div>
 
+
                 <h2>
                     ${title}
                 </h2>
+
 
                 <p>
                     ${message}
@@ -1003,10 +1102,12 @@ function renderHeader() {
     const user =
         state.telegramUser || {};
 
+
     const firstName =
         user.first_name ||
         state.backendUser?.firstName ||
         "کاربر";
+
 
     return `
 
@@ -1046,6 +1147,7 @@ function renderHeader() {
                     ↻
                 </button>
 
+
                 <button
                     type="button"
                     class="icon-button"
@@ -1072,33 +1174,40 @@ function renderDashboard() {
     const wallet =
         state.wallet || {};
 
+
     const bot =
         state.bot || {};
+
 
     const balance =
         numberValue(
             wallet.balance
         );
 
+
     const totalProfit =
         numberValue(
             wallet.totalProfit
         );
+
 
     const totalTrades =
         numberValue(
             wallet.totalTrades
         );
 
+
     const withdrawable =
         numberValue(
             wallet.withdrawable
         );
 
+
     const rate =
         numberValue(
             state.exchangeRate
         );
+
 
     const status =
         String(
@@ -1107,11 +1216,14 @@ function renderDashboard() {
         )
         .toUpperCase();
 
+
     let statusClass =
         "stopped";
 
+
     let statusText =
         "متوقف";
+
 
     if (
         status === "ACTIVE"
@@ -1125,6 +1237,7 @@ function renderDashboard() {
 
     }
 
+
     if (
         status === "PENDING"
     ) {
@@ -1137,16 +1250,19 @@ function renderDashboard() {
 
     }
 
+
     const app =
         document.getElementById(
             "app"
         );
+
 
     if (!app) {
 
         return;
 
     }
+
 
     app.innerHTML = `
 
@@ -1201,6 +1317,7 @@ function renderDashboard() {
                     >
                         کیف پول
                     </button>
+
 
                     <button
                         type="button"
@@ -1469,6 +1586,7 @@ function renderRecentTrades() {
                                     trade.profit
                                 );
 
+
                             return `
 
                                 <div
@@ -1482,6 +1600,7 @@ function renderRecentTrades() {
                                             "نامشخص"
                                         )}
                                     </div>
+
 
                                     <div
                                         class="stat-value ${
@@ -1526,36 +1645,43 @@ function renderWallet() {
     const wallet =
         state.wallet || {};
 
+
     const balance =
         numberValue(
             wallet.balance
         );
+
 
     const withdrawable =
         numberValue(
             wallet.withdrawable
         );
 
+
     const totalProfit =
         numberValue(
             wallet.totalProfit
         );
+
 
     const rate =
         numberValue(
             state.exchangeRate
         );
 
+
     const app =
         document.getElementById(
             "app"
         );
+
 
     if (!app) {
 
         return;
 
     }
+
 
     app.innerHTML = `
 
@@ -1615,6 +1741,7 @@ function renderWallet() {
                         واریز
                     </button>
 
+
                     <button
                         type="button"
                         class="secondary-button"
@@ -1650,6 +1777,7 @@ function renderWallet() {
                             withdrawable
                         )}
                     </div>
+
 
                     <div class="stat-label">
 
@@ -1697,6 +1825,7 @@ function renderWallet() {
                 <div class="stat-label">
                     نرخ ۱ دلار
                 </div>
+
 
                 <div class="stat-value">
 
@@ -1762,11 +1891,13 @@ function renderTrades() {
             "app"
         );
 
+
     if (!app) {
 
         return;
 
     }
+
 
     const trades =
         Array.isArray(
@@ -1775,8 +1906,10 @@ function renderTrades() {
             ? state.trades
             : [];
 
+
     let content =
         "";
+
 
     if (
         trades.length === 0
@@ -1805,6 +1938,7 @@ function renderTrades() {
 
     }
 
+
     else {
 
         content =
@@ -1817,6 +1951,7 @@ function renderTrades() {
                             numberValue(
                                 trade.profit
                             );
+
 
                         return `
 
@@ -1831,6 +1966,7 @@ function renderTrades() {
                                         "نامشخص"
                                     )}
                                 </div>
+
 
                                 <div class="stat-value ${
                                     profit >= 0
@@ -1857,6 +1993,7 @@ function renderTrades() {
                 .join("");
 
     }
+
 
     app.innerHTML = `
 
@@ -1892,26 +2029,31 @@ function renderWithdraw() {
     const wallet =
         state.wallet || {};
 
+
     const withdrawable =
         numberValue(
             wallet.withdrawable
         );
+
 
     const rate =
         numberValue(
             state.exchangeRate
         );
 
+
     const app =
         document.getElementById(
             "app"
         );
+
 
     if (!app) {
 
         return;
 
     }
+
 
     app.innerHTML = `
 
@@ -1927,6 +2069,7 @@ function renderWithdraw() {
                     ←
                 </button>
 
+
                 <h1>
                     برداشت تومان
                 </h1>
@@ -1940,11 +2083,13 @@ function renderWithdraw() {
                     موجودی قابل برداشت
                 </div>
 
+
                 <div class="balance-value">
                     $${formatNumber(
                         withdrawable
                     )}
                 </div>
+
 
                 <div class="balance-toman">
 
@@ -1969,14 +2114,17 @@ function renderWithdraw() {
                     💳
                 </div>
 
+
                 <h2>
                     برداشت به تومان
                 </h2>
+
 
                 <p>
                     درخواست برداشت شما بر اساس
                     نرخ دلار ثبت‌شده محاسبه می‌شود.
                 </p>
+
 
                 <button
                     type="button"
@@ -2008,18 +2156,22 @@ function renderProfile() {
     const telegramUser =
         state.telegramUser || {};
 
+
     const backendUser =
         state.backendUser || {};
+
 
     const firstName =
         telegramUser.first_name ||
         backendUser.firstName ||
         "";
 
+
     const lastName =
         telegramUser.last_name ||
         backendUser.lastName ||
         "";
+
 
     const fullName =
         (
@@ -2029,6 +2181,7 @@ function renderProfile() {
         )
             .trim() ||
         "کاربر";
+
 
     const username =
         telegramUser.username
@@ -2048,16 +2201,19 @@ function renderProfile() {
                     : "بدون آیدی"
             );
 
+
     const telegramId =
         telegramUser.id ||
         backendUser.telegramId ||
         0;
+
 
     const phoneNumber =
         backendUser.phoneNumber ||
         backendUser.phone ||
         backendUser.mobile ||
         "ثبت نشده";
+
 
     const registrationDate =
         backendUser.createdAt ||
@@ -2066,18 +2222,23 @@ function renderProfile() {
         backendUser.createdDate ||
         null;
 
+
     const loginDate =
         state.loginTime ||
         new Date();
 
+
     const access =
         getAccessStatus();
+
 
     let accessText =
         "در انتظار تأیید";
 
+
     let accessClass =
         "pending";
+
 
     if (
         access.allowed
@@ -2088,10 +2249,12 @@ function renderProfile() {
                 ? "مدیر / سازنده"
                 : "فعال";
 
+
         accessClass =
             "active";
 
     }
+
 
     else if (
         access.blocked
@@ -2100,10 +2263,12 @@ function renderProfile() {
         accessText =
             "مسدود";
 
+
         accessClass =
             "stopped";
 
     }
+
 
     else if (
         access.rejected
@@ -2112,21 +2277,39 @@ function renderProfile() {
         accessText =
             "رد شده";
 
+
         accessClass =
             "stopped";
 
     }
+
+
+    else if (
+        !access.registrationComplete
+    ) {
+
+        accessText =
+            "ثبت‌نام ناقص";
+
+
+        accessClass =
+            "pending";
+
+    }
+
 
     const app =
         document.getElementById(
             "app"
         );
 
+
     if (!app) {
 
         return;
 
     }
+
 
     app.innerHTML = `
 
@@ -2188,11 +2371,14 @@ function renderProfile() {
                             نام
                         </span>
 
+
                         <span class="detail-value">
+
                             ${escapeHtml(
                                 firstName ||
                                 "ثبت نشده"
                             )}
+
                         </span>
 
                     </div>
@@ -2204,11 +2390,14 @@ function renderProfile() {
                             نام خانوادگی
                         </span>
 
+
                         <span class="detail-value">
+
                             ${escapeHtml(
                                 lastName ||
                                 "ثبت نشده"
                             )}
+
                         </span>
 
                     </div>
@@ -2220,10 +2409,13 @@ function renderProfile() {
                             آیدی تلگرام
                         </span>
 
+
                         <span class="detail-value">
+
                             ${escapeHtml(
                                 username
                             )}
+
                         </span>
 
                     </div>
@@ -2235,10 +2427,13 @@ function renderProfile() {
                             شناسه تلگرام
                         </span>
 
+
                         <span class="detail-value">
+
                             ${escapeHtml(
                                 telegramId
                             )}
+
                         </span>
 
                     </div>
@@ -2250,10 +2445,13 @@ function renderProfile() {
                             شماره تلفن
                         </span>
 
+
                         <span class="detail-value">
+
                             ${escapeHtml(
                                 phoneNumber
                             )}
+
                         </span>
 
                     </div>
@@ -2264,6 +2462,7 @@ function renderProfile() {
                         <span class="detail-label">
                             زمان ثبت‌نام
                         </span>
+
 
                         <span class="detail-value">
 
@@ -2286,6 +2485,7 @@ function renderProfile() {
                             زمان ورود
                         </span>
 
+
                         <span class="detail-value">
 
                             ${formatDateTime(
@@ -2302,6 +2502,7 @@ function renderProfile() {
                         <span class="detail-label">
                             وضعیت دسترسی
                         </span>
+
 
                         <span
                             class="status ${accessClass}"
@@ -2505,16 +2706,19 @@ function renderAnalytics() {
     const wallet =
         state.wallet || {};
 
+
     const app =
         document.getElementById(
             "app"
         );
+
 
     if (!app) {
 
         return;
 
     }
+
 
     app.innerHTML = `
 
@@ -2537,11 +2741,14 @@ function renderAnalytics() {
                         کل معاملات
                     </div>
 
+
                     <div class="stat-value">
+
                         ${formatNumber(
                             wallet.totalTrades,
                             0
                         )}
+
                     </div>
 
                 </div>
@@ -2553,10 +2760,13 @@ function renderAnalytics() {
                         سود کل
                     </div>
 
+
                     <div class="stat-value green">
+
                         $${formatNumber(
                             wallet.totalProfit
                         )}
+
                     </div>
 
                 </div>
@@ -2567,6 +2777,7 @@ function renderAnalytics() {
                     <div class="stat-label">
                         سود امروز
                     </div>
+
 
                     <div class="stat-value green">
                         $0.00
@@ -2580,6 +2791,7 @@ function renderAnalytics() {
                     <div class="stat-label">
                         نرخ برد
                     </div>
+
 
                     <div class="stat-value">
                         0.00%
@@ -2605,9 +2817,11 @@ function renderAnalytics() {
                     📊
                 </div>
 
+
                 <div class="empty-title">
                     اطلاعات آماری واقعی
                 </div>
+
 
                 <div class="empty-text">
                     آمار فقط بر اساس معاملات واقعی
@@ -2660,6 +2874,7 @@ function renderCurrentPage() {
 
     }
 
+
     if (
         state.currentPage ===
         "trades"
@@ -2670,6 +2885,7 @@ function renderCurrentPage() {
         return;
 
     }
+
 
     if (
         state.currentPage ===
@@ -2682,6 +2898,7 @@ function renderCurrentPage() {
 
     }
 
+
     if (
         state.currentPage ===
         "analytics"
@@ -2693,6 +2910,7 @@ function renderCurrentPage() {
 
     }
 
+
     if (
         state.currentPage ===
         "profile"
@@ -2703,6 +2921,7 @@ function renderCurrentPage() {
         return;
 
     }
+
 
     renderDashboard();
 
@@ -2727,16 +2946,20 @@ function goTo(page) {
 
         renderAccessPage();
 
+
         showToast(
             getAccessMessage()
         );
+
 
         return;
 
     }
 
+
     state.currentPage =
         page;
+
 
     renderCurrentPage();
 
@@ -2757,14 +2980,18 @@ async function startBot() {
             getAccessMessage()
         );
 
+
         renderAccessPage();
+
 
         return;
 
     }
 
+
     const userId =
         getBackendUserId();
+
 
     if (!userId) {
 
@@ -2772,15 +2999,18 @@ async function startBot() {
             "کاربر هنوز احراز نشده است"
         );
 
+
         return;
 
     }
+
 
     try {
 
         showToast(
             "در حال شروع ربات..."
         );
+
 
         await apiRequest(
             "/api/bot/start/" +
@@ -2798,9 +3028,12 @@ async function startBot() {
             }
         );
 
+
         await loadBot();
 
+
         renderDashboard();
+
 
         showToast(
             "ربات با موفقیت فعال شد"
@@ -2808,11 +3041,13 @@ async function startBot() {
 
     }
 
+
     catch (error) {
 
         console.error(
             error
         );
+
 
         showToast(
             error.message ||
@@ -2834,9 +3069,11 @@ function openSupport() {
         SUPPORT_USERNAME
             .replace("@", "");
 
+
     const url =
         "https://t.me/" +
         username;
+
 
     if (
         tg &&
@@ -2848,9 +3085,11 @@ function openSupport() {
             url
         );
 
+
         return;
 
     }
+
 
     window.open(
         url,
@@ -2871,26 +3110,32 @@ function showToast(message) {
             ".toast"
         );
 
+
     if (oldToast) {
 
         oldToast.remove();
 
     }
 
+
     const toast =
         document.createElement(
             "div"
         );
 
+
     toast.className =
         "toast";
+
 
     toast.textContent =
         message;
 
+
     document.body.appendChild(
         toast
     );
+
 
     setTimeout(
         () => {
@@ -2923,8 +3168,10 @@ function formatDateTime(date) {
 
     }
 
+
     const value =
         new Date(date);
+
 
     if (
         Number.isNaN(
@@ -2935,6 +3182,7 @@ function formatDateTime(date) {
         return "ثبت نشده";
 
     }
+
 
     return value.toLocaleString(
         "fa-IR",
@@ -2969,13 +3217,16 @@ async function initializeApp() {
 
     initializeTelegram();
 
+
     state.loginTime =
         new Date();
+
 
     try {
 
         const authResult =
             await authenticateTelegram();
+
 
         if (
             !authResult ||
@@ -2985,11 +3236,14 @@ async function initializeApp() {
             state.loading =
                 false;
 
+
             renderAccessPage();
+
 
             return;
 
         }
+
 
         /*
          * فقط کاربر تأییدشده اطلاعات مالی
@@ -3006,6 +3260,7 @@ async function initializeApp() {
 
     }
 
+
     catch (error) {
 
         console.error(
@@ -3014,6 +3269,7 @@ async function initializeApp() {
         );
 
     }
+
 
     state.loading =
         false;
@@ -3025,9 +3281,11 @@ async function initializeApp() {
 
         renderAccessPage();
 
+
         return;
 
     }
+
 
     renderDashboard();
 
@@ -3041,14 +3299,18 @@ async function initializeApp() {
 window.goTo =
     goTo;
 
+
 window.openSupport =
     openSupport;
+
 
 window.startBot =
     startBot;
 
+
 window.showToast =
     showToast;
+
 
 window.refreshData =
     refreshData;
