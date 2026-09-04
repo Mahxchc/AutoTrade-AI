@@ -2,8 +2,8 @@
 // ..M AutoTrade AI
 // Mini App Application
 // File: MiniApp/app.js
-// مرحله ۱۸ از ۲۰
-// اتصال Wallet + Currency به Backend
+// مرحله ۱۹ از ۲۰
+// کنترل کامل وضعیت دسترسی کاربر
 // =====================================
 
 
@@ -287,13 +287,22 @@ async function apiRequest(
 
     if (!response.ok) {
 
-        throw new Error(
+        const error =
+            new Error(
 
-            data?.message ||
-            data?.error ||
-            "خطا در ارتباط با سرور"
+                data?.message ||
+                data?.error ||
+                "خطا در ارتباط با سرور"
 
-        );
+            );
+
+        error.status =
+            response.status;
+
+        error.data =
+            data;
+
+        throw error;
 
     }
 
@@ -365,6 +374,20 @@ async function authenticateTelegram() {
             error
         );
 
+        /*
+         * اگر Backend وضعیت کاربر را برگرداند،
+         * حتی در صورت خطای HTTP آن را نگه می‌داریم.
+         */
+
+        if (
+            error?.data?.user
+        ) {
+
+            state.backendUser =
+                error.data.user;
+
+        }
+
         return null;
 
     }
@@ -388,75 +411,136 @@ function getBackendUserId() {
 
 
 // =====================================
+// Get User Access Status :: M
+// =====================================
+
+function getAccessStatus() {
+
+    const user =
+        state.backendUser || {};
+
+    const status =
+        String(
+            user.status ||
+            "PENDING"
+        )
+        .toUpperCase();
+
+    const approvalStatus =
+        String(
+            user.approvalStatus ||
+            "PENDING"
+        )
+        .toUpperCase();
+
+    const accessEnabled =
+        user.accessEnabled === true;
+
+    const isAdmin =
+        user.isAdmin === true;
+
+    return {
+
+        status,
+
+        approvalStatus,
+
+        accessEnabled,
+
+        isAdmin,
+
+        blocked:
+            status === "BLOCKED",
+
+        rejected:
+            approvalStatus === "REJECTED",
+
+        approved:
+            approvalStatus === "APPROVED",
+
+        active:
+            status === "ACTIVE",
+
+        allowed:
+            isAdmin ||
+            (
+                accessEnabled &&
+                approvalStatus === "APPROVED" &&
+                status === "ACTIVE"
+            )
+
+    };
+
+}
+
+
+// =====================================
 // Check Access :: M
+// =====================================
+//
+// دسترسی کاربر عادی فقط زمانی مجاز است که
+// هر سه شرط زیر برقرار باشد:
+//
+// accessEnabled = true
+// approvalStatus = APPROVED
+// status = ACTIVE
+//
+// Admin مجاز است.
+//
 // =====================================
 
 function isAccessAllowed() {
 
-    const user =
-        state.backendUser;
+    const access =
+        getAccessStatus();
 
-    if (!user) {
+    return access.allowed;
 
-        return false;
+}
+
+
+// =====================================
+// Get Access Message :: M
+// =====================================
+
+function getAccessMessage() {
+
+    const access =
+        getAccessStatus();
+
+    if (
+        access.blocked
+    ) {
+
+        return (
+            "حساب شما مسدود شده است."
+        );
 
     }
 
     if (
-        String(user.status)
-            .toUpperCase() ===
-        "BLOCKED"
+        access.rejected
     ) {
 
-        return false;
+        return (
+            "درخواست شما توسط مدیریت تأیید نشده است."
+        );
 
     }
 
     if (
-        user.isAdmin === true
+        !access.approved ||
+        !access.active ||
+        !access.accessEnabled
     ) {
 
-        return true;
+        return (
+            "حساب شما در انتظار تأیید مدیریت است."
+        );
 
     }
 
-    if (
-        user.accessEnabled === true
-    ) {
-
-        return true;
-
-    }
-
-    if (
-        user.botAccess === true
-    ) {
-
-        return true;
-
-    }
-
-    if (
-        String(user.approvalStatus)
-            .toUpperCase() ===
-        "APPROVED"
-    ) {
-
-        return true;
-
-    }
-
-    if (
-        String(user.status)
-            .toUpperCase() ===
-        "ACTIVE"
-    ) {
-
-        return true;
-
-    }
-
-    return false;
+    return "";
 
 }
 
@@ -496,11 +580,6 @@ async function loadWallet() {
 
         state.wallet =
             wallet || null;
-
-        console.log(
-            "Wallet loaded:",
-            state.wallet
-        );
 
     }
 
@@ -637,26 +716,6 @@ async function loadExchangeRate() {
                 "/api/currency/exchange-rate"
             );
 
-        console.log(
-            "Currency API response:",
-            result
-        );
-
-        // ---------------------------------
-        // Backend response:
-        //
-        // {
-        //   success: true,
-        //   currency: {
-        //      USD: {
-        //          Toman: 10000,
-        //          IRR: 100000
-        //      }
-        //   },
-        //   exchangeRate: 10000
-        // }
-        // ---------------------------------
-
         const rate =
             numberValue(
 
@@ -678,11 +737,6 @@ async function loadExchangeRate() {
 
         state.exchangeRate =
             rate;
-
-        console.log(
-            "Exchange rate:",
-            state.exchangeRate
-        );
 
         return rate;
 
@@ -791,15 +845,8 @@ function renderAccessPage() {
     const user =
         state.backendUser || {};
 
-    const status =
-        String(
-            user.status ||
-            "PENDING"
-        )
-        .toUpperCase();
-
-    const blocked =
-        status === "BLOCKED";
+    const access =
+        getAccessStatus();
 
     const app =
         document.getElementById(
@@ -809,6 +856,62 @@ function renderAccessPage() {
     if (!app) {
 
         return;
+
+    }
+
+    let icon =
+        "🔐";
+
+    let title =
+        "در انتظار تأیید مدیریت";
+
+    let message =
+        "اطلاعات شما با موفقیت ثبت شده است. پس از تأیید مدیریت، دسترسی AutoTrade AI برای شما فعال خواهد شد.";
+
+    if (
+        access.blocked
+    ) {
+
+        icon =
+            "🚫";
+
+        title =
+            "حساب شما مسدود شده است";
+
+        message =
+            "دسترسی حساب شما در حال حاضر مسدود است. برای بررسی وضعیت حساب با پشتیبانی AutoTrade AI ارتباط بگیرید.";
+
+    }
+
+    else if (
+        access.rejected
+    ) {
+
+        icon =
+            "❌";
+
+        title =
+            "درخواست شما تأیید نشد";
+
+        message =
+            "درخواست شما توسط مدیریت تأیید نشد. در صورت نیاز به پشتیبانی با ما در ارتباط باشید.";
+
+    }
+
+    else if (
+        !user.phoneNumber ||
+        !user.firstName ||
+        !user.lastName
+    ) {
+
+        icon =
+            "📝";
+
+        title =
+            "تکمیل ثبت‌نام";
+
+        message =
+            "برای استفاده از AutoTrade AI ابتدا باید نام، نام خانوادگی و شماره تلفن شما ثبت شود.";
 
     }
 
@@ -831,11 +934,7 @@ function renderAccessPage() {
                         </div>
 
                         <div class="brand-subtitle">
-                            ${
-                                blocked
-                                    ? "حساب مسدود"
-                                    : "دسترسی در انتظار تأیید"
-                            }
+                            وضعیت حساب
                         </div>
 
                     </div>
@@ -848,28 +947,35 @@ function renderAccessPage() {
             <div class="glass-card support-card">
 
                 <div class="support-icon">
-                    ${blocked ? "🚫" : "🔐"}
+                    ${icon}
                 </div>
 
                 <h2>
-                    ${
-                        blocked
-                            ? "حساب شما مسدود شده است"
-                            : "دسترسی شما هنوز تأیید نشده است"
-                    }
+                    ${title}
                 </h2>
 
                 <p>
-
-                    ${
-                        blocked
-
-                            ? "برای بررسی وضعیت حساب با پشتیبانی AutoTrade AI ارتباط بگیرید."
-
-                            : "حساب شما با موفقیت ثبت شده است. پس از تأیید توسط مدیریت، امکانات AutoTrade AI برای شما فعال خواهد شد."
-                    }
-
+                    ${message}
                 </p>
+
+
+                ${
+                    access.rejected
+
+                        ? `
+
+                            <div
+                                class="support-username"
+                                style="margin:16px 0"
+                            >
+                                ${SUPPORT_USERNAME}
+                            </div>
+
+                        `
+
+                        : ""
+                }
+
 
                 <button
                     type="button"
@@ -1081,7 +1187,6 @@ function renderDashboard() {
                                 balance * rate
                             )
                             : "در حال دریافت نرخ..."
-
                     }
 
                 </div>
@@ -1495,7 +1600,6 @@ function renderWallet() {
                                 balance * rate
                             )
                             : "در حال دریافت نرخ..."
-
                     }
 
                 </div>
@@ -1953,7 +2057,6 @@ function renderProfile() {
         backendUser.phoneNumber ||
         backendUser.phone ||
         backendUser.mobile ||
-        telegramUser.phone_number ||
         "ثبت نشده";
 
     const registrationDate =
@@ -1967,34 +2070,31 @@ function renderProfile() {
         state.loginTime ||
         new Date();
 
+    const access =
+        getAccessStatus();
+
     let accessText =
-        "فعال";
+        "در انتظار تأیید";
 
     let accessClass =
-        "active";
+        "pending";
 
     if (
-        String(
-            backendUser.status
-        )
-            .toUpperCase() ===
-        "PENDING"
+        access.allowed
     ) {
 
         accessText =
-            "در انتظار تأیید";
+            access.isAdmin
+                ? "مدیر / سازنده"
+                : "فعال";
 
         accessClass =
-            "pending";
+            "active";
 
     }
 
-    if (
-        String(
-            backendUser.status
-        )
-            .toUpperCase() ===
-        "BLOCKED"
+    else if (
+        access.blocked
     ) {
 
         accessText =
@@ -2005,52 +2105,17 @@ function renderProfile() {
 
     }
 
-    if (
-        backendUser.isAdmin === true
-    ) {
-
-        accessText =
-            "مدیر / سازنده";
-
-        accessClass =
-            "active";
-
-    }
-
     else if (
-        backendUser.accessEnabled ===
-        false
+        access.rejected
     ) {
 
         accessText =
-            "در انتظار تأیید";
+            "رد شده";
 
         accessClass =
-            "pending";
+            "stopped";
 
     }
-
-    const photoUrl =
-        telegramUser.photo_url ||
-        "";
-
-    const avatar =
-        photoUrl
-
-            ? `
-                <img
-                    src="${escapeHtml(
-                        photoUrl
-                    )}"
-                    alt="avatar"
-                >
-            `
-
-            : `
-                <span>
-                    AI
-                </span>
-            `;
 
     const app =
         document.getElementById(
@@ -2084,7 +2149,9 @@ function renderProfile() {
 
                     <div class="avatar">
 
-                        ${avatar}
+                        <span>
+                            AI
+                        </span>
 
                     </div>
 
@@ -2122,12 +2189,10 @@ function renderProfile() {
                         </span>
 
                         <span class="detail-value">
-
                             ${escapeHtml(
                                 firstName ||
                                 "ثبت نشده"
                             )}
-
                         </span>
 
                     </div>
@@ -2140,12 +2205,10 @@ function renderProfile() {
                         </span>
 
                         <span class="detail-value">
-
                             ${escapeHtml(
                                 lastName ||
                                 "ثبت نشده"
                             )}
-
                         </span>
 
                     </div>
@@ -2158,11 +2221,9 @@ function renderProfile() {
                         </span>
 
                         <span class="detail-value">
-
                             ${escapeHtml(
                                 username
                             )}
-
                         </span>
 
                     </div>
@@ -2175,11 +2236,9 @@ function renderProfile() {
                         </span>
 
                         <span class="detail-value">
-
                             ${escapeHtml(
                                 telegramId
                             )}
-
                         </span>
 
                     </div>
@@ -2192,11 +2251,9 @@ function renderProfile() {
                         </span>
 
                         <span class="detail-value">
-
                             ${escapeHtml(
                                 phoneNumber
                             )}
-
                         </span>
 
                     </div>
@@ -2575,6 +2632,23 @@ function renderAnalytics() {
 
 function renderCurrentPage() {
 
+    /*
+     * اگر کاربر دسترسی ندارد،
+     * اجازه نمایش هیچ صفحه مالی یا معاملاتی
+     * را نمی‌دهیم.
+     */
+
+    if (
+        !isAccessAllowed()
+    ) {
+
+        renderAccessPage();
+
+        return;
+
+    }
+
+
     if (
         state.currentPage ===
         "wallet"
@@ -2641,6 +2715,26 @@ function renderCurrentPage() {
 
 function goTo(page) {
 
+    /*
+     * پروفایل برای کاربر تأییدنشده
+     * قابل مشاهده است تا وضعیت خودش را ببیند.
+     */
+
+    if (
+        !isAccessAllowed() &&
+        page !== "profile"
+    ) {
+
+        renderAccessPage();
+
+        showToast(
+            getAccessMessage()
+        );
+
+        return;
+
+    }
+
     state.currentPage =
         page;
 
@@ -2655,6 +2749,20 @@ function goTo(page) {
 
 async function startBot() {
 
+    if (
+        !isAccessAllowed()
+    ) {
+
+        showToast(
+            getAccessMessage()
+        );
+
+        renderAccessPage();
+
+        return;
+
+    }
+
     const userId =
         getBackendUserId();
 
@@ -2662,16 +2770,6 @@ async function startBot() {
 
         showToast(
             "کاربر هنوز احراز نشده است"
-        );
-
-        return;
-
-    }
-
-    if (!isAccessAllowed()) {
-
-        showToast(
-            "دسترسی شما هنوز تأیید نشده است"
         );
 
         return;
@@ -2893,6 +2991,11 @@ async function initializeApp() {
 
         }
 
+        /*
+         * فقط کاربر تأییدشده اطلاعات مالی
+         * و معاملاتی را دریافت می‌کند.
+         */
+
         if (
             isAccessAllowed()
         ) {
@@ -2914,6 +3017,7 @@ async function initializeApp() {
 
     state.loading =
         false;
+
 
     if (
         !isAccessAllowed()
