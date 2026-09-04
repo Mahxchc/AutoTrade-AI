@@ -14,22 +14,16 @@ import {
     requireAdmin
 } from "../middleware/auth.js";
 
+import {
+    sendApprovalNotification,
+    sendRejectionNotification
+} from "../bot.js";
 
 const router =
     express.Router();
 
-
 // =====================================
-// Admin Authentication
-// =====================================
-//
-// همه مسیرهای این فایل:
-//
-// 1. Telegram Authentication
-// 2. بررسی Admin بودن کاربر
-//
-// فقط ADMIN_TELEGRAM_ID اجازه دارد.
-//
+// Admin Authentication :: M
 // =====================================
 
 router.use(
@@ -40,10 +34,9 @@ router.use(
     requireAdmin
 );
 
-
 // =====================================
 // GET /api/admin/users
-// دریافت لیست کاربران
+// همه کاربران
 // =====================================
 
 router.get(
@@ -78,7 +71,6 @@ router.get(
                     })
                     .limit(500);
 
-
             return res.json({
 
                 success: true,
@@ -106,10 +98,9 @@ router.get(
     }
 );
 
-
 // =====================================
 // GET /api/admin/users/pending
-// کاربران در انتظار تأیید
+// در انتظار تأیید
 // =====================================
 
 router.get(
@@ -124,15 +115,12 @@ router.get(
                     $or: [
 
                         {
-                            accessEnabled:
-                                false,
-
-                            status:
+                            approvalStatus:
                                 "PENDING"
                         },
 
                         {
-                            approvalStatus:
+                            status:
                                 "PENDING"
                         }
 
@@ -154,14 +142,14 @@ router.get(
                         "botActive",
                         "status",
                         "lastLogin",
-                        "createdAt"
+                        "createdAt",
+                        "updatedAt"
                     ].join(" ")
                 )
                 .sort({
                     createdAt: 1
                 })
                 .limit(500);
-
 
             return res.json({
 
@@ -190,10 +178,8 @@ router.get(
     }
 );
 
-
 // =====================================
 // GET /api/admin/users/:id
-// دریافت اطلاعات یک کاربر
 // =====================================
 
 router.get(
@@ -207,7 +193,6 @@ router.get(
                     req.params.id
                 );
 
-
             if (!user) {
 
                 return res.status(404).json({
@@ -220,7 +205,6 @@ router.get(
                 });
 
             }
-
 
             return res.json({
 
@@ -246,10 +230,9 @@ router.get(
     }
 );
 
-
 // =====================================
 // POST /api/admin/users/:id/approve
-// تأیید کاربر
+// تأیید دسترسی کاربر
 // =====================================
 
 router.post(
@@ -263,7 +246,6 @@ router.post(
                     req.params.id
                 );
 
-
             if (!user) {
 
                 return res.status(404).json({
@@ -276,11 +258,6 @@ router.post(
                 });
 
             }
-
-
-            // =================================
-            // جلوگیری از تغییر وضعیت Admin
-            // =================================
 
             if (
                 user.isAdmin === true
@@ -297,9 +274,8 @@ router.post(
 
             }
 
-
             // =================================
-            // Approve User
+            // Approve :: M
             // =================================
 
             user.accessEnabled =
@@ -311,16 +287,49 @@ router.post(
             user.status =
                 "ACTIVE";
 
+            user.botAccess =
+                true;
+
+            user.botActive =
+                false;
 
             await user.save();
 
+            // =================================
+            // Notify User :: M
+            // =================================
+
+            let notificationSent =
+                false;
+
+            try {
+
+                notificationSent =
+                    await sendApprovalNotification(
+                        user
+                    );
+
+            }
+
+            catch (notifyError) {
+
+                console.error(
+                    "[APPROVAL TELEGRAM NOTIFICATION ERROR]",
+                    notifyError
+                );
+
+            }
 
             return res.json({
 
                 success: true,
 
                 message:
-                    "کاربر با موفقیت تأیید شد",
+                    notificationSent
+                        ? "کاربر تأیید شد و پیام برای کاربر ارسال شد"
+                        : "کاربر تأیید شد اما پیام Telegram ارسال نشد",
+
+                notificationSent,
 
                 user: {
 
@@ -338,6 +347,9 @@ router.post(
 
                     lastName:
                         user.lastName,
+
+                    phoneNumber:
+                        user.phoneNumber,
 
                     accessEnabled:
                         user.accessEnabled,
@@ -374,10 +386,9 @@ router.post(
     }
 );
 
-
 // =====================================
 // POST /api/admin/users/:id/reject
-// رد کردن کاربر
+// رد درخواست دسترسی
 // =====================================
 
 router.post(
@@ -391,7 +402,6 @@ router.post(
                     req.params.id
                 );
 
-
             if (!user) {
 
                 return res.status(404).json({
@@ -404,7 +414,6 @@ router.post(
                 });
 
             }
-
 
             if (
                 user.isAdmin === true
@@ -421,6 +430,9 @@ router.post(
 
             }
 
+            // =================================
+            // Reject :: M
+            // =================================
 
             user.accessEnabled =
                 false;
@@ -429,7 +441,7 @@ router.post(
                 "REJECTED";
 
             user.status =
-                "PENDING";
+                "REJECTED";
 
             user.botAccess =
                 false;
@@ -437,16 +449,43 @@ router.post(
             user.botActive =
                 false;
 
-
             await user.save();
 
+            // =================================
+            // Notify User :: M
+            // =================================
+
+            let notificationSent =
+                false;
+
+            try {
+
+                notificationSent =
+                    await sendRejectionNotification(
+                        user
+                    );
+
+            }
+
+            catch (notifyError) {
+
+                console.error(
+                    "[REJECTION TELEGRAM NOTIFICATION ERROR]",
+                    notifyError
+                );
+
+            }
 
             return res.json({
 
                 success: true,
 
                 message:
-                    "درخواست کاربر رد شد",
+                    notificationSent
+                        ? "درخواست رد شد و پیام برای کاربر ارسال شد"
+                        : "درخواست رد شد اما پیام Telegram ارسال نشد",
+
+                notificationSent,
 
                 user: {
 
@@ -464,6 +503,9 @@ router.post(
 
                     lastName:
                         user.lastName,
+
+                    phoneNumber:
+                        user.phoneNumber,
 
                     accessEnabled:
                         user.accessEnabled,
@@ -500,10 +542,8 @@ router.post(
     }
 );
 
-
 // =====================================
 // POST /api/admin/users/:id/block
-// مسدود کردن کاربر
 // =====================================
 
 router.post(
@@ -517,7 +557,6 @@ router.post(
                     req.params.id
                 );
 
-
             if (!user) {
 
                 return res.status(404).json({
@@ -530,7 +569,6 @@ router.post(
                 });
 
             }
-
 
             if (
                 user.isAdmin === true
@@ -547,7 +585,6 @@ router.post(
 
             }
 
-
             user.accessEnabled =
                 false;
 
@@ -563,9 +600,7 @@ router.post(
             user.botActive =
                 false;
 
-
             await user.save();
-
 
             return res.json({
 
@@ -574,39 +609,7 @@ router.post(
                 message:
                     "کاربر مسدود شد",
 
-                user: {
-
-                    id:
-                        user._id,
-
-                    telegramId:
-                        user.telegramId,
-
-                    username:
-                        user.username,
-
-                    firstName:
-                        user.firstName,
-
-                    lastName:
-                        user.lastName,
-
-                    accessEnabled:
-                        user.accessEnabled,
-
-                    approvalStatus:
-                        user.approvalStatus,
-
-                    status:
-                        user.status,
-
-                    botAccess:
-                        user.botAccess,
-
-                    botActive:
-                        user.botActive
-
-                }
+                user
 
             });
 
@@ -626,10 +629,8 @@ router.post(
     }
 );
 
-
 // =====================================
 // POST /api/admin/users/:id/unblock
-// رفع مسدودی کاربر
 // =====================================
 
 router.post(
@@ -643,7 +644,6 @@ router.post(
                     req.params.id
                 );
 
-
             if (!user) {
 
                 return res.status(404).json({
@@ -656,7 +656,6 @@ router.post(
                 });
 
             }
-
 
             if (
                 user.isAdmin === true
@@ -673,7 +672,6 @@ router.post(
 
             }
 
-
             user.accessEnabled =
                 true;
 
@@ -683,9 +681,34 @@ router.post(
             user.status =
                 "ACTIVE";
 
+            user.botAccess =
+                true;
+
+            user.botActive =
+                false;
 
             await user.save();
 
+            // =================================
+            // Notify User :: M
+            // =================================
+
+            try {
+
+                await sendApprovalNotification(
+                    user
+                );
+
+            }
+
+            catch (notifyError) {
+
+                console.error(
+                    "[UNBLOCK TELEGRAM NOTIFICATION ERROR]",
+                    notifyError
+                );
+
+            }
 
             return res.json({
 
@@ -694,39 +717,7 @@ router.post(
                 message:
                     "دسترسی کاربر فعال شد",
 
-                user: {
-
-                    id:
-                        user._id,
-
-                    telegramId:
-                        user.telegramId,
-
-                    username:
-                        user.username,
-
-                    firstName:
-                        user.firstName,
-
-                    lastName:
-                        user.lastName,
-
-                    accessEnabled:
-                        user.accessEnabled,
-
-                    approvalStatus:
-                        user.approvalStatus,
-
-                    status:
-                        user.status,
-
-                    botAccess:
-                        user.botAccess,
-
-                    botActive:
-                        user.botActive
-
-                }
+                user
 
             });
 
@@ -746,10 +737,8 @@ router.post(
     }
 );
 
-
 // =====================================
 // POST /api/admin/users/:id/bot-access
-// فعال / غیرفعال کردن دسترسی ربات
 // =====================================
 
 router.post(
@@ -762,7 +751,6 @@ router.post(
                 await User.findById(
                     req.params.id
                 );
-
 
             if (!user) {
 
@@ -777,7 +765,6 @@ router.post(
 
             }
 
-
             if (
                 user.isAdmin === true
             ) {
@@ -787,16 +774,14 @@ router.post(
                     success: false,
 
                     message:
-                        "تنظیم دسترسی Bot برای Admin مجاز نیست"
+                        "تنظیم Bot برای Admin مجاز نیست"
 
                 });
 
             }
 
-
             const enabled =
                 req.body?.enabled;
-
 
             if (
                 typeof enabled !==
@@ -813,11 +798,6 @@ router.post(
                 });
 
             }
-
-
-            // =================================
-            // فقط کاربر تأییدشده Bot بگیرد
-            // =================================
 
             if (
                 enabled === true &&
@@ -838,23 +818,17 @@ router.post(
 
             }
 
-
             user.botAccess =
                 enabled;
 
-
-            if (
-                enabled === false
-            ) {
+            if (!enabled) {
 
                 user.botActive =
                     false;
 
             }
 
-
             await user.save();
-
 
             return res.json({
 
@@ -865,30 +839,7 @@ router.post(
                         ? "دسترسی ربات فعال شد"
                         : "دسترسی ربات غیرفعال شد",
 
-                user: {
-
-                    id:
-                        user._id,
-
-                    telegramId:
-                        user.telegramId,
-
-                    accessEnabled:
-                        user.accessEnabled,
-
-                    approvalStatus:
-                        user.approvalStatus,
-
-                    status:
-                        user.status,
-
-                    botAccess:
-                        user.botAccess,
-
-                    botActive:
-                        user.botActive
-
-                }
+                user
 
             });
 
@@ -908,10 +859,8 @@ router.post(
     }
 );
 
-
 // =====================================
 // GET /api/admin/stats
-// آمار کلی کاربران
 // =====================================
 
 router.get(
@@ -921,15 +870,11 @@ router.get(
         try {
 
             const [
-
                 total,
-
                 pending,
-
                 active,
-
+                rejected,
                 blocked
-
             ] =
                 await Promise.all([
 
@@ -937,15 +882,25 @@ router.get(
 
                     User.countDocuments({
 
-                        status:
+                        approvalStatus:
                             "PENDING"
 
                     }),
 
                     User.countDocuments({
 
+                        approvalStatus:
+                            "APPROVED",
+
                         status:
                             "ACTIVE"
+
+                    }),
+
+                    User.countDocuments({
+
+                        approvalStatus:
+                            "REJECTED"
 
                     }),
 
@@ -958,7 +913,6 @@ router.get(
 
                 ]);
 
-
             return res.json({
 
                 success: true,
@@ -970,6 +924,8 @@ router.get(
                     pending,
 
                     active,
+
+                    rejected,
 
                     blocked
 
@@ -993,10 +949,8 @@ router.get(
     }
 );
 
-
 // =====================================
 // Admin Self Check
-// GET /api/admin/me
 // =====================================
 
 router.get(
@@ -1019,9 +973,8 @@ router.get(
     }
 );
 
-
 // =====================================
-// Export
+// Export :: M
 // =====================================
 
 export default router;
