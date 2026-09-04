@@ -1,15 +1,15 @@
 // =====================================
-// ..M
 // AutoTrade AI
-// Withdraw Routes
+// Withdraw Routes :: M
+// مسیرهای برداشت امن
 // File: backend/routes/withdraw.js
 // =====================================
 
 import express from "express";
 import mongoose from "mongoose";
 
-import User from "../models/User.js";
 import Withdraw from "../models/Withdraw.js";
+import User from "../models/User.js";
 
 import {
     createWithdrawRequest,
@@ -25,118 +25,213 @@ import {
     requiredAdmin
 } from "../middleware/auth.js";
 
+
 const router = express.Router();
 
 
 // =====================================
-// ..M
-// پیدا کردن کاربر احراز هویت‌شده
+// Authenticated User :: M
 // =====================================
 
 async function getAuthenticatedUser(req) {
+
     const telegramId =
-        req.telegramId ||
-        req.telegramUser?.id ||
+        req.telegramId ??
+        req.telegramUser?.id ??
         req.user?.telegramId;
 
+
     if (!telegramId) {
-        const error = new Error("Telegram user not authenticated");
-        error.statusCode = 401;
-        throw error;
+
+        throw new Error(
+            "کاربر تلگرام شناسایی نشد"
+        );
+
     }
 
-    const user = await User.findOne({
-        telegramId: String(telegramId)
-    });
+
+    const user =
+        await User.findOne({
+
+            telegramId:
+                String(telegramId)
+
+        });
+
 
     if (!user) {
-        const error = new Error("User not found");
-        error.statusCode = 404;
-        throw error;
+
+        throw new Error(
+            "کاربر پیدا نشد"
+        );
+
     }
 
+
     return user;
+
 }
 
 
 // =====================================
-// ..M
+// Create Withdraw :: M
 // POST /api/withdraw
-// ایجاد درخواست برداشت
 // =====================================
 
-router.post("/", requiredTelegramUser, async (req, res) => {
-    try {
-        const user = await getAuthenticatedUser(req);
+router.post(
+    "/",
+    requiredTelegramUser,
+    async (req, res) => {
 
-        const {
-            amountToman,
-            withdrawAll,
-            method,
-            bankAccount,
-            accountHolderName
-        } = req.body || {};
+        try {
 
-        const result = await createWithdrawRequest({
-            userId: user._id,
-            amountToman,
-            withdrawAll: Boolean(withdrawAll),
-            method,
-            bankAccount,
-            accountHolderName
-        });
+            const user =
+                await getAuthenticatedUser(
+                    req
+                );
 
-        return res.status(201).json({
-            success: true,
-            message: "Withdrawal request created successfully",
-            withdraw: result
-        });
 
-    } catch (error) {
-        console.error("POST /api/withdraw error:", error);
+            const {
 
-        return res.status(error.statusCode || 400).json({
-            success: false,
-            message: error.message || "Failed to create withdrawal request"
-        });
+                amountToman,
+
+                withdrawAll = false,
+
+                method = "BANK",
+
+                bankAccount = "",
+
+                accountHolderName = "",
+
+                iban = ""
+
+            } = req.body || {};
+
+
+            const withdraw =
+                await createWithdrawRequest({
+
+                    userId:
+                        user._id,
+
+                    amountToman,
+
+                    withdrawAll,
+
+                    method,
+
+                    bankAccount:
+                        bankAccount ||
+                        iban,
+
+                    accountHolderName
+
+                });
+
+
+            return res.json({
+
+                success:
+                    true,
+
+                message:
+                    "درخواست برداشت با موفقیت ثبت شد",
+
+                withdraw
+
+            });
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "[WITHDRAW CREATE]",
+                error
+            );
+
+
+            return res.status(400).json({
+
+                success:
+                    false,
+
+                message:
+                    error.message ||
+                    "ثبت درخواست برداشت ناموفق بود"
+
+            });
+
+        }
+
     }
-});
+);
 
 
 // =====================================
-// ..M
+// My Withdraws :: M
 // GET /api/withdraw/my
-// دریافت برداشت‌های کاربر فعلی
 // =====================================
 
-router.get("/my", requiredTelegramUser, async (req, res) => {
-    try {
-        const user = await getAuthenticatedUser(req);
+router.get(
+    "/my",
+    requiredTelegramUser,
+    async (req, res) => {
 
-        const withdraws = await getUserWithdraws({
-            userId: user._id
-        });
+        try {
 
-        return res.json({
-            success: true,
-            withdraws
-        });
+            const user =
+                await getAuthenticatedUser(
+                    req
+                );
 
-    } catch (error) {
-        console.error("GET /api/withdraw/my error:", error);
 
-        return res.status(error.statusCode || 400).json({
-            success: false,
-            message: error.message || "Failed to get withdrawals"
-        });
+            const withdraws =
+                await getUserWithdraws(
+                    user._id
+                );
+
+
+            return res.json({
+
+                success:
+                    true,
+
+                withdraws
+
+            });
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "[WITHDRAW MY]",
+                error
+            );
+
+
+            return res.status(400).json({
+
+                success:
+                    false,
+
+                message:
+                    error.message ||
+                    "دریافت برداشت‌ها ناموفق بود"
+
+            });
+
+        }
+
     }
-});
+);
 
 
 // =====================================
-// ..M
-// GET /api/withdraw/admin/all
-// مخصوص ادمین
+// Admin All Withdraws :: M
+// IMPORTANT:
+// قبل از /:withdrawId قرار گرفته
 // =====================================
 
 router.get(
@@ -144,43 +239,63 @@ router.get(
     requiredTelegramUser,
     requiredAdmin,
     async (req, res) => {
+
         try {
-            const withdraws = await Withdraw.find({})
-                .populate(
-                    "userId",
-                    "telegramId username firstName lastName"
-                )
-                .sort({
-                    createdAt: -1
-                })
-                .limit(500)
-                .lean();
+
+            const withdraws =
+                await Withdraw.find({})
+                    .sort({
+                        createdAt:
+                            -1
+                    })
+                    .limit(500)
+                    .populate(
+                        "userId",
+                        "telegramId username firstName lastName"
+                    );
+
 
             return res.json({
-                success: true,
-                count: withdraws.length,
+
+                success:
+                    true,
+
+                count:
+                    withdraws.length,
+
                 withdraws
+
             });
 
-        } catch (error) {
+        }
+
+        catch (error) {
+
             console.error(
-                "GET /api/withdraw/admin/all error:",
+                "[WITHDRAW ADMIN ALL]",
                 error
             );
 
+
             return res.status(500).json({
-                success: false,
-                message: "Failed to get admin withdrawals"
+
+                success:
+                    false,
+
+                message:
+                    "دریافت لیست برداشت‌ها ناموفق بود"
+
             });
+
         }
+
     }
 );
 
 
 // =====================================
-// ..M
-// POST /api/withdraw/admin/:withdrawId/complete
-// تکمیل برداشت توسط ادمین
+// Admin Complete Withdraw :: M
+// POST /api/withdraw/admin/:id/complete
 // =====================================
 
 router.post(
@@ -188,54 +303,67 @@ router.post(
     requiredTelegramUser,
     requiredAdmin,
     async (req, res) => {
-        try {
-            const { withdrawId } = req.params;
 
-            if (!mongoose.Types.ObjectId.isValid(withdrawId)) {
-                return res.status(400).json({
-                    success: false,
-                    message: "Invalid withdraw ID"
-                });
-            }
+        try {
 
             const {
-                transactionId,
-                description
+                transactionId = null
             } = req.body || {};
 
-            const result = await completeWithdraw({
-                withdrawId,
-                transactionId,
-                description
-            });
+
+            const withdraw =
+                await completeWithdraw({
+
+                    withdrawId:
+                        req.params.withdrawId,
+
+                    transactionId
+
+                });
+
 
             return res.json({
-                success: true,
-                message: "Withdrawal completed successfully",
-                withdraw: result
+
+                success:
+                    true,
+
+                message:
+                    "برداشت با موفقیت تکمیل شد",
+
+                withdraw
+
             });
 
-        } catch (error) {
+        }
+
+        catch (error) {
+
             console.error(
-                "POST /api/withdraw/admin/:withdrawId/complete error:",
+                "[WITHDRAW COMPLETE]",
                 error
             );
 
-            return res.status(error.statusCode || 400).json({
-                success: false,
+
+            return res.status(400).json({
+
+                success:
+                    false,
+
                 message:
                     error.message ||
-                    "Failed to complete withdrawal"
+                    "تکمیل برداشت ناموفق بود"
+
             });
+
         }
+
     }
 );
 
 
 // =====================================
-// ..M
-// POST /api/withdraw/admin/:withdrawId/fail
-// شکست برداشت توسط ادمین
+// Admin Fail Withdraw :: M
+// POST /api/withdraw/admin/:id/fail
 // =====================================
 
 router.post(
@@ -243,52 +371,67 @@ router.post(
     requiredTelegramUser,
     requiredAdmin,
     async (req, res) => {
-        try {
-            const { withdrawId } = req.params;
 
-            if (!mongoose.Types.ObjectId.isValid(withdrawId)) {
-                return res.status(400).json({
-                    success: false,
-                    message: "Invalid withdraw ID"
-                });
-            }
+        try {
 
             const {
-                description
+                description = ""
             } = req.body || {};
 
-            const result = await failWithdraw({
-                withdrawId,
-                description
-            });
+
+            const withdraw =
+                await failWithdraw({
+
+                    withdrawId:
+                        req.params.withdrawId,
+
+                    description
+
+                });
+
 
             return res.json({
-                success: true,
-                message: "Withdrawal marked as failed",
-                withdraw: result
+
+                success:
+                    true,
+
+                message:
+                    "برداشت ناموفق شد",
+
+                withdraw
+
             });
 
-        } catch (error) {
+        }
+
+        catch (error) {
+
             console.error(
-                "POST /api/withdraw/admin/:withdrawId/fail error:",
+                "[WITHDRAW FAIL]",
                 error
             );
 
-            return res.status(error.statusCode || 400).json({
-                success: false,
+
+            return res.status(400).json({
+
+                success:
+                    false,
+
                 message:
                     error.message ||
-                    "Failed to mark withdrawal as failed"
+                    "تغییر وضعیت برداشت ناموفق بود"
+
             });
+
         }
+
     }
 );
 
 
 // =====================================
-// ..M
-// POST /api/withdraw/admin/:withdrawId/cancel
-// لغو برداشت توسط ادمین
+// Admin Cancel Withdraw :: M
+// POST /api/withdraw/admin/:id/cancel
 // =====================================
 
 router.post(
@@ -296,100 +439,194 @@ router.post(
     requiredTelegramUser,
     requiredAdmin,
     async (req, res) => {
-        try {
-            const { withdrawId } = req.params;
 
-            if (!mongoose.Types.ObjectId.isValid(withdrawId)) {
-                return res.status(400).json({
-                    success: false,
-                    message: "Invalid withdraw ID"
-                });
-            }
+        try {
 
             const {
-                description
+                description = ""
             } = req.body || {};
 
-            const result = await cancelWithdraw({
-                withdrawId,
-                description
-            });
+
+            const withdraw =
+                await cancelWithdraw({
+
+                    withdrawId:
+                        req.params.withdrawId,
+
+                    description
+
+                });
+
 
             return res.json({
-                success: true,
-                message: "Withdrawal cancelled successfully",
-                withdraw: result
+
+                success:
+                    true,
+
+                message:
+                    "برداشت لغو شد",
+
+                withdraw
+
             });
 
-        } catch (error) {
+        }
+
+        catch (error) {
+
             console.error(
-                "POST /api/withdraw/admin/:withdrawId/cancel error:",
+                "[WITHDRAW CANCEL]",
                 error
             );
 
-            return res.status(error.statusCode || 400).json({
-                success: false,
+
+            return res.status(400).json({
+
+                success:
+                    false,
+
                 message:
                     error.message ||
-                    "Failed to cancel withdrawal"
+                    "لغو برداشت ناموفق بود"
+
             });
+
         }
+
     }
 );
 
 
 // =====================================
-// ..M
+// Get Single Withdraw :: M
 // GET /api/withdraw/:withdrawId
-// دریافت جزئیات یک برداشت
 // =====================================
 
 router.get(
     "/:withdrawId",
     requiredTelegramUser,
     async (req, res) => {
+
         try {
-            const user = await getAuthenticatedUser(req);
 
-            const { withdrawId } = req.params;
+            if (
+                !mongoose.Types.ObjectId.isValid(
+                    req.params.withdrawId
+                )
+            ) {
 
-            if (!mongoose.Types.ObjectId.isValid(withdrawId)) {
                 return res.status(400).json({
-                    success: false,
-                    message: "Invalid withdraw ID"
+
+                    success:
+                        false,
+
+                    message:
+                        "شناسه برداشت نامعتبر است"
+
                 });
+
             }
 
-            const withdraw = await getWithdrawById({
-                withdrawId,
-                userId: user._id
-            });
+
+            const user =
+                await getAuthenticatedUser(
+                    req
+                );
+
+
+            const withdraw =
+                await getWithdrawById({
+
+                    withdrawId:
+                        req.params.withdrawId,
+
+                    userId:
+                        user._id
+
+                });
+
 
             return res.json({
-                success: true,
+
+                success:
+                    true,
+
                 withdraw
+
             });
 
-        } catch (error) {
+        }
+
+        catch (error) {
+
             console.error(
-                "GET /api/withdraw/:withdrawId error:",
+                "[WITHDRAW GET]",
                 error
             );
 
-            return res.status(error.statusCode || 400).json({
-                success: false,
+
+            return res.status(404).json({
+
+                success:
+                    false,
+
                 message:
                     error.message ||
-                    "Failed to get withdrawal"
+                    "برداشت پیدا نشد"
+
             });
+
         }
+
     }
 );
 
 
 // =====================================
-// ..M
-// Export
+// Error Handler :: M
+// =====================================
+
+router.use(
+    (
+        error,
+        req,
+        res,
+        next
+    ) => {
+
+        console.error(
+            "[WITHDRAW ROUTER ERROR]",
+            error
+        );
+
+
+        if (
+            res.headersSent
+        ) {
+
+            return next(
+                error
+            );
+
+        }
+
+
+        return res.status(500).json({
+
+            success:
+                false,
+
+            message:
+                "خطای داخلی سرور"
+
+        });
+
+    }
+);
+
+
+// =====================================
+// Export :: M
 // =====================================
 
 export default router;
