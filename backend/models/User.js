@@ -1,263 +1,169 @@
 // =====================================
-// ..M AutoTrade AI
+// ..M
+// AutoTrade AI
 // User Model
 // File: backend/models/User.js
-// مرحله ۲۱ از ۲۰
-// ثبت‌نام مرحله‌ای کاربر
 // =====================================
 
 import mongoose from "mongoose";
 
-
 // =====================================
-// User Schema :: M
+// ..M
+// User Schema
 // =====================================
 
-const UserSchema =
-    new mongoose.Schema(
-
-        {
-
-            // ---------------------------------
-            // Telegram ID
-            // ---------------------------------
-
-            telegramId: {
-
-                type: String,
-
-                required: true,
-
-                unique: true,
-
-                index: true
-
-            },
-
-
-            // ---------------------------------
-            // Telegram Username
-            // ---------------------------------
-
-            username: {
-
-                type: String,
-
-                default: ""
-
-            },
-
-
-            // ---------------------------------
-            // First Name
-            // ---------------------------------
-
-            firstName: {
-
-                type: String,
-
-                default: ""
-
-            },
-
-
-            // ---------------------------------
-            // Last Name
-            // ---------------------------------
-
-            lastName: {
-
-                type: String,
-
-                default: ""
-
-            },
-
-
-            // ---------------------------------
-            // Phone Number
-            // ---------------------------------
-
-            phoneNumber: {
-
-                type: String,
-
-                default: ""
-
-            },
-
-
-            // ---------------------------------
-            // Registration Step
-            // ---------------------------------
-            //
-            // NAME
-            // PHONE
-            // COMPLETED
-            //
-            // ---------------------------------
-
-            registrationStep: {
-
-                type: String,
-
-                enum: [
-
-                    "NAME",
-                    "PHONE",
-                    "COMPLETED"
-
-                ],
-
-                default: "NAME"
-
-            },
-
-
-            // ---------------------------------
-            // Access
-            // ---------------------------------
-
-            accessEnabled: {
-
-                type: Boolean,
-
-                default: false
-
-            },
-
-
-            // ---------------------------------
-            // Approval
-            // ---------------------------------
-
-            approvalStatus: {
-
-                type: String,
-
-                enum: [
-
-                    "PENDING",
-                    "APPROVED",
-                    "REJECTED"
-
-                ],
-
-                default: "PENDING"
-
-            },
-
-
-            // ---------------------------------
-            // Admin
-            // ---------------------------------
-
-            isAdmin: {
-
-                type: Boolean,
-
-                default: false
-
-            },
-
-
-            // ---------------------------------
-            // Bot Access
-            // ---------------------------------
-
-            botAccess: {
-
-                type: Boolean,
-
-                default: false
-
-            },
-
-
-            // ---------------------------------
-            // Bot Active
-            // ---------------------------------
-
-            botActive: {
-
-                type: Boolean,
-
-                default: false
-
-            },
-
-
-            // ---------------------------------
-            // Wallet
-            // ---------------------------------
-
-            walletId: {
-
-                type:
-                    mongoose.Schema.Types.ObjectId,
-
-                ref:
-                    "Wallet",
-
-                default: null
-
-            },
-
-
-            // ---------------------------------
-            // Account Status
-            // ---------------------------------
-
-            status: {
-
-                type: String,
-
-                enum: [
-
-                    "PENDING",
-                    "ACTIVE",
-                    "BLOCKED"
-
-                ],
-
-                default: "PENDING"
-
-            },
-
-
-            // ---------------------------------
-            // Last Login
-            // ---------------------------------
-
-            lastLogin: {
-
-                type: Date,
-
-                default: Date.now
-
-            }
-
+const userSchema = new mongoose.Schema(
+    {
+        // =====================================
+        // ..M
+        // Telegram Information
+        // =====================================
+
+        telegramId: {
+            type: String,
+            required: true,
+            unique: true,
+            index: true
         },
 
-        {
+        username: {
+            type: String,
+            default: ""
+        },
 
-            timestamps: true
+        firstName: {
+            type: String,
+            default: ""
+        },
 
+        lastName: {
+            type: String,
+            default: ""
+        },
+
+        phoneNumber: {
+            type: String,
+            default: ""
+        },
+
+        // =====================================
+        // ..M
+        // Registration Progress
+        // =====================================
+
+        // NAME    = منتظر نام و نام خانوادگی
+        // PHONE   = منتظر شماره تلفن
+        // COMPLETED = ثبت‌نام کامل شده و منتظر تأیید مدیریت
+
+        registrationStep: {
+            type: String,
+            enum: ["NAME", "PHONE", "COMPLETED"],
+            default: "NAME"
+        },
+
+        // =====================================
+        // ..M
+        // Access / Approval
+        // =====================================
+
+        accessEnabled: {
+            type: Boolean,
+            default: false
+        },
+
+        approvalStatus: {
+            type: String,
+            enum: ["PENDING", "APPROVED", "REJECTED"],
+            default: "PENDING"
+        },
+
+        // =====================================
+        // ..M
+        // Admin
+        // =====================================
+
+        isAdmin: {
+            type: Boolean,
+            default: false
+        },
+
+        // =====================================
+        // ..M
+        // Bot Access
+        // =====================================
+
+        botAccess: {
+            type: Boolean,
+            default: false
+        },
+
+        botActive: {
+            type: Boolean,
+            default: false
+        },
+
+        // =====================================
+        // ..M
+        // Wallet
+        // =====================================
+
+        walletId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Wallet",
+            default: null
+        },
+
+        // =====================================
+        // ..M
+        // User Status
+        // =====================================
+
+        status: {
+            type: String,
+            enum: ["PENDING", "ACTIVE", "BLOCKED"],
+            default: "PENDING"
+        },
+
+        // =====================================
+        // ..M
+        // Financial Information
+        // =====================================
+
+        balance: {
+            type: Number,
+            default: 0
+        },
+
+        totalProfit: {
+            type: Number,
+            default: 0
+        },
+
+        todayProfit: {
+            type: Number,
+            default: 0
+        },
+
+        // =====================================
+        // ..M
+        // Login Information
+        // =====================================
+
+        lastLogin: {
+            type: Date,
+            default: null
         }
-
-    );
-
+    },
+    {
+        timestamps: true
+    }
+);
 
 // =====================================
-// Export Model :: M
+// ..M
+// Export User Model
 // =====================================
 
-const User =
-    mongoose.models.User ||
-    mongoose.model(
-        "User",
-        UserSchema
-    );
-
+const User = mongoose.model("User", userSchema);
 
 export default User;
