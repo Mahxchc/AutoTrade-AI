@@ -110,11 +110,13 @@ async function sendMessage(
     return telegramRequest(
         "sendMessage",
         {
-            chat_id: chatId,
+            chat_id:
+                chatId,
 
             text,
 
-            parse_mode: "HTML",
+            parse_mode:
+                "HTML",
 
             ...extra
         }
@@ -199,7 +201,6 @@ function miniAppKeyboard() {
 // =====================================
 // ..M
 // Welcome Message
-// فقط یک پیام برای کاربر جدید
 // =====================================
 
 async function sendWelcomeMessage(
@@ -301,7 +302,7 @@ async function sendWaitingMessage(
 
 // =====================================
 // ..M
-// Existing User
+// Existing User Message
 // =====================================
 
 async function sendExistingUserMessage(
@@ -421,6 +422,69 @@ ${SUPPORT_USERNAME}`
 
 // =====================================
 // ..M
+// Find User
+// =====================================
+
+async function findUserByTelegramId(
+    telegramId
+) {
+    return User.findOne({
+        telegramId:
+            String(telegramId)
+    });
+}
+
+// =====================================
+// ..M
+// Parse Full Name
+// =====================================
+
+function parseFullName(
+    text
+) {
+
+    const clean =
+        String(text || "")
+            .trim()
+            .replace(
+                /\s+/g,
+                " "
+            );
+
+    if (!clean) {
+        return null;
+    }
+
+    const parts =
+        clean.split(" ");
+
+    if (
+        parts.length < 2
+    ) {
+        return null;
+    }
+
+    const firstName =
+        parts.shift();
+
+    const lastName =
+        parts.join(" ");
+
+    if (
+        !firstName ||
+        !lastName
+    ) {
+        return null;
+    }
+
+    return {
+        firstName,
+        lastName
+    };
+}
+
+// =====================================
+// ..M
 // Notify Admins
 // =====================================
 
@@ -517,7 +581,7 @@ ${requestDate}
     } catch (error) {
 
         console.error(
-            "❌ Admin registration notification error:",
+            "❌ Admin notification error:",
             error.message
         );
 
@@ -573,70 +637,6 @@ async function sendRejectionNotification(
 
 ${SUPPORT_USERNAME}`
     );
-}
-
-// =====================================
-// ..M
-// Find User
-// =====================================
-
-async function findUserByTelegramId(
-    telegramId
-) {
-
-    return User.findOne({
-        telegramId:
-            String(telegramId)
-    });
-}
-
-// =====================================
-// ..M
-// Parse Full Name
-// =====================================
-
-function parseFullName(
-    text
-) {
-
-    const clean =
-        String(text || "")
-            .trim()
-            .replace(
-                /\s+/g,
-                " "
-            );
-
-    if (!clean) {
-        return null;
-    }
-
-    const parts =
-        clean.split(" ");
-
-    if (
-        parts.length < 2
-    ) {
-        return null;
-    }
-
-    const firstName =
-        parts.shift();
-
-    const lastName =
-        parts.join(" ");
-
-    if (
-        !firstName ||
-        !lastName
-    ) {
-        return null;
-    }
-
-    return {
-        firstName,
-        lastName
-    };
 }
 
 // =====================================
@@ -718,7 +718,7 @@ async function handleStart(
                     "PENDING"
             });
 
-        // فقط یک پیام
+        // فقط پیام خوش آمدگویی
         await sendWelcomeMessage(
             chatId,
             telegramUser.first_name ||
@@ -766,7 +766,7 @@ async function handleStart(
 
 // =====================================
 // ..M
-// Handle Name
+// Handle Name Message
 // =====================================
 
 async function handleNameMessage(
@@ -834,7 +834,7 @@ async function handleNameMessage(
 
     if (!parsed) {
 
-        await sendMessage(
+        return sendMessage(
             chatId,
 
             `⚠️ لطفاً <b>نام و نام خانوادگی</b> خود را کامل در یک پیام بنویسید.
@@ -842,8 +842,6 @@ async function handleNameMessage(
 مثال:
 <b>علی صام</b>`
         );
-
-        return;
     }
 
     // =====================================
@@ -882,7 +880,7 @@ async function handleNameMessage(
     // Ask Phone
     // =====================================
 
-    await sendPhoneRequest(
+    return sendPhoneRequest(
         chatId
     );
 }
@@ -933,18 +931,17 @@ async function handlePhoneContact(
 
     if (
         message.contact.user_id &&
+
         String(
             message.contact.user_id
         ) !== telegramId
     ) {
 
-        await sendMessage(
+        return sendMessage(
             chatId,
 
             "⚠️ لطفاً شماره تلفن متعلق به همین حساب تلگرام را ارسال کنید."
         );
-
-        return;
     }
 
     // =====================================
@@ -998,7 +995,7 @@ async function handlePhoneContact(
 
     // =====================================
     // ..M
-    // Registration Complete
+    // User Confirmation
     // =====================================
 
     await sendWaitingMessage(
@@ -1007,7 +1004,7 @@ async function handlePhoneContact(
 
     // =====================================
     // ..M
-    // Notify Admins
+    // Admin Notification
     // =====================================
 
     await notifyAdminsAboutRegistration(
@@ -1104,7 +1101,7 @@ async function handleTextMessage(
 
     // =====================================
     // ..M
-    // Pending / Completed
+    // Completed / Pending
     // =====================================
 
     if (
@@ -1194,7 +1191,7 @@ const handleUpdate =
 // Telegram Webhook
 // =====================================
 
-export async function telegramWebhook(
+async function telegramWebhook(
     req,
     res
 ) {
@@ -1233,7 +1230,7 @@ export async function telegramWebhook(
 // Set Telegram Webhook
 // =====================================
 
-export async function setTelegramWebhook() {
+async function setTelegramWebhook() {
 
     if (
         !TELEGRAM_BOT_TOKEN
@@ -1289,10 +1286,12 @@ export async function setTelegramWebhook() {
 // =====================================
 // ..M
 // Setup Telegram Commands
-// اسم مورد انتظار server.js
+// مهم:
+// اینجا export نداریم
+// فقط یک بار پایین فایل export می‌شود
 // =====================================
 
-export async function setupTelegramCommands() {
+async function setupTelegramCommands() {
 
     if (
         !TELEGRAM_BOT_TOKEN
@@ -1335,7 +1334,7 @@ export async function setupTelegramCommands() {
 
 // =====================================
 // ..M
-// Compatibility With Older Code
+// Compatibility
 // =====================================
 
 const setBotCommands =
@@ -1344,12 +1343,21 @@ const setBotCommands =
 // =====================================
 // ..M
 // Named Exports
+// فقط یک بار
 // =====================================
 
 export {
+    telegramWebhook,
+
     handleTelegramUpdate,
 
     handleUpdate,
+
+    setTelegramWebhook,
+
+    setupTelegramCommands,
+
+    setBotCommands,
 
     sendMessage,
 
@@ -1367,11 +1375,7 @@ export {
 
     notifyAdminsAboutRegistration,
 
-    removeKeyboard,
-
-    setupTelegramCommands,
-
-    setBotCommands
+    removeKeyboard
 };
 
 // =====================================
@@ -1407,5 +1411,7 @@ export default {
 
     sendRejectionNotification,
 
-    notifyAdminsAboutRegistration
+    notifyAdminsAboutRegistration,
+
+    removeKeyboard
 };
