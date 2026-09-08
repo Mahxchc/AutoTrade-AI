@@ -223,6 +223,10 @@ function initButtons() {
     }
 
 
+    // =====================================
+    // ..M Support
+    // =====================================
+
     const support =
         document.querySelector(
             ".support-card button"
@@ -231,12 +235,51 @@ function initButtons() {
 
     if (support) {
 
+        // ..M تغییر نوشته دکمه
+        support.textContent =
+            "پیام به پشتیبانی";
+
+
         support.addEventListener(
             "click",
             () => {
 
+                const supportUsername =
+                    "mehdi2410l";
+
+
+                const supportUrl =
+                    `https://t.me/${supportUsername}`;
+
+
+                // ..M باز کردن مستقیم چت پشتیبانی
+                if (
+                    window.Telegram &&
+                    window.Telegram.WebApp
+                ) {
+
+                    const tg =
+                        window.Telegram.WebApp;
+
+
+                    if (
+                        tg.openTelegramLink
+                    ) {
+
+                        tg.openTelegramLink(
+                            supportUrl
+                        );
+
+                        return;
+
+                    }
+
+                }
+
+
+                // ..M حالت خارج از Telegram
                 window.open(
-                    "https://t.me/mehdi2410l",
+                    supportUrl,
                     "_blank"
                 );
 
