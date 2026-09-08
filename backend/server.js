@@ -10,14 +10,14 @@ import dotenv from "dotenv";
 
 
 // =====================================
-// Load Environment :: M
+// ..M Load Environment
 // =====================================
 
 dotenv.config();
 
 
 // =====================================
-// Database :: M
+// ..M Database
 // =====================================
 
 import connectDatabase
@@ -27,7 +27,7 @@ import mongoose from "mongoose";
 
 
 // =====================================
-// Authentication Middleware :: M
+// ..M Authentication Middleware
 // =====================================
 
 import {
@@ -37,7 +37,7 @@ import {
 
 
 // =====================================
-// Telegram Bot :: M
+// ..M Telegram Bot
 // =====================================
 
 import {
@@ -48,7 +48,7 @@ import {
 
 
 // =====================================
-// Routes :: M
+// ..M Routes
 // =====================================
 
 import userRoutes
@@ -83,7 +83,7 @@ import adminRoutes
 
 
 // =====================================
-// Express App :: M
+// ..M Express App
 // =====================================
 
 const app =
@@ -91,7 +91,7 @@ const app =
 
 
 // =====================================
-// Trust Proxy :: M
+// ..M Trust Proxy
 // =====================================
 
 app.set(
@@ -101,7 +101,7 @@ app.set(
 
 
 // =====================================
-// Basic Security :: M
+// ..M Basic Security
 // =====================================
 
 app.disable(
@@ -110,7 +110,7 @@ app.disable(
 
 
 // =====================================
-// CORS :: M
+// ..M CORS
 // =====================================
 
 const allowedOrigins = [
@@ -132,7 +132,7 @@ app.use(
         ) {
 
             // ---------------------------------
-            // Server-to-server
+            // ..M Server-to-server
             // ---------------------------------
 
             if (!origin) {
@@ -146,7 +146,7 @@ app.use(
 
 
             // ---------------------------------
-            // No configured origins
+            // ..M No configured origins
             // ---------------------------------
 
             if (
@@ -162,7 +162,7 @@ app.use(
 
 
             // ---------------------------------
-            // Allowed origin
+            // ..M Allowed origin
             // ---------------------------------
 
             if (
@@ -218,7 +218,7 @@ app.use(
 
 
 // =====================================
-// Body Parser :: M
+// ..M Body Parser
 // =====================================
 
 app.use(
@@ -249,7 +249,7 @@ app.use(
 
 
 // =====================================
-// Request Time :: M
+// ..M Request Time
 // =====================================
 
 app.use(
@@ -269,7 +269,7 @@ app.use(
 
 
 // =====================================
-// Root Health :: M
+// ..M Root Health
 // =====================================
 
 app.get(
@@ -300,7 +300,7 @@ app.get(
 
 
 // =====================================
-// Real Health Check :: M
+// ..M Real Health Check
 // =====================================
 
 app.get(
@@ -352,15 +352,103 @@ app.get(
 
 
 // =====================================
-// Telegram Webhook :: M
+// ..M Telegram Webhook
 // =====================================
 //
 // Telegram -> Render
 //
-// POST /api/telegram/webhook
+// POST /api/webhook/telegram
 //
 // این مسیر عمومی است چون درخواست
 // مستقیماً از Telegram Bot API می‌آید.
+//
+// =====================================
+
+app.post(
+    "/api/webhook/telegram",
+    async (
+        req,
+        res
+    ) => {
+
+        try {
+
+            // ---------------------------------
+            // ..M Validate Telegram Update
+            // ---------------------------------
+
+            if (
+                !req.body ||
+                typeof req.body !== "object"
+            ) {
+
+                return res.status(400).json({
+
+                    success:
+                        false,
+
+                    message:
+                        "Invalid Telegram update"
+
+                });
+
+            }
+
+
+            // ---------------------------------
+            // ..M Handle Telegram Update
+            // ---------------------------------
+
+            await handleTelegramUpdate(
+                req.body
+            );
+
+
+            // ---------------------------------
+            // ..M Telegram Success
+            // ---------------------------------
+
+            return res.status(200).json({
+
+                success:
+                    true
+
+            });
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "TELEGRAM WEBHOOK ERROR:",
+                error
+            );
+
+
+            // Telegram should receive 200
+            // so it does not repeatedly retry
+            return res.status(200).json({
+
+                success:
+                    false
+
+            });
+
+        }
+
+    }
+);
+
+
+// =====================================
+// ..M Telegram Webhook Compatibility
+// =====================================
+//
+// مسیر قدیمی را هم نگه می‌داریم تا اگر
+// جایی هنوز از آدرس قبلی استفاده شد،
+// Webhook از کار نیفتد.
+//
+// POST /api/telegram/webhook
 //
 // =====================================
 
@@ -408,7 +496,7 @@ app.post(
         catch (error) {
 
             console.error(
-                "TELEGRAM WEBHOOK ERROR:",
+                "TELEGRAM COMPATIBILITY WEBHOOK ERROR:",
                 error
             );
 
@@ -427,13 +515,11 @@ app.post(
 
 
 // =====================================
-// Telegram Authentication :: M
+// ..M Telegram Authentication
 // =====================================
 //
-// این مسیر باید قبل از تأیید مدیریت
-// قابل استفاده باشد.
-//
-// چون کاربر ابتدا باید ثبت‌نام شود.
+// این مسیر قبل از تأیید مدیریت
+// قابل استفاده است.
 //
 // =====================================
 
@@ -444,11 +530,7 @@ app.use(
 
 
 // =====================================
-// Public Currency Route :: M
-// =====================================
-//
-// نرخ ارز عمومی است.
-//
+// ..M Public Currency Route
 // =====================================
 
 app.use(
@@ -458,7 +540,7 @@ app.use(
 
 
 // =====================================
-// Admin Routes :: M
+// ..M Admin Routes
 // =====================================
 //
 // Admin Route داخل خودش:
@@ -478,7 +560,7 @@ app.use(
 
 
 // =====================================
-// Users Routes :: M
+// ..M Users Routes
 // =====================================
 //
 // احراز هویت Telegram لازم است.
@@ -496,12 +578,10 @@ app.use(
 
 
 // =====================================
-// APPROVED USER APIs :: M
+// ..M APPROVED USER APIs
 // =====================================
 //
-// از این قسمت به بعد:
-//
-// کاربر باید:
+// از این قسمت به بعد کاربر باید:
 //
 // accessEnabled = true
 // approvalStatus = APPROVED
@@ -513,7 +593,7 @@ app.use(
 
 
 // =====================================
-// Wallet :: M
+// ..M Wallet
 // =====================================
 
 app.use(
@@ -524,7 +604,7 @@ app.use(
 
 
 // =====================================
-// Trades :: M
+// ..M Trades
 // =====================================
 
 app.use(
@@ -535,7 +615,7 @@ app.use(
 
 
 // =====================================
-// Bot API :: M
+// ..M Bot API
 // =====================================
 
 app.use(
@@ -546,7 +626,7 @@ app.use(
 
 
 // =====================================
-// Deposits :: M
+// ..M Deposits
 // =====================================
 
 app.use(
@@ -557,7 +637,7 @@ app.use(
 
 
 // =====================================
-// Payments :: M
+// ..M Payments
 // =====================================
 
 app.use(
@@ -568,7 +648,7 @@ app.use(
 
 
 // =====================================
-// Withdrawals :: M
+// ..M Withdrawals
 // =====================================
 
 app.use(
@@ -579,7 +659,7 @@ app.use(
 
 
 // =====================================
-// 404 Handler :: M
+// ..M 404 Handler
 // =====================================
 
 app.use(
@@ -606,7 +686,7 @@ app.use(
 
 
 // =====================================
-// Global Error Handler :: M
+// ..M Global Error Handler
 // =====================================
 
 app.use(
@@ -660,7 +740,7 @@ app.use(
 
 
 // =====================================
-// Start Server :: M
+// ..M Start Server
 // =====================================
 
 const PORT =
@@ -674,7 +754,7 @@ async function startServer() {
     try {
 
         // ---------------------------------
-        // MongoDB
+        // ..M MongoDB
         // ---------------------------------
 
         await connectDatabase();
@@ -686,7 +766,7 @@ async function startServer() {
 
 
         // ---------------------------------
-        // Telegram Bot Commands
+        // ..M Telegram Bot Commands
         // ---------------------------------
 
         try {
@@ -710,7 +790,7 @@ async function startServer() {
 
 
         // ---------------------------------
-        // Telegram Webhook
+        // ..M Telegram Webhook
         // ---------------------------------
 
         try {
@@ -734,7 +814,7 @@ async function startServer() {
 
 
         // ---------------------------------
-        // Express
+        // ..M Express
         // ---------------------------------
 
         app.listen(
@@ -773,14 +853,14 @@ async function startServer() {
 
 
 // =====================================
-// Start Application :: M
+// ..M Start Application
 // =====================================
 
 startServer();
 
 
 // =====================================
-// Export App :: M
+// ..M Export App
 // =====================================
 
 export default app;
