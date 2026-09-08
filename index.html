@@ -1,51 +1,44 @@
+<!-- =====================================
+     ..M AutoTrade AI
+     Profile Page
+     ===================================== -->
+
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 
 <head>
+
     <meta charset="UTF-8">
 
     <meta
         name="viewport"
-        content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover"
+        content="width=device-width, initial-scale=1.0"
     >
-
-    <meta name="theme-color" content="#06101d">
 
     <title>AutoTrade AI</title>
 
-    <link rel="stylesheet" href="style.css">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
 </head>
+
 
 <body>
 
     <!-- =====================================
-         ..M AutoTrade AI
-         Glass Background
-    ====================================== -->
-
-    <div class="background">
-
-        <div class="light light-1"></div>
-        <div class="light light-2"></div>
-        <div class="light light-3"></div>
-
-        <div class="orb orb-1"></div>
-        <div class="orb orb-2"></div>
-        <div class="orb orb-3"></div>
-
-    </div>
-
-
-    <!-- =====================================
          ..M App
-    ====================================== -->
+         ===================================== -->
 
-    <main id="app">
+    <main class="app">
 
 
         <!-- =====================================
              ..M Header
-        ====================================== -->
+             ===================================== -->
 
         <header class="top-header">
 
@@ -55,42 +48,28 @@
                     AI
                 </div>
 
-                <div>
-                    <div class="brand-title">
-                        AutoTrade AI
-                    </div>
+                <div class="brand-text">
 
-                    <div class="brand-subtitle">
+                    <strong>
+                        AutoTrade AI
+                    </strong>
+
+                    <span>
                         هوش مصنوعی معاملات
-                    </div>
+                    </span>
+
                 </div>
 
             </div>
 
 
-            <button class="icon-glass-button" id="notificationBtn">
+            <button
+                id="notificationBtn"
+                class="notification-button"
+                type="button"
+            >
 
-                <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                >
-                    <path
-                        d="M18 8C18 5.79 16.21 4 14 4H10C7.79 4 6 5.79 6 8V12.5C6 14.16 5.31 15.75 4.1 16.9L3 18H21L19.9 16.9C18.69 15.75 18 14.16 18 12.5V8Z"
-                        stroke="currentColor"
-                        stroke-width="1.7"
-                    />
-
-                    <path
-                        d="M9.5 21H14.5"
-                        stroke="currentColor"
-                        stroke-width="1.7"
-                        stroke-linecap="round"
-                    />
-                </svg>
-
-                <span class="notification-dot"></span>
+                🔔
 
             </button>
 
@@ -98,582 +77,14 @@
 
 
         <!-- =====================================
-             ..M Pages
-        ====================================== -->
-
-        <section id="page-dashboard" class="page active">
-
-
-            <!-- Balance -->
-
-            <div class="glass-card balance-card">
-
-                <div class="card-top">
-
-                    <div>
-
-                        <span class="muted">
-                            موجودی کل
-                        </span>
-
-                        <div class="balance-value">
-                            $0.00
-                        </div>
-
-                        <div class="toman-value">
-                            ۰ تومان
-                        </div>
-
-                    </div>
-
-                    <div class="currency-pill">
-                        USDT
-                    </div>
-
-                </div>
-
-
-                <div class="balance-line"></div>
-
-
-                <div class="balance-bottom">
-
-                    <div>
-                        <span class="muted">
-                            سود امروز
-                        </span>
-
-                        <strong>
-                            $0.00
-                        </strong>
-                    </div>
-
-                    <div class="profit-positive">
-                        +0.00%
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <!-- Actions -->
-
-            <div class="quick-actions">
-
-                <button class="glass-action">
-                    <span class="action-icon">＋</span>
-                    <span>واریز</span>
-                </button>
-
-                <button class="glass-action">
-                    <span class="action-icon">↗</span>
-                    <span>برداشت</span>
-                </button>
-
-                <button class="glass-action">
-                    <span class="action-icon">↔</span>
-                    <span>انتقال</span>
-                </button>
-
-            </div>
-
-
-            <!-- Statistics -->
-
-            <div class="section-title">
-                آمار حساب
-            </div>
-
-
-            <div class="stats-grid">
-
-                <div class="glass-card stat-card">
-
-                    <span class="muted">
-                        سود کل
-                    </span>
-
-                    <strong>
-                        $0.00
-                    </strong>
-
-                    <small>
-                        0.00%
-                    </small>
-
-                </div>
-
-
-                <div class="glass-card stat-card">
-
-                    <span class="muted">
-                        معاملات
-                    </span>
-
-                    <strong>
-                        0
-                    </strong>
-
-                    <small>
-                        بدون معامله
-                    </small>
-
-                </div>
-
-
-                <div class="glass-card stat-card">
-
-                    <span class="muted">
-                        Win Rate
-                    </span>
-
-                    <strong>
-                        0.00%
-                    </strong>
-
-                    <small>
-                        هنوز داده‌ای نیست
-                    </small>
-
-                </div>
-
-
-                <div class="glass-card stat-card">
-
-                    <span class="muted">
-                        سرمایه
-                    </span>
-
-                    <strong>
-                        $0.00
-                    </strong>
-
-                    <small>
-                        USDT
-                    </small>
-
-                </div>
-
-            </div>
-
-
-            <!-- AI Trading -->
-
-            <div class="section-title">
-                هوش مصنوعی معاملات
-            </div>
-
-
-            <div class="glass-card ai-card">
-
-                <div class="ai-header">
-
-                    <div class="ai-logo">
-                        ✦
-                    </div>
-
-                    <div>
-
-                        <strong>
-                            AI Trading
-                        </strong>
-
-                        <span>
-                            سیستم هوشمند AutoTrade
-                        </span>
-
-                    </div>
-
-                    <div class="status stopped">
-                        متوقف
-                    </div>
-
-                </div>
-
-
-                <div class="ai-details">
-
-                    <div>
-
-                        <span>
-                            Strategy
-                        </span>
-
-                        <strong>
-                            AI Scalping
-                        </strong>
-
-                    </div>
-
-                    <div>
-
-                        <span>
-                            Accuracy
-                        </span>
-
-                        <strong>
-                            0.00%
-                        </strong>
-
-                    </div>
-
-                    <div>
-
-                        <span>
-                            Risk
-                        </span>
-
-                        <strong>
-                            Medium
-                        </strong>
-
-                    </div>
-
-                </div>
-
-
-                <button class="primary-button">
-
-                    <span>
-                        شروع معاملات هوشمند
-                    </span>
-
-                    <span>
-                        →
-                    </span>
-
-                </button>
-
-            </div>
-
-
-            <!-- Recent Trades -->
-
-            <div class="section-header">
-
-                <div class="section-title">
-                    آخرین معاملات
-                </div>
-
-                <button class="view-button">
-                    مشاهده همه
-                </button>
-
-            </div>
-
-
-            <div class="glass-card empty-card">
-
-                <div class="empty-icon">
-                    ◇
-                </div>
-
-                <strong>
-                    هنوز معامله‌ای وجود ندارد
-                </strong>
-
-                <span>
-                    معاملات انجام‌شده اینجا نمایش داده می‌شوند
-                </span>
-
-            </div>
-
-        </section>
-
-
-
-        <!-- =====================================
-             ..M Wallet
-        ====================================== -->
-
-        <section id="page-wallet" class="page">
-
-            <div class="page-heading">
-
-                <h1>
-                    کیف پول
-                </h1>
-
-                <span>
-                    مدیریت دارایی
-                </span>
-
-            </div>
-
-
-            <div class="glass-card wallet-main">
-
-                <span class="muted">
-                    موجودی قابل برداشت
-                </span>
-
-                <div class="wallet-balance">
-                    $0.00
-                </div>
-
-                <div class="toman-value">
-                    ۰ تومان
-                </div>
-
-                <div class="currency-pill">
-                    USDT
-                </div>
-
-            </div>
-
-
-            <div class="wallet-actions">
-
-                <button class="glass-action big">
-                    <span class="action-icon">＋</span>
-                    واریز
-                </button>
-
-                <button class="glass-action big">
-                    <span class="action-icon">↗</span>
-                    برداشت
-                </button>
-
-            </div>
-
-
-            <div class="section-title">
-                خلاصه کیف پول
-            </div>
-
-
-            <div class="glass-card list-card">
-
-                <div class="list-row">
-
-                    <span>
-                        موجودی Spot
-                    </span>
-
-                    <strong>
-                        $0.00
-                    </strong>
-
-                </div>
-
-
-                <div class="list-row">
-
-                    <span>
-                        سود کل
-                    </span>
-
-                    <strong>
-                        $0.00
-                    </strong>
-
-                </div>
-
-
-                <div class="list-row">
-
-                    <span>
-                        ارزش کل
-                    </span>
-
-                    <strong>
-                        $0.00
-                    </strong>
-
-                </div>
-
-            </div>
-
-
-            <div class="section-title">
-                تراکنش‌های اخیر
-            </div>
-
-
-            <div class="glass-card empty-card">
-
-                <div class="empty-icon">
-                    ◇
-                </div>
-
-                <strong>
-                    تراکنشی وجود ندارد
-                </strong>
-
-            </div>
-
-        </section>
-
-
-
-        <!-- =====================================
-             ..M Trades
-        ====================================== -->
-
-        <section id="page-trades" class="page">
-
-            <div class="page-heading">
-
-                <h1>
-                    معاملات
-                </h1>
-
-                <span>
-                    تاریخچه معاملات AI
-                </span>
-
-            </div>
-
-
-            <div class="trade-tabs">
-
-                <button class="active">
-                    باز
-                </button>
-
-                <button>
-                    بسته
-                </button>
-
-            </div>
-
-
-            <div class="glass-card empty-card large">
-
-                <div class="empty-icon">
-                    ↯
-                </div>
-
-                <strong>
-                    معامله بازی وجود ندارد
-                </strong>
-
-                <span>
-                    معاملات فعال AI در این بخش نمایش داده می‌شوند
-                </span>
-
-            </div>
-
-        </section>
-
-
-
-        <!-- =====================================
-             ..M Analytics
-        ====================================== -->
-
-        <section id="page-analytics" class="page">
-
-            <div class="page-heading">
-
-                <h1>
-                    تحلیل
-                </h1>
-
-                <span>
-                    عملکرد سیستم هوش مصنوعی
-                </span>
-
-            </div>
-
-
-            <div class="glass-card chart-card">
-
-                <div class="chart-header">
-
-                    <div>
-
-                        <span class="muted">
-                            عملکرد
-                        </span>
-
-                        <strong>
-                            $0.00
-                        </strong>
-
-                    </div>
-
-                    <span class="currency-pill">
-                        7D
-                    </span>
-
-                </div>
-
-
-                <div class="chart">
-
-                    <div class="chart-line"></div>
-
-                    <div class="chart-glow"></div>
-
-                </div>
-
-
-                <div class="chart-labels">
-
-                    <span>
-                        شنبه
-                    </span>
-
-                    <span>
-                        یکشنبه
-                    </span>
-
-                    <span>
-                        دوشنبه
-                    </span>
-
-                    <span>
-                        سه‌شنبه
-                    </span>
-
-                    <span>
-                        امروز
-                    </span>
-
-                </div>
-
-            </div>
-
-
-            <div class="stats-grid">
-
-                <div class="glass-card stat-card">
-
-                    <span>
-                        سود
-                    </span>
-
-                    <strong>
-                        $0.00
-                    </strong>
-
-                </div>
-
-                <div class="glass-card stat-card">
-
-                    <span>
-                        ضرر
-                    </span>
-
-                    <strong>
-                        $0.00
-                    </strong>
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-
-        <!-- =====================================
              ..M Profile
-        ====================================== -->
+             ===================================== -->
 
-        <section id="page-profile" class="page">
+        <section
+            id="page-profile"
+            class="page active"
+        >
+
 
             <div class="page-heading">
 
@@ -681,130 +92,167 @@
                     پروفایل
                 </h1>
 
-                <span>
+                <p>
                     حساب کاربری
-                </span>
+                </p>
 
             </div>
 
 
-            <div class="glass-card profile-card">
+            <!-- =====================================
+                 ..M User Information
+                 ===================================== -->
 
-                <div class="profile-avatar">
-                    A
+            <section class="profile-card">
+
+                <div class="profile-card-header">
+
+                    <div class="profile-avatar">
+                        <span id="profileInitial">
+                            A
+                        </span>
+                    </div>
+
+                    <div class="profile-title">
+
+                        <strong id="profileName">
+                            کاربر
+                        </strong>
+
+                        <span>
+                            اطلاعات کاربر
+                        </span>
+
+                    </div>
+
                 </div>
 
-                <div>
 
-                    <strong>
-                        کاربر
-                    </strong>
+                <div class="profile-info-list">
 
-                    <span>
-                        AutoTrade AI
-                    </span>
+
+                    <!-- User ID -->
+
+                    <div class="profile-info-row">
+
+                        <div class="info-icon">
+                            #
+                        </div>
+
+                        <div class="info-content">
+
+                            <span>
+                                آیدی کاربر
+                            </span>
+
+                            <strong id="userTelegramId">
+                                0
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- Name -->
+
+                    <div class="profile-info-row">
+
+                        <div class="info-icon">
+                            A
+                        </div>
+
+                        <div class="info-content">
+
+                            <span>
+                                نام و نام خانوادگی
+                            </span>
+
+                            <strong id="userFullName">
+                                کاربر
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- Phone -->
+
+                    <div class="profile-info-row">
+
+                        <div class="info-icon">
+                            ☎
+                        </div>
+
+                        <div class="info-content">
+
+                            <span>
+                                شماره تلفن
+                            </span>
+
+                            <strong id="userPhone">
+                                ثبت نشده
+                            </strong>
+
+                        </div>
+
+                    </div>
+
 
                 </div>
 
-                <div class="verified">
-                    ✓
-                </div>
-
-            </div>
+            </section>
 
 
-            <div class="glass-card profile-menu">
+            <!-- =====================================
+                 ..M Support
+                 ===================================== -->
 
-                <button class="profile-row">
-
-                    <span class="row-icon">
-                        ◉
-                    </span>
-
-                    <span>
-                        اطلاعات حساب
-                    </span>
-
-                    <span>
-                        ‹
-                    </span>
-
-                </button>
-
-
-                <button class="profile-row">
-
-                    <span class="row-icon">
-                        ♢
-                    </span>
-
-                    <span>
-                        امنیت
-                    </span>
-
-                    <span>
-                        ‹
-                    </span>
-
-                </button>
-
-
-                <button class="profile-row">
-
-                    <span class="row-icon">
-                        ?
-                    </span>
-
-                    <span>
-                        پشتیبانی
-                    </span>
-
-                    <span>
-                        ‹
-                    </span>
-
-                </button>
-
-            </div>
-
-
-            <div class="glass-card support-card">
+            <section class="support-card">
 
                 <div class="support-icon">
                     ?
                 </div>
 
-                <div>
+
+                <div class="support-content">
 
                     <strong>
-                        نیاز به کمک دارید؟
+                        پشتیبانی
                     </strong>
 
                     <span>
-                        پشتیبانی AutoTrade AI
+                        نیاز به کمک دارید؟
                     </span>
 
                 </div>
 
-                <button>
-                    تماس
+
+                <button
+                    type="button"
+                    id="supportButton"
+                >
+                    پیام به پشتیبانی
                 </button>
 
-            </div>
+            </section>
+
 
         </section>
 
 
-
         <!-- =====================================
              ..M Bottom Navigation
-        ====================================== -->
+             ===================================== -->
 
-        <nav class="bottom-nav">
+        <nav class="bottom-navigation">
+
 
             <button
-                class="nav-item active"
-                data-page="dashboard"
+                class="nav-item"
+                data-page="home"
+                type="button"
             >
 
                 <span class="nav-icon">
@@ -821,6 +269,7 @@
             <button
                 class="nav-item"
                 data-page="wallet"
+                type="button"
             >
 
                 <span class="nav-icon">
@@ -837,6 +286,7 @@
             <button
                 class="nav-item"
                 data-page="trades"
+                type="button"
             >
 
                 <span class="nav-icon">
@@ -853,10 +303,11 @@
             <button
                 class="nav-item"
                 data-page="analytics"
+                type="button"
             >
 
                 <span class="nav-icon">
-                    ◒
+                    ◐
                 </span>
 
                 <span>
@@ -867,8 +318,9 @@
 
 
             <button
-                class="nav-item"
+                class="nav-item active"
                 data-page="profile"
+                type="button"
             >
 
                 <span class="nav-icon">
@@ -881,9 +333,219 @@
 
             </button>
 
+
         </nav>
 
+
     </main>
+
+
+    <!-- =====================================
+         ..M Profile Data
+         ===================================== -->
+
+    <script>
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            () => {
+
+                loadTelegramUser();
+
+                initSupport();
+
+            }
+        );
+
+
+        // =====================================
+        // ..M Telegram User
+        // =====================================
+
+        function loadTelegramUser() {
+
+            try {
+
+                const tg =
+                    window.Telegram &&
+                    window.Telegram.WebApp;
+
+
+                if (!tg) {
+
+                    return;
+
+                }
+
+
+                tg.ready();
+
+
+                const user =
+                    tg.initDataUnsafe &&
+                    tg.initDataUnsafe.user;
+
+
+                if (!user) {
+
+                    return;
+
+                }
+
+
+                // ..M Telegram ID
+
+                const telegramId =
+                    user.id || 0;
+
+
+                const idElement =
+                    document.getElementById(
+                        "userTelegramId"
+                    );
+
+
+                if (idElement) {
+
+                    idElement.textContent =
+                        telegramId;
+
+                }
+
+
+                // ..M Full Name
+
+                const firstName =
+                    user.first_name || "";
+
+
+                const lastName =
+                    user.last_name || "";
+
+
+                const fullName =
+                    `${firstName} ${lastName}`
+                        .trim();
+
+
+                const nameElement =
+                    document.getElementById(
+                        "userFullName"
+                    );
+
+
+                const profileName =
+                    document.getElementById(
+                        "profileName"
+                    );
+
+
+                if (fullName) {
+
+                    if (nameElement) {
+
+                        nameElement.textContent =
+                            fullName;
+
+                    }
+
+
+                    if (profileName) {
+
+                        profileName.textContent =
+                            fullName;
+
+                    }
+
+                }
+
+
+                // ..M Avatar
+
+                const initialElement =
+                    document.getElementById(
+                        "profileInitial"
+                    );
+
+
+                if (
+                    initialElement &&
+                    firstName
+                ) {
+
+                    initialElement.textContent =
+                        firstName
+                            .charAt(0)
+                            .toUpperCase();
+
+                }
+
+
+            } catch (error) {
+
+                console.log(
+                    "Telegram user error:",
+                    error
+                );
+
+            }
+
+        }
+
+
+        // =====================================
+        // ..M Support
+        // =====================================
+
+        function initSupport() {
+
+            const button =
+                document.getElementById(
+                    "supportButton"
+                );
+
+
+            if (!button) {
+
+                return;
+
+            }
+
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    const url =
+                        "https://t.me/mehdi2410l";
+
+
+                    if (
+                        window.Telegram &&
+                        window.Telegram.WebApp &&
+                        window.Telegram.WebApp.openTelegramLink
+                    ) {
+
+                        window.Telegram.WebApp.openTelegramLink(
+                            url
+                        );
+
+                        return;
+
+                    }
+
+
+                    window.open(
+                        url,
+                        "_blank"
+                    );
+
+                }
+            );
+
+        }
+
+    </script>
 
 
     <script src="app.js"></script>
