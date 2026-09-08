@@ -1,78 +1,892 @@
-<!-- =====================================
-     ..M AutoTrade AI
-     Mini App
-     File: MiniApp/index.html
-     ===================================== -->
-
 <!DOCTYPE html>
-
-<html
-    lang="fa"
-    dir="rtl"
->
+<html lang="fa" dir="rtl">
 
 <head>
-
     <meta charset="UTF-8">
 
     <meta
         name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+        content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover"
     >
 
-    <meta
-        name="theme-color"
-        content="#081b35"
-    >
+    <meta name="theme-color" content="#06101d">
 
-    <title>
-        AutoTrade AI
-    </title>
+    <title>AutoTrade AI</title>
 
-    <link
-        rel="stylesheet"
-        href="style.css"
-    >
-
+    <link rel="stylesheet" href="style.css">
 </head>
-
 
 <body>
 
-    <div
-        id="app"
-        class="app"
-    >
+    <!-- =====================================
+         ..M AutoTrade AI
+         Glass Background
+    ====================================== -->
 
-        <div class="loading-screen">
+    <div class="background">
 
-            <div class="loading-logo">
-                AI
-            </div>
+        <div class="light light-1"></div>
+        <div class="light light-2"></div>
+        <div class="light light-3"></div>
 
-            <div class="loading-title">
-                AutoTrade AI
-            </div>
-
-            <div class="loading-text">
-                در حال بارگذاری...
-            </div>
-
-        </div>
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
 
     </div>
 
 
-    <!-- Telegram WebApp -->
+    <!-- =====================================
+         ..M App
+    ====================================== -->
 
-    <script
-        src="https://telegram.org/js/telegram-web-app.js"
-    ></script>
+    <main id="app">
 
 
-    <script
-        src="app.js"
-    ></script>
+        <!-- =====================================
+             ..M Header
+        ====================================== -->
+
+        <header class="top-header">
+
+            <div class="brand">
+
+                <div class="brand-icon">
+                    AI
+                </div>
+
+                <div>
+                    <div class="brand-title">
+                        AutoTrade AI
+                    </div>
+
+                    <div class="brand-subtitle">
+                        هوش مصنوعی معاملات
+                    </div>
+                </div>
+
+            </div>
+
+
+            <button class="icon-glass-button" id="notificationBtn">
+
+                <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                >
+                    <path
+                        d="M18 8C18 5.79 16.21 4 14 4H10C7.79 4 6 5.79 6 8V12.5C6 14.16 5.31 15.75 4.1 16.9L3 18H21L19.9 16.9C18.69 15.75 18 14.16 18 12.5V8Z"
+                        stroke="currentColor"
+                        stroke-width="1.7"
+                    />
+
+                    <path
+                        d="M9.5 21H14.5"
+                        stroke="currentColor"
+                        stroke-width="1.7"
+                        stroke-linecap="round"
+                    />
+                </svg>
+
+                <span class="notification-dot"></span>
+
+            </button>
+
+        </header>
+
+
+        <!-- =====================================
+             ..M Pages
+        ====================================== -->
+
+        <section id="page-dashboard" class="page active">
+
+
+            <!-- Balance -->
+
+            <div class="glass-card balance-card">
+
+                <div class="card-top">
+
+                    <div>
+
+                        <span class="muted">
+                            موجودی کل
+                        </span>
+
+                        <div class="balance-value">
+                            $0.00
+                        </div>
+
+                        <div class="toman-value">
+                            ۰ تومان
+                        </div>
+
+                    </div>
+
+                    <div class="currency-pill">
+                        USDT
+                    </div>
+
+                </div>
+
+
+                <div class="balance-line"></div>
+
+
+                <div class="balance-bottom">
+
+                    <div>
+                        <span class="muted">
+                            سود امروز
+                        </span>
+
+                        <strong>
+                            $0.00
+                        </strong>
+                    </div>
+
+                    <div class="profit-positive">
+                        +0.00%
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Actions -->
+
+            <div class="quick-actions">
+
+                <button class="glass-action">
+                    <span class="action-icon">＋</span>
+                    <span>واریز</span>
+                </button>
+
+                <button class="glass-action">
+                    <span class="action-icon">↗</span>
+                    <span>برداشت</span>
+                </button>
+
+                <button class="glass-action">
+                    <span class="action-icon">↔</span>
+                    <span>انتقال</span>
+                </button>
+
+            </div>
+
+
+            <!-- Statistics -->
+
+            <div class="section-title">
+                آمار حساب
+            </div>
+
+
+            <div class="stats-grid">
+
+                <div class="glass-card stat-card">
+
+                    <span class="muted">
+                        سود کل
+                    </span>
+
+                    <strong>
+                        $0.00
+                    </strong>
+
+                    <small>
+                        0.00%
+                    </small>
+
+                </div>
+
+
+                <div class="glass-card stat-card">
+
+                    <span class="muted">
+                        معاملات
+                    </span>
+
+                    <strong>
+                        0
+                    </strong>
+
+                    <small>
+                        بدون معامله
+                    </small>
+
+                </div>
+
+
+                <div class="glass-card stat-card">
+
+                    <span class="muted">
+                        Win Rate
+                    </span>
+
+                    <strong>
+                        0.00%
+                    </strong>
+
+                    <small>
+                        هنوز داده‌ای نیست
+                    </small>
+
+                </div>
+
+
+                <div class="glass-card stat-card">
+
+                    <span class="muted">
+                        سرمایه
+                    </span>
+
+                    <strong>
+                        $0.00
+                    </strong>
+
+                    <small>
+                        USDT
+                    </small>
+
+                </div>
+
+            </div>
+
+
+            <!-- AI Trading -->
+
+            <div class="section-title">
+                هوش مصنوعی معاملات
+            </div>
+
+
+            <div class="glass-card ai-card">
+
+                <div class="ai-header">
+
+                    <div class="ai-logo">
+                        ✦
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            AI Trading
+                        </strong>
+
+                        <span>
+                            سیستم هوشمند AutoTrade
+                        </span>
+
+                    </div>
+
+                    <div class="status stopped">
+                        متوقف
+                    </div>
+
+                </div>
+
+
+                <div class="ai-details">
+
+                    <div>
+
+                        <span>
+                            Strategy
+                        </span>
+
+                        <strong>
+                            AI Scalping
+                        </strong>
+
+                    </div>
+
+                    <div>
+
+                        <span>
+                            Accuracy
+                        </span>
+
+                        <strong>
+                            0.00%
+                        </strong>
+
+                    </div>
+
+                    <div>
+
+                        <span>
+                            Risk
+                        </span>
+
+                        <strong>
+                            Medium
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <button class="primary-button">
+
+                    <span>
+                        شروع معاملات هوشمند
+                    </span>
+
+                    <span>
+                        →
+                    </span>
+
+                </button>
+
+            </div>
+
+
+            <!-- Recent Trades -->
+
+            <div class="section-header">
+
+                <div class="section-title">
+                    آخرین معاملات
+                </div>
+
+                <button class="view-button">
+                    مشاهده همه
+                </button>
+
+            </div>
+
+
+            <div class="glass-card empty-card">
+
+                <div class="empty-icon">
+                    ◇
+                </div>
+
+                <strong>
+                    هنوز معامله‌ای وجود ندارد
+                </strong>
+
+                <span>
+                    معاملات انجام‌شده اینجا نمایش داده می‌شوند
+                </span>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =====================================
+             ..M Wallet
+        ====================================== -->
+
+        <section id="page-wallet" class="page">
+
+            <div class="page-heading">
+
+                <h1>
+                    کیف پول
+                </h1>
+
+                <span>
+                    مدیریت دارایی
+                </span>
+
+            </div>
+
+
+            <div class="glass-card wallet-main">
+
+                <span class="muted">
+                    موجودی قابل برداشت
+                </span>
+
+                <div class="wallet-balance">
+                    $0.00
+                </div>
+
+                <div class="toman-value">
+                    ۰ تومان
+                </div>
+
+                <div class="currency-pill">
+                    USDT
+                </div>
+
+            </div>
+
+
+            <div class="wallet-actions">
+
+                <button class="glass-action big">
+                    <span class="action-icon">＋</span>
+                    واریز
+                </button>
+
+                <button class="glass-action big">
+                    <span class="action-icon">↗</span>
+                    برداشت
+                </button>
+
+            </div>
+
+
+            <div class="section-title">
+                خلاصه کیف پول
+            </div>
+
+
+            <div class="glass-card list-card">
+
+                <div class="list-row">
+
+                    <span>
+                        موجودی Spot
+                    </span>
+
+                    <strong>
+                        $0.00
+                    </strong>
+
+                </div>
+
+
+                <div class="list-row">
+
+                    <span>
+                        سود کل
+                    </span>
+
+                    <strong>
+                        $0.00
+                    </strong>
+
+                </div>
+
+
+                <div class="list-row">
+
+                    <span>
+                        ارزش کل
+                    </span>
+
+                    <strong>
+                        $0.00
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="section-title">
+                تراکنش‌های اخیر
+            </div>
+
+
+            <div class="glass-card empty-card">
+
+                <div class="empty-icon">
+                    ◇
+                </div>
+
+                <strong>
+                    تراکنشی وجود ندارد
+                </strong>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =====================================
+             ..M Trades
+        ====================================== -->
+
+        <section id="page-trades" class="page">
+
+            <div class="page-heading">
+
+                <h1>
+                    معاملات
+                </h1>
+
+                <span>
+                    تاریخچه معاملات AI
+                </span>
+
+            </div>
+
+
+            <div class="trade-tabs">
+
+                <button class="active">
+                    باز
+                </button>
+
+                <button>
+                    بسته
+                </button>
+
+            </div>
+
+
+            <div class="glass-card empty-card large">
+
+                <div class="empty-icon">
+                    ↯
+                </div>
+
+                <strong>
+                    معامله بازی وجود ندارد
+                </strong>
+
+                <span>
+                    معاملات فعال AI در این بخش نمایش داده می‌شوند
+                </span>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =====================================
+             ..M Analytics
+        ====================================== -->
+
+        <section id="page-analytics" class="page">
+
+            <div class="page-heading">
+
+                <h1>
+                    تحلیل
+                </h1>
+
+                <span>
+                    عملکرد سیستم هوش مصنوعی
+                </span>
+
+            </div>
+
+
+            <div class="glass-card chart-card">
+
+                <div class="chart-header">
+
+                    <div>
+
+                        <span class="muted">
+                            عملکرد
+                        </span>
+
+                        <strong>
+                            $0.00
+                        </strong>
+
+                    </div>
+
+                    <span class="currency-pill">
+                        7D
+                    </span>
+
+                </div>
+
+
+                <div class="chart">
+
+                    <div class="chart-line"></div>
+
+                    <div class="chart-glow"></div>
+
+                </div>
+
+
+                <div class="chart-labels">
+
+                    <span>
+                        شنبه
+                    </span>
+
+                    <span>
+                        یکشنبه
+                    </span>
+
+                    <span>
+                        دوشنبه
+                    </span>
+
+                    <span>
+                        سه‌شنبه
+                    </span>
+
+                    <span>
+                        امروز
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div class="stats-grid">
+
+                <div class="glass-card stat-card">
+
+                    <span>
+                        سود
+                    </span>
+
+                    <strong>
+                        $0.00
+                    </strong>
+
+                </div>
+
+                <div class="glass-card stat-card">
+
+                    <span>
+                        ضرر
+                    </span>
+
+                    <strong>
+                        $0.00
+                    </strong>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =====================================
+             ..M Profile
+        ====================================== -->
+
+        <section id="page-profile" class="page">
+
+            <div class="page-heading">
+
+                <h1>
+                    پروفایل
+                </h1>
+
+                <span>
+                    حساب کاربری
+                </span>
+
+            </div>
+
+
+            <div class="glass-card profile-card">
+
+                <div class="profile-avatar">
+                    A
+                </div>
+
+                <div>
+
+                    <strong>
+                        کاربر
+                    </strong>
+
+                    <span>
+                        AutoTrade AI
+                    </span>
+
+                </div>
+
+                <div class="verified">
+                    ✓
+                </div>
+
+            </div>
+
+
+            <div class="glass-card profile-menu">
+
+                <button class="profile-row">
+
+                    <span class="row-icon">
+                        ◉
+                    </span>
+
+                    <span>
+                        اطلاعات حساب
+                    </span>
+
+                    <span>
+                        ‹
+                    </span>
+
+                </button>
+
+
+                <button class="profile-row">
+
+                    <span class="row-icon">
+                        ♢
+                    </span>
+
+                    <span>
+                        امنیت
+                    </span>
+
+                    <span>
+                        ‹
+                    </span>
+
+                </button>
+
+
+                <button class="profile-row">
+
+                    <span class="row-icon">
+                        ?
+                    </span>
+
+                    <span>
+                        پشتیبانی
+                    </span>
+
+                    <span>
+                        ‹
+                    </span>
+
+                </button>
+
+            </div>
+
+
+            <div class="glass-card support-card">
+
+                <div class="support-icon">
+                    ?
+                </div>
+
+                <div>
+
+                    <strong>
+                        نیاز به کمک دارید؟
+                    </strong>
+
+                    <span>
+                        پشتیبانی AutoTrade AI
+                    </span>
+
+                </div>
+
+                <button>
+                    تماس
+                </button>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =====================================
+             ..M Bottom Navigation
+        ====================================== -->
+
+        <nav class="bottom-nav">
+
+            <button
+                class="nav-item active"
+                data-page="dashboard"
+            >
+
+                <span class="nav-icon">
+                    ⌂
+                </span>
+
+                <span>
+                    خانه
+                </span>
+
+            </button>
+
+
+            <button
+                class="nav-item"
+                data-page="wallet"
+            >
+
+                <span class="nav-icon">
+                    ◇
+                </span>
+
+                <span>
+                    کیف پول
+                </span>
+
+            </button>
+
+
+            <button
+                class="nav-item"
+                data-page="trades"
+            >
+
+                <span class="nav-icon">
+                    ↗
+                </span>
+
+                <span>
+                    معاملات
+                </span>
+
+            </button>
+
+
+            <button
+                class="nav-item"
+                data-page="analytics"
+            >
+
+                <span class="nav-icon">
+                    ◒
+                </span>
+
+                <span>
+                    تحلیل
+                </span>
+
+            </button>
+
+
+            <button
+                class="nav-item"
+                data-page="profile"
+            >
+
+                <span class="nav-icon">
+                    ○
+                </span>
+
+                <span>
+                    پروفایل
+                </span>
+
+            </button>
+
+        </nav>
+
+    </main>
+
+
+    <script src="app.js"></script>
 
 </body>
 
