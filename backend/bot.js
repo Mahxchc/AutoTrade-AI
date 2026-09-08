@@ -1,15 +1,14 @@
 // =====================================
-// ..M
-// AutoTrade AI
+// ..M AutoTrade AI
 // Telegram Bot
 // File: backend/bot.js
 // =====================================
 
 import User from "./models/User.js";
 
+
 // =====================================
-// ..M
-// Environment
+// ..M Environment
 // =====================================
 
 const TELEGRAM_BOT_TOKEN =
@@ -28,9 +27,9 @@ const MINI_APP_URL =
 const SUPPORT_USERNAME =
     "@mehdi2410l";
 
+
 // =====================================
-// ..M
-// Telegram API
+// ..M Telegram API
 // =====================================
 
 const TELEGRAM_API =
@@ -38,16 +37,18 @@ const TELEGRAM_API =
         ? `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`
         : null;
 
+
 // =====================================
-// ..M
-// Telegram Request
+// ..M Telegram Request
 // =====================================
 
 async function telegramRequest(
     method,
     body = {}
 ) {
+
     if (!TELEGRAM_API) {
+
         console.error(
             "❌ TELEGRAM_BOT_TOKEN تنظیم نشده است."
         );
@@ -56,6 +57,7 @@ async function telegramRequest(
     }
 
     try {
+
         const response =
             await fetch(
                 `${TELEGRAM_API}/${method}`,
@@ -72,10 +74,13 @@ async function telegramRequest(
                 }
             );
 
+
         const data =
             await response.json();
 
+
         if (!data.ok) {
+
             console.error(
                 `❌ Telegram API Error [${method}]:`,
                 data.description
@@ -84,9 +89,12 @@ async function telegramRequest(
             return null;
         }
 
+
         return data.result;
 
-    } catch (error) {
+    }
+
+    catch (error) {
 
         console.error(
             `❌ Telegram Request Error [${method}]:`,
@@ -97,9 +105,9 @@ async function telegramRequest(
     }
 }
 
+
 // =====================================
-// ..M
-// Send Message
+// ..M Send Message
 // =====================================
 
 async function sendMessage(
@@ -107,6 +115,7 @@ async function sendMessage(
     text,
     extra = {}
 ) {
+
     return telegramRequest(
         "sendMessage",
         {
@@ -123,14 +132,15 @@ async function sendMessage(
     );
 }
 
+
 // =====================================
-// ..M
-// Remove Keyboard
+// ..M Remove Keyboard
 // =====================================
 
 async function removeKeyboard(
     chatId
 ) {
+
     return sendMessage(
         chatId,
         " ",
@@ -143,14 +153,17 @@ async function removeKeyboard(
     );
 }
 
+
 // =====================================
-// ..M
-// Phone Keyboard
+// ..M Phone Keyboard
 // =====================================
 
 function phoneKeyboard() {
+
     return {
+
         keyboard: [
+
             [
                 {
                     text:
@@ -160,6 +173,7 @@ function phoneKeyboard() {
                         true
                 }
             ]
+
         ],
 
         resize_keyboard:
@@ -170,20 +184,24 @@ function phoneKeyboard() {
     };
 }
 
+
 // =====================================
-// ..M
-// Mini App Keyboard
+// ..M Mini App Keyboard
 // =====================================
 
 function miniAppKeyboard() {
 
     if (!MINI_APP_URL) {
+
         return undefined;
     }
 
     return {
+
         inline_keyboard: [
+
             [
+
                 {
                     text:
                         "🚀 ورود به AutoTrade AI",
@@ -193,19 +211,22 @@ function miniAppKeyboard() {
                             MINI_APP_URL
                     }
                 }
+
             ]
+
         ]
     };
 }
 
+
 // =====================================
-// ..M
-// Welcome Message
+// ..M Welcome Message
 // =====================================
 
 async function sendWelcomeMessage(
     chatId
 ) {
+
     return sendMessage(
         chatId,
 
@@ -213,39 +234,35 @@ async function sendWelcomeMessage(
 
 شما وارد سیستم هوشمند <b>AutoTrade AI</b> شدید.
 
-برای شروع ثبت‌نام و استفاده از خدمات، لطفاً ابتدا <b>نام و نام خانوادگی</b> خود را در یک پیام بنویسید.
-
-مثال:
-<b>علی صام</b>`
+برای شروع ثبت‌نام و استفاده از خدمات، لطفاً ابتدا <b>نام و نام خانوادگی</b> خود را در یک پیام بنویسید.`
     );
 }
 
+
 // =====================================
-// ..M
-// Ask Name
+// ..M Ask Name
 // =====================================
 
 async function sendNameRequest(
     chatId
 ) {
+
     return sendMessage(
         chatId,
 
-        `👤 <b>نام و نام خانوادگی</b> خود را در یک پیام بنویسید.
-
-مثال:
-<b>علی صام</b>`
+        `👤 <b>نام و نام خانوادگی</b> خود را در یک پیام بنویسید.`
     );
 }
 
+
 // =====================================
-// ..M
-// Ask Phone
+// ..M Ask Phone
 // =====================================
 
 async function sendPhoneRequest(
     chatId
 ) {
+
     return sendMessage(
         chatId,
 
@@ -262,14 +279,15 @@ async function sendPhoneRequest(
     );
 }
 
+
 // =====================================
-// ..M
-// Waiting Approval
+// ..M Waiting Approval
 // =====================================
 
 async function sendWaitingMessage(
     chatId
 ) {
+
     return sendMessage(
         chatId,
 
@@ -292,23 +310,26 @@ async function sendWaitingMessage(
     );
 }
 
+
 // =====================================
-// ..M
-// Find User
+// ..M Find User
 // =====================================
 
 async function findUserByTelegramId(
     telegramId
 ) {
+
     return User.findOne({
+
         telegramId:
             String(telegramId)
+
     });
 }
 
+
 // =====================================
-// ..M
-// Parse Full Name
+// ..M Parse Full Name
 // =====================================
 
 function parseFullName(
@@ -323,41 +344,54 @@ function parseFullName(
                 " "
             );
 
+
     if (!clean) {
+
         return null;
     }
+
 
     const parts =
         clean.split(" ");
 
+
     if (
         parts.length < 2
     ) {
+
         return null;
     }
+
 
     const firstName =
         parts.shift();
 
+
     const lastName =
         parts.join(" ");
+
 
     if (
         !firstName ||
         !lastName
     ) {
+
         return null;
     }
 
+
     return {
+
         firstName,
+
         lastName
+
     };
 }
 
+
 // =====================================
-// ..M
-// Notify Admins
+// ..M Notify Admins
 // =====================================
 
 async function notifyAdminsAboutRegistration(
@@ -368,17 +402,22 @@ async function notifyAdminsAboutRegistration(
 
         const admins =
             await User.find({
+
                 isAdmin:
                     true,
 
                 telegramId: {
+
                     $exists:
                         true,
 
                     $ne:
                         ""
+
                 }
+
             });
+
 
         if (!admins.length) {
 
@@ -389,6 +428,7 @@ async function notifyAdminsAboutRegistration(
             return false;
         }
 
+
         const requestDate =
             new Date().toLocaleString(
                 "fa-IR",
@@ -397,6 +437,7 @@ async function notifyAdminsAboutRegistration(
                         "Asia/Tehran"
                 }
             );
+
 
         const username =
             user.username
@@ -407,6 +448,7 @@ async function notifyAdminsAboutRegistration(
                     ""
                 )}`
                 : "ندارد";
+
 
         const message =
 `🔔 <b>درخواست ثبت‌نام جدید</b>
@@ -434,6 +476,7 @@ ${requestDate}
 
 لطفاً درخواست کاربر را در پنل مدیریت بررسی کنید.`;
 
+
         for (
             const admin of admins
         ) {
@@ -444,13 +487,17 @@ ${requestDate}
             );
         }
 
+
         console.log(
             `✅ Registration notification sent to ${admins.length} admin(s).`
         );
 
+
         return true;
 
-    } catch (error) {
+    }
+
+    catch (error) {
 
         console.error(
             "❌ Admin notification error:",
@@ -461,9 +508,9 @@ ${requestDate}
     }
 }
 
+
 // =====================================
-// ..M
-// Approval Notification
+// ..M Approval Notification
 // =====================================
 
 async function sendApprovalNotification(
@@ -491,9 +538,9 @@ async function sendApprovalNotification(
     );
 }
 
+
 // =====================================
-// ..M
-// Rejection Notification
+// ..M Rejection Notification
 // =====================================
 
 async function sendRejectionNotification(
@@ -511,15 +558,19 @@ ${SUPPORT_USERNAME}`
     );
 }
 
+
 // =====================================
-// ..M
-// Existing User
+// ..M Existing User Message
 // =====================================
 
 async function sendExistingUserMessage(
     chatId,
     user
 ) {
+
+    // ---------------------------------
+    // ..M Rejected
+    // ---------------------------------
 
     if (
         user.approvalStatus ===
@@ -536,6 +587,11 @@ async function sendExistingUserMessage(
 ${SUPPORT_USERNAME}`
         );
     }
+
+
+    // ---------------------------------
+    // ..M Approved
+    // ---------------------------------
 
     if (
         user.accessEnabled === true &&
@@ -561,6 +617,11 @@ ${SUPPORT_USERNAME}`
         );
     }
 
+
+    // ---------------------------------
+    // ..M Registration Completed
+    // ---------------------------------
+
     if (
         user.registrationStep ===
         "COMPLETED"
@@ -570,6 +631,11 @@ ${SUPPORT_USERNAME}`
             chatId
         );
     }
+
+
+    // ---------------------------------
+    // ..M Pending With Phone
+    // ---------------------------------
 
     if (
         user.approvalStatus ===
@@ -582,6 +648,11 @@ ${SUPPORT_USERNAME}`
         );
     }
 
+
+    // ---------------------------------
+    // ..M Phone Step
+    // ---------------------------------
+
     if (
         user.registrationStep ===
         "PHONE"
@@ -592,14 +663,19 @@ ${SUPPORT_USERNAME}`
         );
     }
 
+
+    // ---------------------------------
+    // ..M Name Step
+    // ---------------------------------
+
     return sendNameRequest(
         chatId
     );
 }
 
+
 // =====================================
-// ..M
-// Handle Start
+// ..M Handle Start
 // =====================================
 
 async function handleStart(
@@ -609,14 +685,18 @@ async function handleStart(
     if (
         !message?.chat?.id
     ) {
+
         return;
     }
+
 
     const chatId =
         message.chat.id;
 
+
     const telegramUser =
         message.from || {};
+
 
     const telegramId =
         String(
@@ -624,14 +704,15 @@ async function handleStart(
             chatId
         );
 
+
     let user =
         await findUserByTelegramId(
             telegramId
         );
 
+
     // =====================================
-    // ..M
-    // New User
+    // ..M New User
     // =====================================
 
     if (!user) {
@@ -674,7 +755,9 @@ async function handleStart(
 
                 status:
                     "PENDING"
+
             });
+
 
         // فقط یک پیام خوش‌آمدگویی
         return sendWelcomeMessage(
@@ -682,9 +765,9 @@ async function handleStart(
         );
     }
 
+
     // =====================================
-    // ..M
-    // Existing User
+    // ..M Existing User
     // =====================================
 
     return sendExistingUserMessage(
@@ -693,9 +776,9 @@ async function handleStart(
     );
 }
 
+
 // =====================================
-// ..M
-// Handle Name
+// ..M Handle Name Message
 // =====================================
 
 async function handleNameMessage(
@@ -707,21 +790,26 @@ async function handleNameMessage(
         !message?.from?.id ||
         !message?.text
     ) {
+
         return;
     }
 
+
     const chatId =
         message.chat.id;
+
 
     const telegramId =
         String(
             message.from.id
         );
 
+
     const user =
         await findUserByTelegramId(
             telegramId
         );
+
 
     if (!user) {
 
@@ -729,6 +817,11 @@ async function handleNameMessage(
             message
         );
     }
+
+
+    // ---------------------------------
+    // ..M Already Approved
+    // ---------------------------------
 
     if (
         user.approvalStatus ===
@@ -741,10 +834,16 @@ async function handleNameMessage(
         );
     }
 
+
+    // ---------------------------------
+    // ..M Parse Name
+    // ---------------------------------
+
     const parsed =
         parseFullName(
             message.text
         );
+
 
     if (!parsed) {
 
@@ -753,40 +852,58 @@ async function handleNameMessage(
         );
     }
 
+
+    // ---------------------------------
+    // ..M Save Name
+    // ---------------------------------
+
     user.firstName =
         parsed.firstName;
+
 
     user.lastName =
         parsed.lastName;
 
+
     user.registrationStep =
         "PHONE";
+
 
     user.accessEnabled =
         false;
 
+
     user.approvalStatus =
         "PENDING";
+
 
     user.status =
         "PENDING";
 
+
     user.botAccess =
         false;
+
 
     user.botActive =
         false;
 
+
     await user.save();
+
+
+    // ---------------------------------
+    // ..M Ask Phone
+    // ---------------------------------
 
     return sendPhoneRequest(
         chatId
     );
 }
 
+
 // =====================================
-// ..M
-// Handle Phone
+// ..M Handle Phone Contact
 // =====================================
 
 async function handlePhoneContact(
@@ -798,21 +915,26 @@ async function handlePhoneContact(
         !message?.from?.id ||
         !message?.contact?.phone_number
     ) {
+
         return;
     }
 
+
     const chatId =
         message.chat.id;
+
 
     const telegramId =
         String(
             message.from.id
         );
 
+
     const user =
         await findUserByTelegramId(
             telegramId
         );
+
 
     if (!user) {
 
@@ -821,10 +943,10 @@ async function handlePhoneContact(
         );
     }
 
-    // =====================================
-    // ..M
-    // Contact Security
-    // =====================================
+
+    // ---------------------------------
+    // ..M Contact Security
+    // ---------------------------------
 
     if (
         message.contact.user_id &&
@@ -840,10 +962,12 @@ async function handlePhoneContact(
         );
     }
 
+
     let phone =
         String(
             message.contact.phone_number
         ).trim();
+
 
     if (
         phone.startsWith("+")
@@ -853,54 +977,67 @@ async function handlePhoneContact(
             phone.substring(1);
     }
 
+
+    // ---------------------------------
+    // ..M Save Phone
+    // ---------------------------------
+
     user.phoneNumber =
         phone;
+
 
     user.registrationStep =
         "COMPLETED";
 
+
     user.accessEnabled =
         false;
+
 
     user.approvalStatus =
         "PENDING";
 
+
     user.status =
         "PENDING";
+
 
     user.botAccess =
         false;
 
+
     user.botActive =
         false;
+
 
     user.lastLogin =
         new Date();
 
+
     await user.save();
 
-    // =====================================
-    // ..M
-    // User Confirmation
-    // =====================================
+
+    // ---------------------------------
+    // ..M User Confirmation
+    // ---------------------------------
 
     await sendWaitingMessage(
         chatId
     );
 
-    // =====================================
-    // ..M
-    // Admin Notification
-    // =====================================
+
+    // ---------------------------------
+    // ..M Admin Notification
+    // ---------------------------------
 
     await notifyAdminsAboutRegistration(
         user
     );
 }
 
+
 // =====================================
-// ..M
-// Handle Text
+// ..M Handle Text Message
 // =====================================
 
 async function handleTextMessage(
@@ -912,13 +1049,20 @@ async function handleTextMessage(
         !message?.from?.id ||
         !message?.text
     ) {
+
         return;
     }
+
 
     const text =
         String(
             message.text
         ).trim();
+
+
+    // ---------------------------------
+    // ..M Start
+    // ---------------------------------
 
     if (
         text.startsWith("/start")
@@ -929,6 +1073,11 @@ async function handleTextMessage(
         );
     }
 
+
+    // ---------------------------------
+    // ..M Find User
+    // ---------------------------------
+
     const user =
         await findUserByTelegramId(
             String(
@@ -936,12 +1085,18 @@ async function handleTextMessage(
             )
         );
 
+
     if (!user) {
 
         return handleStart(
             message
         );
     }
+
+
+    // ---------------------------------
+    // ..M Name
+    // ---------------------------------
 
     if (
         user.registrationStep ===
@@ -953,6 +1108,11 @@ async function handleTextMessage(
         );
     }
 
+
+    // ---------------------------------
+    // ..M Phone
+    // ---------------------------------
+
     if (
         user.registrationStep ===
         "PHONE"
@@ -963,11 +1123,16 @@ async function handleTextMessage(
         );
     }
 
+
+    // ---------------------------------
+    // ..M Completed / Pending
+    // ---------------------------------
+
     if (
         user.registrationStep ===
-        "COMPLETED" ||
+            "COMPLETED" ||
         user.approvalStatus ===
-        "PENDING"
+            "PENDING"
     ) {
 
         return sendWaitingMessage(
@@ -976,9 +1141,9 @@ async function handleTextMessage(
     }
 }
 
+
 // =====================================
-// ..M
-// Handle Telegram Update
+// ..M Handle Telegram Update
 // =====================================
 
 async function handleTelegramUpdate(
@@ -991,12 +1156,18 @@ async function handleTelegramUpdate(
             return;
         }
 
+
         if (
             update.message
         ) {
 
             const message =
                 update.message;
+
+
+            // ---------------------------------
+            // ..M Contact
+            // ---------------------------------
 
             if (
                 message.contact
@@ -1006,6 +1177,11 @@ async function handleTelegramUpdate(
                     message
                 );
             }
+
+
+            // ---------------------------------
+            // ..M Text
+            // ---------------------------------
 
             if (
                 message.text
@@ -1017,7 +1193,9 @@ async function handleTelegramUpdate(
             }
         }
 
-    } catch (error) {
+    }
+
+    catch (error) {
 
         console.error(
             "❌ Telegram update error:",
@@ -1026,17 +1204,17 @@ async function handleTelegramUpdate(
     }
 }
 
+
 // =====================================
-// ..M
-// Compatibility Alias
+// ..M Compatibility Alias
 // =====================================
 
 const handleUpdate =
     handleTelegramUpdate;
 
+
 // =====================================
-// ..M
-// Telegram Webhook
+// ..M Telegram Webhook
 // =====================================
 
 async function telegramWebhook(
@@ -1050,32 +1228,40 @@ async function telegramWebhook(
             req.body
         );
 
+
         return res
             .status(200)
             .json({
+
                 success:
                     true
+
             });
 
-    } catch (error) {
+    }
+
+    catch (error) {
 
         console.error(
             "❌ Telegram webhook error:",
             error
         );
 
+
         return res
             .status(200)
             .json({
+
                 success:
                     false
+
             });
     }
 }
 
+
 // =====================================
-// ..M
-// Setup Telegram Webhook
+// ..M Setup Telegram Webhook
 // =====================================
 
 async function setupTelegramWebhook() {
@@ -1091,6 +1277,7 @@ async function setupTelegramWebhook() {
         return false;
     }
 
+
     if (!BACKEND_URL) {
 
         console.error(
@@ -1100,24 +1287,31 @@ async function setupTelegramWebhook() {
         return false;
     }
 
+
     const webhookUrl =
         `${BACKEND_URL.replace(
             /\/$/,
             ""
         )}/api/webhook/telegram`;
 
+
     const result =
         await telegramRequest(
             "setWebhook",
             {
+
                 url:
                     webhookUrl,
 
                 allowed_updates: [
+
                     "message"
+
                 ]
+
             }
         );
+
 
     if (result) {
 
@@ -1128,20 +1322,21 @@ async function setupTelegramWebhook() {
         return true;
     }
 
+
     return false;
 }
 
+
 // =====================================
-// ..M
-// Alias
+// ..M Telegram Webhook Alias
 // =====================================
 
 const setTelegramWebhook =
     setupTelegramWebhook;
 
+
 // =====================================
-// ..M
-// Setup Telegram Commands
+// ..M Setup Telegram Commands
 // =====================================
 
 async function setupTelegramCommands() {
@@ -1157,21 +1352,29 @@ async function setupTelegramCommands() {
         return false;
     }
 
+
     const result =
         await telegramRequest(
             "setMyCommands",
             {
+
                 commands: [
+
                     {
+
                         command:
                             "start",
 
                         description:
                             "شروع / ثبت‌نام"
+
                     }
+
                 ]
+
             }
         );
+
 
     if (result) {
 
@@ -1182,23 +1385,25 @@ async function setupTelegramCommands() {
         return true;
     }
 
+
     return false;
 }
 
+
 // =====================================
-// ..M
-// Alias
+// ..M Telegram Commands Alias
 // =====================================
 
 const setBotCommands =
     setupTelegramCommands;
 
+
 // =====================================
-// ..M
-// Named Exports
+// ..M Named Exports
 // =====================================
 
 export {
+
     telegramWebhook,
 
     handleTelegramUpdate,
@@ -1230,11 +1435,12 @@ export {
     notifyAdminsAboutRegistration,
 
     removeKeyboard
+
 };
 
+
 // =====================================
-// ..M
-// Default Export
+// ..M Default Export
 // =====================================
 
 export default {
@@ -1270,4 +1476,5 @@ export default {
     notifyAdminsAboutRegistration,
 
     removeKeyboard
+
 };
