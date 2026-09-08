@@ -1,14 +1,21 @@
 // =====================================
 // ..M AutoTrade AI
-// Mini App Application
+// Mini App
 // File: MiniApp/app.js
-// مرحله ۲۰ از ۲۰
-// کنترل نهایی دسترسی + احراز هویت + داشبورد
 // =====================================
+
+"use strict";
+
+// =====================================
+// Telegram WebApp :: M
+// =====================================
+
+const tg =
+    window.Telegram?.WebApp || null;
 
 
 // =====================================
-// Configuration :: M
+// Backend URL :: M
 // =====================================
 
 const BACKEND_URL =
@@ -21,17 +28,6 @@ const BACKEND_URL =
 
 const SUPPORT_USERNAME =
     "@mehdi2410l";
-
-
-// =====================================
-// Telegram :: M
-// =====================================
-
-const tg =
-    window.Telegram &&
-    window.Telegram.WebApp
-        ? window.Telegram.WebApp
-        : null;
 
 
 // =====================================
@@ -59,77 +55,67 @@ const state = {
         [],
 
     exchangeRate:
-        0,
+        10000,
 
     loginTime:
         null,
 
     loading:
-        true,
-
-    refreshing:
         false
 
 };
 
 
 // =====================================
-// Safe Number :: M
+// DOM :: M
 // =====================================
 
-function numberValue(value) {
+const app =
+    document.getElementById("app");
 
-    const number =
-        Number(value);
 
-    if (
-        !Number.isFinite(number)
-    ) {
+// =====================================
+// Telegram Init :: M
+// =====================================
 
-        return 0;
+function initializeTelegram() {
+
+    if (!tg) {
+        return;
+    }
+
+    try {
+
+        tg.ready();
+
+        tg.expand();
+
+        if (tg.setHeaderColor) {
+
+            tg.setHeaderColor(
+                "#07182d"
+            );
+
+        }
+
+        if (tg.setBackgroundColor) {
+
+            tg.setBackgroundColor(
+                "#061529"
+            );
+
+        }
 
     }
 
-    return number;
+    catch (error) {
 
-}
-
-
-// =====================================
-// Format Number :: M
-// =====================================
-
-function formatNumber(
-    value,
-    decimals = 2
-) {
-
-    return numberValue(value)
-        .toLocaleString(
-            "en-US",
-            {
-                minimumFractionDigits:
-                    decimals,
-
-                maximumFractionDigits:
-                    decimals
-            }
+        console.error(
+            "Telegram initialization error:",
+            error
         );
 
-}
-
-
-// =====================================
-// Format Toman :: M
-// =====================================
-
-function formatToman(value) {
-
-    return numberValue(value)
-        .toLocaleString(
-            "fa-IR"
-        ) +
-        " تومان";
+    }
 
 }
 
@@ -140,9 +126,16 @@ function formatToman(value) {
 
 function escapeHtml(value) {
 
-    return String(
-        value ?? ""
-    )
+    if (
+        value === null ||
+        value === undefined
+    ) {
+
+        return "";
+
+    }
+
+    return String(value)
         .replace(
             /&/g,
             "&amp;"
@@ -168,76 +161,84 @@ function escapeHtml(value) {
 
 
 // =====================================
-// Get Telegram User :: M
+// Number Formatter :: M
 // =====================================
 
-function getTelegramUser() {
+function formatNumber(
+    value,
+    decimals = 2
+) {
+
+    const number =
+        Number(value);
 
     if (
-        tg &&
-        tg.initDataUnsafe &&
-        tg.initDataUnsafe.user
+        !Number.isFinite(number)
     ) {
 
-        return tg.initDataUnsafe.user;
+        return "0";
 
     }
 
-    return null;
+    return number.toLocaleString(
+        "en-US",
+        {
+            minimumFractionDigits:
+                decimals,
+
+            maximumFractionDigits:
+                decimals
+        }
+    );
 
 }
 
 
 // =====================================
-// Telegram Init :: M
+// Toman Formatter :: M
 // =====================================
 
-function initializeTelegram() {
+function formatToman(
+    value
+) {
 
-    if (!tg) {
+    const number =
+        Number(value);
 
-        return;
+    if (
+        !Number.isFinite(number)
+    ) {
 
-    }
-
-    try {
-
-        tg.ready();
-
-        tg.expand();
-
-        if (
-            typeof tg.setHeaderColor ===
-            "function"
-        ) {
-
-            tg.setHeaderColor(
-                "#061426"
-            );
-
-        }
-
-        if (
-            typeof tg.setBackgroundColor ===
-            "function"
-        ) {
-
-            tg.setBackgroundColor(
-                "#061426"
-            );
-
-        }
+        return "۰ تومان";
 
     }
 
-    catch (error) {
+    return Math.round(number)
+        .toLocaleString(
+            "fa-IR"
+        ) +
+        " تومان";
 
-        console.error(
-            "Telegram initialization error:",
-            error
-        );
+}
 
-    }
+
+// =====================================
+// USD To Toman :: M
+// =====================================
+
+function usdToToman(
+    usd
+) {
+
+    const rate =
+        Number(
+            state.exchangeRate
+        ) || 10000;
+
+    return (
+        Number(usd) *
+        rate
+    );
 
 }
 
@@ -247,13 +248,9 @@ function initializeTelegram() {
 // =====================================
 
 async function apiRequest(
-    path,
+    endpoint,
     options = {}
 ) {
-
-    const url =
-        BACKEND_URL +
-        path;
 
     const headers = {
 
@@ -279,21 +276,32 @@ async function apiRequest(
         ] =
             tg.initData;
 
+        headers[
+            "X-Telegram-InitData"
+        ] =
+            tg.initData;
+
     }
 
 
     const response =
         await fetch(
-            url,
+
+            BACKEND_URL +
+            endpoint,
+
             {
+
                 ...options,
+
                 headers
+
             }
+
         );
 
 
-    let data =
-        null;
+    let data = null;
 
 
     try {
@@ -305,8 +313,7 @@ async function apiRequest(
 
     catch {
 
-        data =
-            null;
+        data = null;
 
     }
 
@@ -315,25 +322,12 @@ async function apiRequest(
         !response.ok
     ) {
 
-        const error =
-            new Error(
+        throw new Error(
 
-                data?.message ||
-                data?.error ||
-                "خطا در ارتباط با سرور"
+            data?.message ||
+            "خطا در ارتباط با سرور"
 
-            );
-
-
-        error.status =
-            response.status;
-
-
-        error.data =
-            data;
-
-
-        throw error;
+        );
 
     }
 
@@ -349,551 +343,238 @@ async function apiRequest(
 
 async function authenticateTelegram() {
 
-    const user =
-        getTelegramUser();
+    if (
+        !tg ||
+        !tg.initData
+    ) {
 
-
-    state.telegramUser =
-        user;
-
-
-    if (!tg) {
-
-        return null;
+        throw new Error(
+            "Telegram WebApp authentication data is unavailable"
+        );
 
     }
 
 
-    const initData =
-        tg.initData;
+    const response =
+        await apiRequest(
 
+            "/api/auth/telegram",
 
-    if (!initData) {
+            {
 
-        return null;
+                method:
+                    "POST",
 
-    }
+                body:
+                    JSON.stringify({
 
+                        initData:
+                            tg.initData
 
-    try {
+                    })
 
-        const result =
-            await apiRequest(
-                "/api/auth/telegram",
-                {
+            }
 
-                    method:
-                        "POST",
-
-                    body:
-                        JSON.stringify({
-
-                            initData
-
-                        })
-
-                }
-            );
-
-
-        /*
-         * Backend ممکن است user را
-         * مستقیماً یا داخل data برگرداند.
-         */
-
-        state.backendUser =
-            result?.user ||
-            result?.data?.user ||
-            result?.data ||
-            null;
-
-
-        return result;
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "Telegram authentication failed:",
-            error
         );
 
 
-        /*
-         * اگر Backend در پاسخ خطا
-         * اطلاعات کاربر را فرستاده باشد،
-         * وضعیت را نگه می‌داریم.
-         */
+    if (
+        response?.user
+    ) {
 
         state.backendUser =
-            error?.data?.user ||
-            error?.data?.data?.user ||
-            null;
-
-
-        return null;
+            response.user;
 
     }
+
+    else if (
+        response?.data?.user
+    ) {
+
+        state.backendUser =
+            response.data.user;
+
+    }
+
+
+    state.telegramUser =
+        tg.initDataUnsafe?.user ||
+        null;
+
+
+    state.loginTime =
+        new Date();
+
+
+    return response;
 
 }
 
 
 // =====================================
-// Get Backend User ID :: M
+// Normalize User :: M
 // =====================================
 
-function getBackendUserId() {
+function getUser() {
 
     return (
-        state.backendUser?._id ||
-        state.backendUser?.id ||
-        null
+        state.backendUser ||
+        {}
     );
 
 }
 
 
 // =====================================
-// Get User Access Status :: M
+// Admin Check :: M
 // =====================================
 
-function getAccessStatus() {
+function isAdmin() {
 
     const user =
-        state.backendUser || {};
+        getUser();
 
-
-    const status =
-        String(
-            user.status ||
-            "PENDING"
-        )
-            .toUpperCase();
-
-
-    const approvalStatus =
-        String(
-            user.approvalStatus ||
-            "PENDING"
-        )
-            .toUpperCase();
-
-
-    const accessEnabled =
-        user.accessEnabled === true;
-
-
-    const isAdmin =
-        user.isAdmin === true;
-
-
-    const hasFirstName =
-        Boolean(
-            String(
-                user.firstName ||
-                ""
-            )
-                .trim()
-        );
-
-
-    const hasLastName =
-        Boolean(
-            String(
-                user.lastName ||
-                ""
-            )
-                .trim()
-        );
-
-
-    const hasPhone =
-        Boolean(
-            String(
-                user.phoneNumber ||
-                user.phone ||
-                user.mobile ||
-                ""
-            )
-                .trim()
-        );
-
-
-    const registrationComplete =
-        hasFirstName &&
-        hasLastName &&
-        hasPhone;
-
-
-    return {
-
-        status,
-
-        approvalStatus,
-
-        accessEnabled,
-
-        isAdmin,
-
-        hasFirstName,
-
-        hasLastName,
-
-        hasPhone,
-
-        registrationComplete,
-
-        blocked:
-            status === "BLOCKED",
-
-        rejected:
-            approvalStatus === "REJECTED",
-
-        approved:
-            approvalStatus === "APPROVED",
-
-        active:
-            status === "ACTIVE",
-
-        allowed:
-
-            isAdmin ||
-
-            (
-                registrationComplete &&
-                accessEnabled &&
-                approvalStatus === "APPROVED" &&
-                status === "ACTIVE"
-            )
-
-    };
+    return (
+        user.isAdmin === true
+    );
 
 }
 
 
 // =====================================
-// Check Access :: M
+// Registration Complete :: M
 // =====================================
-//
-// کاربر عادی فقط زمانی مجاز است:
-//
-// 1. نام داشته باشد
-// 2. نام خانوادگی داشته باشد
-// 3. شماره تلفن داشته باشد
-// 4. accessEnabled = true
-// 5. approvalStatus = APPROVED
-// 6. status = ACTIVE
-//
-// مدیر مجاز است.
-//
+
+function isRegistrationComplete() {
+
+    const user =
+        getUser();
+
+
+    // ---------------------------------
+    // Explicit registration step
+    // ---------------------------------
+
+    if (
+        user.registrationStep ===
+        "COMPLETED"
+    ) {
+
+        return true;
+
+    }
+
+
+    // ---------------------------------
+    // Completed registration fallback
+    // ---------------------------------
+
+    const firstName =
+        String(
+            user.firstName ||
+            ""
+        ).trim();
+
+    const lastName =
+        String(
+            user.lastName ||
+            ""
+        ).trim();
+
+    const phone =
+        String(
+            user.phoneNumber ||
+            ""
+        ).trim();
+
+
+    return (
+        firstName.length > 0 &&
+        lastName.length > 0 &&
+        phone.length > 0
+    );
+
+}
+
+
+// =====================================
+// Access Allowed :: M
 // =====================================
 
 function isAccessAllowed() {
 
-    const access =
-        getAccessStatus();
+    const user =
+        getUser();
+
+
+    // ---------------------------------
+    // Admin
+    // ---------------------------------
+
+    if (
+        user.isAdmin === true
+    ) {
+
+        return true;
+
+    }
+
+
+    // ---------------------------------
+    // Normal Approved User
+    // ---------------------------------
 
     return (
-        access.allowed === true
+
+        user.accessEnabled === true &&
+
+        user.approvalStatus ===
+            "APPROVED" &&
+
+        user.status ===
+            "ACTIVE"
+
     );
 
 }
 
 
 // =====================================
-// Get Access Message :: M
+// Approval Pending :: M
 // =====================================
 
-function getAccessMessage() {
+function isApprovalPending() {
 
-    const access =
-        getAccessStatus();
-
-
-    if (
-        access.blocked
-    ) {
-
-        return (
-            "حساب شما مسدود شده است."
-        );
-
-    }
+    const user =
+        getUser();
 
 
-    if (
-        access.rejected
-    ) {
+    return (
 
-        return (
-            "❌ درخواست شما توسط مدیریت تأیید نشد.\n" +
-            "در صورت نیاز به پشتیبانی پیام بدهید\n" +
-            SUPPORT_USERNAME
-        );
+        user.approvalStatus ===
+            "PENDING"
 
-    }
-
-
-    if (
-        !access.registrationComplete
-    ) {
-
-        return (
-            "برای استفاده از AutoTrade AI ابتدا ثبت‌نام خود را کامل کنید."
-        );
-
-    }
-
-
-    if (
-        !access.approved
-    ) {
-
-        return (
-            "حساب شما در انتظار تأیید مدیریت است."
-        );
-
-    }
-
-
-    if (
-        !access.active
-    ) {
-
-        return (
-            "حساب شما هنوز فعال نشده است."
-        );
-
-    }
-
-
-    if (
-        !access.accessEnabled
-    ) {
-
-        return (
-            "دسترسی حساب شما هنوز فعال نشده است."
-        );
-
-    }
-
-
-    return "";
+    );
 
 }
 
 
 // =====================================
-// Load Wallet :: M
+// Approval Rejected :: M
 // =====================================
 
-async function loadWallet() {
+function isApprovalRejected() {
 
-    const userId =
-        getBackendUserId();
+    const user =
+        getUser();
 
 
-    if (!userId) {
+    return (
 
-        state.wallet =
-            null;
+        user.approvalStatus ===
+            "REJECTED"
 
-        return;
-
-    }
-
-
-    if (
-        !isAccessAllowed()
-    ) {
-
-        state.wallet =
-            null;
-
-        return;
-
-    }
-
-
-    try {
-
-        const result =
-            await apiRequest(
-                "/api/wallet/" +
-                encodeURIComponent(
-                    userId
-                )
-            );
-
-
-        const wallet =
-            result?.wallet ||
-            result?.data?.wallet ||
-            result?.data ||
-            result;
-
-
-        state.wallet =
-            wallet || null;
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "Wallet error:",
-            error
-        );
-
-
-        state.wallet =
-            null;
-
-    }
-
-}
-
-
-// =====================================
-// Load Bot :: M
-// =====================================
-
-async function loadBot() {
-
-    const userId =
-        getBackendUserId();
-
-
-    if (!userId) {
-
-        state.bot =
-            null;
-
-        return;
-
-    }
-
-
-    if (
-        !isAccessAllowed()
-    ) {
-
-        state.bot =
-            null;
-
-        return;
-
-    }
-
-
-    try {
-
-        const result =
-            await apiRequest(
-                "/api/bot/" +
-                encodeURIComponent(
-                    userId
-                )
-            );
-
-
-        state.bot =
-            result?.bot ||
-            result?.data?.bot ||
-            result?.data ||
-            result ||
-            null;
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "Bot error:",
-            error
-        );
-
-
-        state.bot =
-            null;
-
-    }
-
-}
-
-
-// =====================================
-// Load Trades :: M
-// =====================================
-
-async function loadTrades() {
-
-    const userId =
-        getBackendUserId();
-
-
-    if (!userId) {
-
-        state.trades =
-            [];
-
-        return;
-
-    }
-
-
-    if (
-        !isAccessAllowed()
-    ) {
-
-        state.trades =
-            [];
-
-        return;
-
-    }
-
-
-    try {
-
-        const result =
-            await apiRequest(
-                "/api/trades/" +
-                encodeURIComponent(
-                    userId
-                )
-            );
-
-
-        state.trades =
-
-            Array.isArray(result)
-
-                ? result
-
-                : (
-                    result?.trades ||
-                    result?.data?.trades ||
-                    result?.data ||
-                    []
-                );
-
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "Trades error:",
-            error
-        );
-
-
-        state.trades =
-            [];
-
-    }
+    );
 
 }
 
@@ -906,37 +587,31 @@ async function loadExchangeRate() {
 
     try {
 
-        const result =
+        const response =
             await apiRequest(
                 "/api/currency/exchange-rate"
             );
 
 
+        const currency =
+            response?.currency;
+
+
         const rate =
-            numberValue(
-
-                result?.exchangeRate ??
-
-                result?.currency?.USD?.Toman ??
-
-                result?.data?.exchangeRate ??
-
-                result?.data?.currency?.USD?.Toman ??
-
-                result?.rate ??
-
-                result?.data?.rate ??
-
-                0
-
+            Number(
+                currency?.exchangeRate
             );
 
 
-        state.exchangeRate =
-            rate;
+        if (
+            Number.isFinite(rate) &&
+            rate > 0
+        ) {
 
+            state.exchangeRate =
+                rate;
 
-        return rate;
+        }
 
     }
 
@@ -947,12 +622,78 @@ async function loadExchangeRate() {
             error
         );
 
+    }
 
-        state.exchangeRate =
-            0;
+}
 
 
-        return 0;
+// =====================================
+// Load Wallet :: M
+// =====================================
+
+async function loadWallet() {
+
+    const user =
+        getUser();
+
+
+    if (
+        !user._id &&
+        !user.id
+    ) {
+
+        return;
+
+    }
+
+
+    const userId =
+        user._id ||
+        user.id;
+
+
+    try {
+
+        const response =
+            await apiRequest(
+
+                `/api/wallet/${encodeURIComponent(
+                    userId
+                )}`
+
+            );
+
+
+        state.wallet =
+            response?.wallet ||
+            response?.data ||
+            response ||
+            null;
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Wallet error:",
+            error
+        );
+
+        state.wallet = {
+
+            balanceUSD:
+                0,
+
+            balanceToman:
+                0,
+
+            totalProfit:
+                0,
+
+            withdrawable:
+                0
+
+        };
 
     }
 
@@ -960,40 +701,108 @@ async function loadExchangeRate() {
 
 
 // =====================================
-// Load All Data :: M
+// Load Trades :: M
 // =====================================
 
-async function loadData() {
+async function loadTrades() {
 
-    if (
-        !isAccessAllowed()
-    ) {
+    try {
 
-        state.wallet =
-            null;
+        const response =
+            await apiRequest(
+                "/api/trades/me"
+            );
 
-        state.bot =
-            null;
 
         state.trades =
+            response?.trades ||
+            response?.data ||
             [];
+
+
+        if (
+            !Array.isArray(
+                state.trades
+            )
+        ) {
+
+            state.trades = [];
+
+        }
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Trades error:",
+            error
+        );
+
+        state.trades = [];
+
+    }
+
+}
+
+
+// =====================================
+// Load Bot :: M
+// =====================================
+
+async function loadBot() {
+
+    const user =
+        getUser();
+
+
+    const userId =
+        user._id ||
+        user.id;
+
+
+    if (!userId) {
 
         return;
 
     }
 
 
-    await Promise.all([
+    try {
 
-        loadExchangeRate(),
+        const response =
+            await apiRequest(
 
-        loadWallet(),
+                `/api/bot/${encodeURIComponent(
+                    userId
+                )}`
 
-        loadBot(),
+            );
 
-        loadTrades()
 
-    ]);
+        state.bot =
+            response?.bot ||
+            response?.data ||
+            response ||
+            null;
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Bot error:",
+            error
+        );
+
+        state.bot = {
+
+            status:
+                "STOPPED"
+
+        };
+
+    }
 
 }
 
@@ -1005,34 +814,33 @@ async function loadData() {
 async function refreshData() {
 
     if (
-        state.refreshing
+        !isAccessAllowed()
     ) {
+
+        renderCurrentPage();
 
         return;
 
     }
 
 
-    state.refreshing =
+    state.loading =
         true;
 
 
     try {
 
-        showToast(
-            "در حال بروزرسانی اطلاعات..."
-        );
+        await Promise.all([
 
+            loadExchangeRate(),
 
-        await loadData();
+            loadWallet(),
 
+            loadTrades(),
 
-        renderCurrentPage();
+            loadBot()
 
-
-        showToast(
-            "اطلاعات با موفقیت بروزرسانی شد"
-        );
+        ]);
 
     }
 
@@ -1043,17 +851,14 @@ async function refreshData() {
             error
         );
 
-
-        showToast(
-            "بروزرسانی اطلاعات انجام نشد"
-        );
-
     }
 
     finally {
 
-        state.refreshing =
+        state.loading =
             false;
+
+        renderCurrentPage();
 
     }
 
@@ -1067,277 +872,257 @@ async function refreshData() {
 function renderAccessPage() {
 
     const user =
-        state.backendUser || {};
+        getUser();
 
 
-    const access =
-        getAccessStatus();
+    // =================================
+    // BLOCKED
+    // =================================
 
+    if (
+        user.status ===
+        "BLOCKED"
+    ) {
 
-    const app =
-        document.getElementById(
-            "app"
-        );
+        app.innerHTML = `
 
+            <div class="access-page">
 
-    if (!app) {
+                <div class="access-card">
+
+                    <div class="access-icon">
+                        🚫
+                    </div>
+
+                    <h2>
+                        دسترسی مسدود است
+                    </h2>
+
+                    <p>
+                        دسترسی حساب شما مسدود شده است.
+                    </p>
+
+                    <button
+                        class="primary-button"
+                        onclick="openSupport()"
+                    >
+                        ارتباط با پشتیبانی
+                    </button>
+
+                </div>
+
+            </div>
+
+        `;
 
         return;
 
     }
 
 
-    let icon =
-        "🔐";
-
-
-    let title =
-        "در انتظار تأیید مدیریت";
-
-
-    let message =
-        "اطلاعات شما با موفقیت ثبت شده است. پس از تأیید مدیریت، دسترسی AutoTrade AI برای شما فعال خواهد شد.";
-
-
-    // ---------------------------------
-    // Blocked
-    // ---------------------------------
+    // =================================
+    // REJECTED
+    // =================================
 
     if (
-        access.blocked
+        isApprovalRejected()
     ) {
 
-        icon =
-            "🚫";
+        app.innerHTML = `
 
+            <div class="access-page">
 
-        title =
-            "حساب شما مسدود شده است";
+                <div class="access-card">
 
+                    <div class="access-icon">
+                        ❌
+                    </div>
 
-        message =
-            "دسترسی حساب شما در حال حاضر مسدود است. برای بررسی وضعیت حساب با پشتیبانی AutoTrade AI ارتباط بگیرید.";
+                    <h2>
+                        درخواست تأیید نشد
+                    </h2>
+
+                    <p>
+                        درخواست شما توسط مدیریت تأیید نشد.
+                    </p>
+
+                    <p>
+                        در صورت نیاز به پشتیبانی با ما در ارتباط باشید.
+                    </p>
+
+                    <div class="support-name">
+                        ${escapeHtml(
+                            SUPPORT_USERNAME
+                        )}
+                    </div>
+
+                    <button
+                        class="primary-button"
+                        onclick="openSupport()"
+                    >
+                        ارتباط با پشتیبانی
+                    </button>
+
+                </div>
+
+            </div>
+
+        `;
+
+        return;
 
     }
 
 
-    // ---------------------------------
-    // Rejected
-    // ---------------------------------
+    // =================================
+    // REGISTRATION INCOMPLETE
+    // =================================
+    //
+    // مهم:
+    // این قسمت قبل از Pending بررسی می‌شود.
+    // اگر اطلاعات کامل نباشد فقط پیام تکمیل
+    // ثبت‌نام نمایش داده می‌شود.
+    //
+    // =================================
 
-    else if (
-        access.rejected
+    if (
+        !isRegistrationComplete()
     ) {
 
-        icon =
-            "❌";
+        app.innerHTML = `
 
+            <div class="access-page">
 
-        title =
-            "درخواست شما تأیید نشد";
+                <div class="access-card">
 
+                    <div class="access-icon">
+                        📝
+                    </div>
 
-        message =
-            "❌ درخواست شما توسط مدیریت تأیید نشد.\nدر صورت نیاز به پشتیبانی پیام بدهید";
+                    <h2>
+                        تکمیل ثبت‌نام
+                    </h2>
+
+                    <p>
+                        لطفاً ابتدا ثبت نام خود را کامل کنید.
+                    </p>
+
+                    <button
+                        class="primary-button"
+                        onclick="openTelegramBot()"
+                    >
+                        تکمیل ثبت‌نام
+                    </button>
+
+                </div>
+
+            </div>
+
+        `;
+
+        return;
 
     }
 
 
-    // ---------------------------------
-    // Registration incomplete
-    // ---------------------------------
+    // =================================
+    // REGISTRATION COMPLETE + PENDING
+    // =================================
+    //
+    // این همان متن دقیق موردنظر کاربر است.
+    //
+    // =================================
 
-    else if (
-        !access.registrationComplete
+    if (
+        isApprovalPending() ||
+        (
+            user.accessEnabled !== true &&
+            user.approvalStatus !==
+                "APPROVED"
+        )
     ) {
 
-        icon =
-            "📝";
+        app.innerHTML = `
 
+            <div class="access-page">
 
-        title =
-            "تکمیل ثبت‌نام";
+                <div class="access-card">
 
+                    <div class="access-icon">
+                        ⏳
+                    </div>
 
-        message =
-            "برای استفاده از AutoTrade AI ابتدا باید نام، نام خانوادگی و شماره تلفن شما ثبت شود.";
+                    <h2>
+                        در انتظار تأیید مدیریت
+                    </h2>
+
+                    <p class="pending-message">
+                        <strong>
+                            ✅ اطلاعات شما با موفقیت ثبت شد.
+                        </strong>
+                        <br><br>
+
+                        <strong>
+                            ⏳ در انتظار تأیید مدیریت
+                        </strong>
+                        <br><br>
+
+                        ثبت‌نام شما تکمیل شده و درخواست دسترسی شما برای مدیریت ارسال شد.
+                        <br><br>
+
+                        پس از تأیید، پیام فعال شدن دسترسی برای شما ارسال خواهد شد.
+                        <br><br>
+
+                        🙏 لطفاً منتظر بمانید.
+                    </p>
+
+                </div>
+
+            </div>
+
+        `;
+
+        return;
 
     }
 
 
-    // ---------------------------------
-    // Pending
-    // ---------------------------------
+    // =================================
+    // APPROVED
+    // =================================
 
-    else {
+    if (
+        isAccessAllowed()
+    ) {
 
-        icon =
-            "⏳";
+        renderDashboard();
 
-
-        title =
-            "در انتظار تأیید مدیریت";
-
-
-        message =
-            "ثبت‌نام شما کامل شده است. درخواست شما برای مدیریت ارسال شده و پس از تأیید، دسترسی AutoTrade AI برای شما فعال خواهد شد.";
+        return;
 
     }
 
+
+    // =================================
+    // DEFAULT
+    // =================================
 
     app.innerHTML = `
 
-        <div class="page">
+        <div class="access-page">
 
-            <div class="top-header">
+            <div class="access-card">
 
-                <div class="brand">
-
-                    <div class="brand-logo">
-                        AI
-                    </div>
-
-                    <div class="brand-text">
-
-                        <div class="brand-title">
-                            AutoTrade AI
-                        </div>
-
-                        <div class="brand-subtitle">
-                            وضعیت حساب
-                        </div>
-
-                    </div>
-
+                <div class="access-icon">
+                    ⏳
                 </div>
-
-            </div>
-
-
-            <div class="glass-card support-card">
-
-                <div class="support-icon">
-                    ${icon}
-                </div>
-
 
                 <h2>
-                    ${escapeHtml(
-                        title
-                    )}
+                    در انتظار تأیید مدیریت
                 </h2>
 
-
-                <p style="white-space:pre-line">
-
-                    ${escapeHtml(
-                        message
-                    )}
-
+                <p>
+                    اطلاعات شما ثبت شده است و درخواست دسترسی شما در حال بررسی مدیریت است.
                 </p>
-
-
-                ${
-                    access.rejected
-
-                        ? `
-
-                            <div
-                                class="support-username"
-                                style="margin:16px 0"
-                            >
-                                ${escapeHtml(
-                                    SUPPORT_USERNAME
-                                )}
-                            </div>
-
-                        `
-
-                        : ""
-                }
-
-
-                <button
-                    type="button"
-                    class="support-button"
-                    onclick="openSupport()"
-                >
-                    ارتباط با پشتیبانی
-                </button>
-
-            </div>
-
-        </div>
-
-    `;
-
-}
-
-
-// =====================================
-// Header :: M
-// =====================================
-
-function renderHeader() {
-
-    const user =
-        state.telegramUser || {};
-
-
-    const firstName =
-        user.first_name ||
-        state.backendUser?.firstName ||
-        "کاربر";
-
-
-    return `
-
-        <div class="top-header">
-
-            <div class="brand">
-
-                <div class="brand-logo">
-                    AI
-                </div>
-
-                <div class="brand-text">
-
-                    <div class="brand-title">
-                        AutoTrade AI
-                    </div>
-
-                    <div class="brand-subtitle">
-
-                        سلام ${escapeHtml(
-                            firstName
-                        )} 👋
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <div class="header-actions">
-
-                <button
-                    type="button"
-                    class="icon-button"
-                    onclick="refreshData()"
-                    title="بروزرسانی"
-                >
-                    ↻
-                </button>
-
-
-                <button
-                    type="button"
-                    class="icon-button"
-                    onclick="goTo('profile')"
-                >
-                    👤
-                </button>
 
             </div>
 
@@ -1358,162 +1143,71 @@ function renderDashboard() {
         state.wallet || {};
 
 
-    const bot =
-        state.bot || {};
-
-
     const balance =
-        numberValue(
-            wallet.balance
+        Number(
+            wallet.balanceUSD ||
+            wallet.balance ||
+            0
         );
 
 
-    const totalProfit =
-        numberValue(
-            wallet.totalProfit
-        );
-
-
-    const totalTrades =
-        numberValue(
-            wallet.totalTrades
+    const profit =
+        Number(
+            wallet.totalProfit ||
+            wallet.profit ||
+            0
         );
 
 
     const withdrawable =
-        numberValue(
-            wallet.withdrawable
+        Number(
+            wallet.withdrawable ||
+            0
         );
 
 
-    const rate =
-        numberValue(
-            state.exchangeRate
-        );
-
-
-    const status =
-        String(
-            bot.status ||
-            "STOPPED"
-        )
-            .toUpperCase();
-
-
-    let statusClass =
-        "stopped";
-
-
-    let statusText =
-        "متوقف";
-
-
-    if (
-        status === "ACTIVE"
-    ) {
-
-        statusClass =
-            "active";
-
-        statusText =
-            "فعال";
-
-    }
-
-
-    if (
-        status === "PENDING"
-    ) {
-
-        statusClass =
-            "pending";
-
-        statusText =
-            "در انتظار";
-
-    }
-
-
-    const app =
-        document.getElementById(
-            "app"
-        );
-
-
-    if (!app) {
-
-        return;
-
-    }
+    const botStatus =
+        state.bot?.status ||
+        "STOPPED";
 
 
     app.innerHTML = `
 
-        <div class="page">
+        <div class="dashboard-page">
 
-            ${renderHeader()}
+            <div class="top-header">
 
+                <div>
+                    <div class="brand">
+                        AutoTrade AI
+                    </div>
 
-            <div class="glass-card balance-card">
-
-                <div class="balance-top">
-
-                    <span class="balance-label">
-                        موجودی کل
-                    </span>
-
-                    <span class="currency-badge">
-                        USDT
-                    </span>
-
+                    <div class="subtitle">
+                        وضعیت حساب
+                    </div>
                 </div>
 
-
-                <div class="balance-value">
-
-                    $${formatNumber(
-                        balance
-                    )}
-
+                <div class="ai-badge">
+                    AI
                 </div>
 
+            </div>
+
+
+            <div class="balance-card">
+
+                <div class="card-label">
+                    موجودی حساب
+                </div>
+
+                <div class="balance-usd">
+                    $${formatNumber(balance)}
+                </div>
 
                 <div class="balance-toman">
-
-                    معادل تومان:
-
-                    ${
-                        rate > 0
-
-                            ? formatToman(
-                                balance * rate
-                            )
-
-                            : "در حال دریافت نرخ..."
-                    }
-
-                </div>
-
-
-                <div class="action-row">
-
-                    <button
-                        type="button"
-                        class="primary-button"
-                        onclick="goTo('wallet')"
-                    >
-                        کیف پول
-                    </button>
-
-
-                    <button
-                        type="button"
-                        class="secondary-button"
-                        onclick="goTo('withdraw')"
-                    >
-                        برداشت
-                    </button>
-
+                    ${formatToman(
+                        usdToToman(balance)
+                    )}
                 </div>
 
             </div>
@@ -1521,82 +1215,43 @@ function renderDashboard() {
 
             <div class="stats-grid">
 
-                <div class="glass-card stat-card">
+                <div class="stat-card">
 
-                    <div class="stat-label">
+                    <div class="stat-title">
                         سود کل
                     </div>
 
-                    <div class="stat-value green">
-
-                        $${formatNumber(
-                            totalProfit
-                        )}
-
-                    </div>
-
-                </div>
-
-
-                <div class="glass-card stat-card">
-
-                    <div class="stat-label">
-                        معاملات
-                    </div>
-
                     <div class="stat-value">
+                        $${formatNumber(profit)}
+                    </div>
 
-                        ${formatNumber(
-                            totalTrades,
-                            0
+                    <div class="stat-toman">
+                        ${formatToman(
+                            usdToToman(profit)
                         )}
-
                     </div>
 
                 </div>
 
 
-                <div class="glass-card stat-card">
+                <div class="stat-card">
 
-                    <div class="stat-label">
+                    <div class="stat-title">
                         قابل برداشت
                     </div>
 
                     <div class="stat-value">
-
                         $${formatNumber(
                             withdrawable
                         )}
-
                     </div>
 
-                </div>
-
-
-                <div class="glass-card stat-card">
-
-                    <div class="stat-label">
-                        نرخ دلار
-                    </div>
-
-                    <div class="stat-value">
-
-                        ${
-                            rate > 0
-
-                                ? formatNumber(
-                                    rate,
-                                    0
-                                )
-
-                                : "0"
-                        }
-
-                    </div>
-
-
-                    <div class="stat-label">
-                        تومان
+                    <div class="stat-toman">
+                        ${formatToman(
+                            usdToToman(
+                                withdrawable
+                            )
+                        )}
                     </div>
 
                 </div>
@@ -1604,164 +1259,92 @@ function renderDashboard() {
             </div>
 
 
-            <div class="section-title">
+            <div class="ai-card">
 
-                <h2>
-                    ربات هوشمند
-                </h2>
-
-                <span>
-                    AutoTrade AI
-                </span>
-
-            </div>
-
-
-            <div class="glass-card bot-card">
-
-                <div class="bot-header">
-
-                    <div class="bot-name">
-                        AI Trading Bot
-                    </div>
-
-
-                    <div
-                        class="status ${statusClass}"
-                    >
-                        ${statusText}
-                    </div>
-
+                <div class="ai-card-title">
+                    🤖 موتور هوش مصنوعی
                 </div>
 
-
-                <div class="bot-info">
-
-                    <div class="info-box">
-
-                        <span class="info-label">
-                            استراتژی
-                        </span>
-
-                        <span class="info-value">
-
-                            ${escapeHtml(
-                                bot.strategy ||
-                                "AI Scalping"
-                            )}
-
-                        </span>
-
-                    </div>
-
-
-                    <div class="info-box">
-
-                        <span class="info-label">
-                            دقت
-                        </span>
-
-                        <span class="info-value">
-
-                            ${formatNumber(
-                                bot.accuracy
-                            )}%
-
-                        </span>
-
-                    </div>
-
-
-                    <div class="info-box">
-
-                        <span class="info-label">
-                            آخرین سیگنال
-                        </span>
-
-                        <span class="info-value">
-
-                            ${escapeHtml(
-                                bot.lastSignal ||
-                                "WAIT"
-                            )}
-
-                        </span>
-
-                    </div>
-
-
-                    <div class="info-box">
-
-                        <span class="info-label">
-                            وضعیت
-                        </span>
-
-                        <span class="info-value">
-
-                            ${statusText}
-
-                        </span>
-
-                    </div>
-
+                <div class="ai-card-status">
+                    ${
+                        botStatus ===
+                        "ACTIVE"
+                            ? "فعال"
+                            : "متوقف"
+                    }
                 </div>
-
 
                 <button
-                    type="button"
                     class="primary-button"
-                    style="width:100%"
-                    onclick="startBot()"
+                    onclick="toggleBot()"
                 >
-                    شروع معامله خودکار
+                    ${
+                        botStatus ===
+                        "ACTIVE"
+                            ? "توقف معاملات AI"
+                            : "شروع معاملات AI"
+                    }
                 </button>
 
             </div>
 
 
-            <div class="section-title">
+            <div class="section-card">
 
-                <h2>
-                    معاملات اخیر
-                </h2>
+                <div class="section-title">
+                    📊 آخرین معاملات
+                </div>
 
-                <span>
-                    ${state.trades.length}
-                    معامله
-                </span>
+                ${
+                    renderRecentTrades()
+                }
 
             </div>
 
 
-            ${
-                state.trades.length === 0
+            <div class="bottom-nav">
 
-                    ? `
+                <button
+                    onclick="goTo('dashboard')"
+                    class="nav-button active"
+                >
+                    🏠
+                    <span>
+                        خانه
+                    </span>
+                </button>
 
-                        <div class="glass-card empty-card">
+                <button
+                    onclick="goTo('trades')"
+                    class="nav-button"
+                >
+                    📊
+                    <span>
+                        معاملات
+                    </span>
+                </button>
 
-                            <div class="empty-icon">
-                                📊
-                            </div>
+                <button
+                    onclick="goTo('wallet')"
+                    class="nav-button"
+                >
+                    💰
+                    <span>
+                        کیف پول
+                    </span>
+                </button>
 
-                            <div class="empty-title">
-                                هنوز معامله‌ای ثبت نشده است
-                            </div>
+                <button
+                    onclick="goTo('profile')"
+                    class="nav-button"
+                >
+                    👤
+                    <span>
+                        پروفایل
+                    </span>
+                </button>
 
-                            <div class="empty-text">
-                                معاملات واقعی پس از ثبت
-                                در این قسمت نمایش داده می‌شوند.
-                            </div>
-
-                        </div>
-
-                    `
-
-                    : renderRecentTrades()
-            }
-
-
-            ${renderBottomNavigation()}
+            </div>
 
         </div>
 
@@ -1776,353 +1359,98 @@ function renderDashboard() {
 
 function renderRecentTrades() {
 
-    return `
-
-        <div>
-
-            ${
-                state.trades
-                    .slice(0, 5)
-                    .map(
-                        trade => {
-
-                            const profit =
-                                numberValue(
-                                    trade.profit
-                                );
+    const trades =
+        Array.isArray(
+            state.trades
+        )
+            ? state.trades.slice(
+                0,
+                5
+            )
+            : [];
 
 
-                            return `
+    if (
+        trades.length === 0
+    ) {
 
-                                <div
-                                    class="glass-card stat-card"
-                                    style="margin-bottom:10px"
-                                >
+        return `
 
-                                    <div class="stat-label">
+            <div class="empty-state">
+                هنوز معامله‌ای ثبت نشده است.
+            </div>
 
-                                        ${escapeHtml(
-                                            trade.symbol ||
-                                            "نامشخص"
-                                        )}
-
-                                    </div>
-
-
-                                    <div
-                                        class="stat-value ${
-                                            profit >= 0
-                                                ? "green"
-                                                : ""
-                                        }"
-                                    >
-
-                                        ${
-                                            profit >= 0
-                                                ? "+"
-                                                : ""
-                                        }$${formatNumber(
-                                            profit
-                                        )}
-
-                                    </div>
-
-                                </div>
-
-                            `;
-
-                        }
-                    )
-                    .join("")
-            }
-
-        </div>
-
-    `;
-
-}
-
-
-// =====================================
-// Wallet :: M
-// =====================================
-
-function renderWallet() {
-
-    const wallet =
-        state.wallet || {};
-
-
-    const balance =
-        numberValue(
-            wallet.balance
-        );
-
-
-    const withdrawable =
-        numberValue(
-            wallet.withdrawable
-        );
-
-
-    const totalProfit =
-        numberValue(
-            wallet.totalProfit
-        );
-
-
-    const rate =
-        numberValue(
-            state.exchangeRate
-        );
-
-
-    const app =
-        document.getElementById(
-            "app"
-        );
-
-
-    if (!app) {
-
-        return;
+        `;
 
     }
 
 
-    app.innerHTML = `
+    return trades.map(
+        trade => {
 
-        <div class="page">
-
-            <div class="page-header">
-
-                <h1>
-                    کیف پول
-                </h1>
-
-            </div>
+            const profit =
+                Number(
+                    trade.profit || 0
+                );
 
 
-            <div class="glass-card balance-card">
-
-                <div class="balance-top">
-
-                    <span class="balance-label">
-                        موجودی
-                    </span>
-
-                    <span class="currency-badge">
-                        USDT
-                    </span>
-
-                </div>
+            const symbol =
+                escapeHtml(
+                    trade.symbol ||
+                    "Unknown"
+                );
 
 
-                <div class="balance-value">
+            return `
 
-                    $${formatNumber(
-                        balance
-                    )}
+                <div class="trade-row">
 
-                </div>
+                    <div>
 
+                        <strong>
+                            ${symbol}
+                        </strong>
 
-                <div class="balance-toman">
-
-                    معادل تومان:
-
-                    ${
-                        rate > 0
-
-                            ? formatToman(
-                                balance * rate
-                            )
-
-                            : "در حال دریافت نرخ..."
-                    }
-
-                </div>
-
-
-                <div class="action-row">
-
-                    <button
-                        type="button"
-                        class="primary-button"
-                        onclick="showToast('اتصال واریز در مرحله اتصال درگاه فعال می‌شود')"
-                    >
-                        واریز
-                    </button>
-
-
-                    <button
-                        type="button"
-                        class="secondary-button"
-                        onclick="goTo('withdraw')"
-                    >
-                        برداشت
-                    </button>
-
-                </div>
-
-            </div>
-
-
-            <div class="section-title">
-
-                <h2>
-                    خلاصه کیف پول
-                </h2>
-
-            </div>
-
-
-            <div class="stats-grid">
-
-                <div class="glass-card stat-card">
-
-                    <div class="stat-label">
-                        موجودی قابل برداشت
-                    </div>
-
-
-                    <div class="stat-value">
-
-                        $${formatNumber(
-                            withdrawable
-                        )}
-
-                    </div>
-
-
-                    <div class="stat-label">
-
-                        ${
-                            rate > 0
-
-                                ? formatToman(
-                                    withdrawable * rate
+                        <div>
+                            ${
+                                escapeHtml(
+                                    trade.type ||
+                                    ""
                                 )
+                            }
+                        </div>
 
-                                : "0 تومان"
-                        }
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            ${
+                                profit >= 0
+                                    ? "+"
+                                    : ""
+                            }$${formatNumber(
+                                profit
+                            )}
+                        </strong>
 
                     </div>
 
                 </div>
 
+            `;
 
-                <div class="glass-card stat-card">
-
-                    <div class="stat-label">
-                        سود کل
-                    </div>
-
-
-                    <div class="stat-value green">
-
-                        $${formatNumber(
-                            totalProfit
-                        )}
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <div class="section-title">
-
-                <h2>
-                    نرخ تبدیل
-                </h2>
-
-            </div>
-
-
-            <div class="glass-card stat-card">
-
-                <div class="stat-label">
-                    نرخ ۱ دلار
-                </div>
-
-
-                <div class="stat-value">
-
-                    ${
-                        rate > 0
-
-                            ? formatNumber(
-                                rate,
-                                0
-                            )
-
-                            : "0"
-                    }
-
-                    تومان
-
-                </div>
-
-            </div>
-
-
-            <div class="section-title">
-
-                <h2>
-                    تراکنش‌ها
-                </h2>
-
-            </div>
-
-
-            <div class="glass-card empty-card">
-
-                <div class="empty-icon">
-                    💳
-                </div>
-
-
-                <div class="empty-title">
-                    هنوز تراکنشی وجود ندارد
-                </div>
-
-
-                <div class="empty-text">
-                    تراکنش‌های شما اینجا نمایش داده می‌شوند.
-                </div>
-
-            </div>
-
-
-            ${renderBottomNavigation()}
-
-        </div>
-
-    `;
+        }
+    ).join("");
 
 }
 
 
 // =====================================
-// Trades :: M
+// Trades Page :: M
 // =====================================
 
 function renderTrades() {
-
-    const app =
-        document.getElementById(
-            "app"
-        );
-
-
-    if (!app) {
-
-        return;
-
-    }
-
 
     const trades =
         Array.isArray(
@@ -2132,114 +1460,96 @@ function renderTrades() {
             : [];
 
 
-    let content =
-        "";
-
-
-    if (
-        trades.length === 0
-    ) {
-
-        content = `
-
-            <div class="glass-card empty-card">
-
-                <div class="empty-icon">
-                    📈
-                </div>
-
-
-                <div class="empty-title">
-                    هنوز معامله‌ای وجود ندارد
-                </div>
-
-
-                <div class="empty-text">
-                    پس از انجام معامله،
-                    نتیجه آن اینجا نمایش داده می‌شود.
-                </div>
-
-            </div>
-
-        `;
-
-    }
-
-    else {
-
-        content =
-            trades
-                .slice(0, 20)
-                .map(
-                    trade => {
-
-                        const profit =
-                            numberValue(
-                                trade.profit
-                            );
-
-
-                        return `
-
-                            <div
-                                class="glass-card stat-card"
-                                style="margin-bottom:10px"
-                            >
-
-                                <div class="stat-label">
-
-                                    ${escapeHtml(
-                                        trade.symbol ||
-                                        "نامشخص"
-                                    )}
-
-                                </div>
-
-
-                                <div class="stat-value ${
-                                    profit >= 0
-                                        ? "green"
-                                        : ""
-                                }">
-
-                                    ${
-                                        profit >= 0
-                                            ? "+"
-                                            : ""
-                                    }$${formatNumber(
-                                        profit
-                                    )}
-
-                                </div>
-
-                            </div>
-
-                        `;
-
-                    }
-                )
-                .join("");
-
-    }
-
-
     app.innerHTML = `
 
-        <div class="page">
+        <div class="dashboard-page">
 
             <div class="page-header">
 
-                <h1>
+                <button
+                    onclick="goTo('dashboard')"
+                    class="back-button"
+                >
+                    ←
+                </button>
+
+                <h2>
                     معاملات
-                </h1>
+                </h2>
 
             </div>
 
 
-            ${content}
+            <div class="section-card">
+
+                ${
+                    trades.length
+                        ? trades.map(
+                            trade => {
+
+                                const profit =
+                                    Number(
+                                        trade.profit ||
+                                        0
+                                    );
 
 
-            ${renderBottomNavigation()}
+                                return `
+
+                                    <div class="trade-row">
+
+                                        <div>
+
+                                            <strong>
+                                                ${
+                                                    escapeHtml(
+                                                        trade.symbol ||
+                                                        "Unknown"
+                                                    )
+                                                }
+                                            </strong>
+
+                                            <div>
+                                                ${
+                                                    escapeHtml(
+                                                        trade.type ||
+                                                        ""
+                                                    )
+                                                }
+                                            </div>
+
+                                        </div>
+
+                                        <div>
+
+                                            <strong>
+                                                ${
+                                                    profit >= 0
+                                                        ? "+"
+                                                        : ""
+                                                }$${formatNumber(
+                                                    profit
+                                                )}
+                                            </strong>
+
+                                        </div>
+
+                                    </div>
+
+                                `;
+
+                            }
+                        ).join("")
+                        : `
+
+                            <div class="empty-state">
+                                هنوز معامله‌ای ثبت نشده است.
+                            </div>
+
+                        `
+                }
+
+            </div>
 
         </div>
 
@@ -2249,128 +1559,90 @@ function renderTrades() {
 
 
 // =====================================
-// Withdraw Page :: M
+// Wallet Page :: M
 // =====================================
 
-function renderWithdraw() {
+function renderWallet() {
 
     const wallet =
         state.wallet || {};
 
 
+    const balance =
+        Number(
+            wallet.balanceUSD ||
+            wallet.balance ||
+            0
+        );
+
+
     const withdrawable =
-        numberValue(
-            wallet.withdrawable
+        Number(
+            wallet.withdrawable ||
+            0
         );
-
-
-    const rate =
-        numberValue(
-            state.exchangeRate
-        );
-
-
-    const app =
-        document.getElementById(
-            "app"
-        );
-
-
-    if (!app) {
-
-        return;
-
-    }
 
 
     app.innerHTML = `
 
-        <div class="page">
+        <div class="dashboard-page">
 
             <div class="page-header">
 
                 <button
-                    type="button"
-                    class="icon-button"
-                    onclick="goTo('wallet')"
+                    onclick="goTo('dashboard')"
+                    class="back-button"
                 >
                     ←
                 </button>
 
-
-                <h1>
-                    برداشت تومان
-                </h1>
+                <h2>
+                    کیف پول
+                </h2>
 
             </div>
 
 
-            <div class="glass-card balance-card">
+            <div class="balance-card">
 
-                <div class="balance-label">
-                    موجودی قابل برداشت
+                <div class="card-label">
+                    موجودی
                 </div>
 
+                <div class="balance-usd">
+                    $${formatNumber(balance)}
+                </div>
 
-                <div class="balance-value">
+                <div class="balance-toman">
+                    ${formatToman(
+                        usdToToman(balance)
+                    )}
+                </div>
 
+            </div>
+
+
+            <div class="section-card">
+
+                <div class="stat-title">
+                    مبلغ قابل برداشت
+                </div>
+
+                <div class="stat-value">
                     $${formatNumber(
                         withdrawable
                     )}
-
                 </div>
 
-
-                <div class="balance-toman">
-
-                    معادل تقریبی:
-
-                    ${
-                        rate > 0
-
-                            ? formatToman(
-                                withdrawable * rate
-                            )
-
-                            : "0 تومان"
-                    }
-
+                <div class="stat-toman">
+                    ${formatToman(
+                        usdToToman(
+                            withdrawable
+                        )
+                    )}
                 </div>
 
             </div>
-
-
-            <div class="glass-card support-card">
-
-                <div class="support-icon">
-                    💳
-                </div>
-
-
-                <h2>
-                    برداشت به تومان
-                </h2>
-
-
-                <p>
-                    درخواست برداشت شما بر اساس
-                    نرخ دلار ثبت‌شده محاسبه می‌شود.
-                </p>
-
-
-                <button
-                    type="button"
-                    class="primary-button"
-                    style="width:100%"
-                    onclick="showToast('فرم برداشت در مرحله اتصال نهایی فعال می‌شود')"
-                >
-                    ثبت درخواست برداشت
-                </button>
-
-            </div>
-
-
-            ${renderBottomNavigation()}
 
         </div>
 
@@ -2380,422 +1652,206 @@ function renderWithdraw() {
 
 
 // =====================================
-// Profile :: M
+// Profile Page :: M
 // =====================================
 
 function renderProfile() {
 
-    const telegramUser =
-        state.telegramUser || {};
+    const user =
+        getUser();
 
 
-    const backendUser =
-        state.backendUser || {};
+    const telegram =
+        state.telegramUser ||
+        {};
 
 
     const firstName =
-        telegramUser.first_name ||
-        backendUser.firstName ||
+        user.firstName ||
+        telegram.first_name ||
         "";
 
 
     const lastName =
-        telegramUser.last_name ||
-        backendUser.lastName ||
+        user.lastName ||
+        telegram.last_name ||
         "";
 
 
-    const fullName =
-        (
-            firstName +
-            " " +
-            lastName
-        )
-            .trim() ||
-        "کاربر";
-
-
     const username =
-        telegramUser.username
+        user.username ||
+        telegram.username ||
+        "";
 
-            ? "@" +
-              telegramUser.username
 
+    const phone =
+        user.phoneNumber ||
+        "";
+
+
+    const status =
+        user.isAdmin
+            ? "مدیر"
             : (
-                backendUser.username
-
-                    ? (
-                        String(
-                            backendUser.username
-                        )
-                            .startsWith("@")
-
-                            ? backendUser.username
-
-                            : "@" +
-                              backendUser.username
+                user.approvalStatus ===
+                    "APPROVED"
+                    ? "فعال"
+                    : (
+                        user.approvalStatus ===
+                            "PENDING"
+                            ? "در انتظار تأیید"
+                            : "غیرفعال"
                     )
-
-                    : "بدون آیدی"
             );
-
-
-    const telegramId =
-        telegramUser.id ||
-        backendUser.telegramId ||
-        0;
-
-
-    const phoneNumber =
-        backendUser.phoneNumber ||
-        backendUser.phone ||
-        backendUser.mobile ||
-        "ثبت نشده";
-
-
-    const registrationDate =
-        backendUser.createdAt ||
-        backendUser.registeredAt ||
-        backendUser.created_at ||
-        backendUser.createdDate ||
-        null;
-
-
-    const loginDate =
-        state.loginTime ||
-        new Date();
-
-
-    const access =
-        getAccessStatus();
-
-
-    let accessText =
-        "در انتظار تأیید";
-
-
-    let accessClass =
-        "pending";
-
-
-    if (
-        access.allowed
-    ) {
-
-        accessText =
-            access.isAdmin
-                ? "مدیر / سازنده"
-                : "فعال";
-
-
-        accessClass =
-            "active";
-
-    }
-
-
-    else if (
-        access.blocked
-    ) {
-
-        accessText =
-            "مسدود";
-
-
-        accessClass =
-            "stopped";
-
-    }
-
-
-    else if (
-        access.rejected
-    ) {
-
-        accessText =
-            "رد شده";
-
-
-        accessClass =
-            "stopped";
-
-    }
-
-
-    else if (
-        !access.registrationComplete
-    ) {
-
-        accessText =
-            "ثبت‌نام ناقص";
-
-
-        accessClass =
-            "pending";
-
-    }
-
-
-    const app =
-        document.getElementById(
-            "app"
-        );
-
-
-    if (!app) {
-
-        return;
-
-    }
 
 
     app.innerHTML = `
 
-        <div class="page">
+        <div class="dashboard-page">
 
             <div class="page-header">
 
-                <h1>
+                <button
+                    onclick="goTo('dashboard')"
+                    class="back-button"
+                >
+                    ←
+                </button>
+
+                <h2>
                     پروفایل
-                </h1>
+                </h2>
 
             </div>
 
 
-            <div
-                class="glass-card profile-card"
-            >
+            <div class="profile-card">
 
-                <div class="profile-main">
-
-                    <div class="avatar">
-
-                        <span>
-                            AI
-                        </span>
-
-                    </div>
-
-
-                    <div>
-
-                        <div class="profile-name">
-
-                            ${escapeHtml(
-                                fullName
-                            )}
-
-                        </div>
-
-
-                        <div class="profile-username">
-
-                            ${escapeHtml(
-                                username
-                            )}
-
-                        </div>
-
-                    </div>
-
+                <div class="profile-avatar">
+                    ${
+                        escapeHtml(
+                            (
+                                firstName ||
+                                "A"
+                            ).charAt(0)
+                        ).toUpperCase()
+                    }
                 </div>
 
 
-                <div class="profile-details">
+                <h2>
+                    ${
+                        escapeHtml(
+                            (
+                                firstName +
+                                " " +
+                                lastName
+                            ).trim() ||
+                            "کاربر"
+                        )
+                    }
+                </h2>
 
-                    <div class="detail-row">
 
-                        <span class="detail-label">
-                            نام
-                        </span>
+                <div class="profile-status">
+                    ${escapeHtml(status)}
+                </div>
+
+            </div>
 
 
-                        <span class="detail-value">
+            <div class="section-card">
 
-                            ${escapeHtml(
+                <div class="profile-row">
+
+                    <span>
+                        نام
+                    </span>
+
+                    <strong>
+                        ${
+                            escapeHtml(
                                 firstName ||
                                 "ثبت نشده"
-                            )}
+                            )
+                        }
+                    </strong>
 
-                        </span>
-
-                    </div>
-
-
-                    <div class="detail-row">
-
-                        <span class="detail-label">
-                            نام خانوادگی
-                        </span>
+                </div>
 
 
-                        <span class="detail-value">
+                <div class="profile-row">
 
-                            ${escapeHtml(
+                    <span>
+                        نام خانوادگی
+                    </span>
+
+                    <strong>
+                        ${
+                            escapeHtml(
                                 lastName ||
                                 "ثبت نشده"
-                            )}
+                            )
+                        }
+                    </strong>
 
-                        </span>
-
-                    </div>
-
-
-                    <div class="detail-row">
-
-                        <span class="detail-label">
-                            آیدی تلگرام
-                        </span>
+                </div>
 
 
-                        <span class="detail-value">
+                <div class="profile-row">
 
-                            ${escapeHtml(
-                                username
-                            )}
+                    <span>
+                        نام کاربری
+                    </span>
 
-                        </span>
+                    <strong>
+                        ${
+                            username
+                                ? "@" +
+                                  escapeHtml(
+                                      username
+                                  )
+                                : "ثبت نشده"
+                        }
+                    </strong>
 
-                    </div>
-
-
-                    <div class="detail-row">
-
-                        <span class="detail-label">
-                            شناسه تلگرام
-                        </span>
-
-
-                        <span class="detail-value">
-
-                            ${escapeHtml(
-                                telegramId
-                            )}
-
-                        </span>
-
-                    </div>
+                </div>
 
 
-                    <div class="detail-row">
+                <div class="profile-row">
 
-                        <span class="detail-label">
-                            شماره تلفن
-                        </span>
+                    <span>
+                        شماره تلفن
+                    </span>
 
-
-                        <span class="detail-value">
-
-                            ${escapeHtml(
-                                phoneNumber
-                            )}
-
-                        </span>
-
-                    </div>
-
-
-                    <div class="detail-row">
-
-                        <span class="detail-label">
-                            زمان ثبت‌نام
-                        </span>
-
-
-                        <span class="detail-value">
-
-                            ${
-                                registrationDate
-
-                                    ? formatDateTime(
-                                        registrationDate
-                                    )
-
-                                    : "ثبت نشده"
-                            }
-
-                        </span>
-
-                    </div>
-
-
-                    <div class="detail-row">
-
-                        <span class="detail-label">
-                            زمان ورود
-                        </span>
-
-
-                        <span class="detail-value">
-
-                            ${formatDateTime(
-                                loginDate
-                            )}
-
-                        </span>
-
-                    </div>
-
-
-                    <div class="detail-row">
-
-                        <span class="detail-label">
-                            وضعیت دسترسی
-                        </span>
-
-
-                        <span
-                            class="status ${accessClass}"
-                        >
-                            ${accessText}
-                        </span>
-
-                    </div>
+                    <strong>
+                        ${
+                            escapeHtml(
+                                phone ||
+                                "ثبت نشده"
+                            )
+                        }
+                    </strong>
 
                 </div>
 
             </div>
 
 
-            <div class="section-title">
+            <div class="section-card">
 
-                <h2>
+                <div class="section-title">
                     پشتیبانی
-                </h2>
-
-            </div>
-
-
-            <div
-                class="glass-card support-card"
-            >
-
-                <div class="support-icon">
-                    💬
                 </div>
 
-
-                <h2>
-                    پشتیبانی AutoTrade AI
-                </h2>
-
-
-                <p>
-                    برای ارتباط مستقیم با پشتیبانی
-                    روی دکمه زیر بزنید.
-                </p>
-
-
-                <div class="support-username">
+                <div class="support-name">
                     ${escapeHtml(
                         SUPPORT_USERNAME
                     )}
                 </div>
 
-
                 <button
-                    type="button"
-                    class="support-button"
+                    class="primary-button"
                     onclick="openSupport()"
                 >
                     ارتباط با پشتیبانی
@@ -2803,9 +1859,6 @@ function renderProfile() {
 
             </div>
 
-
-            ${renderBottomNavigation()}
-
         </div>
 
     `;
@@ -2814,350 +1867,28 @@ function renderProfile() {
 
 
 // =====================================
-// Bottom Navigation :: M
-// =====================================
-
-function renderBottomNavigation() {
-
-    return `
-
-        <nav class="bottom-nav">
-
-            <button
-                type="button"
-                class="nav-button ${
-                    state.currentPage ===
-                    "dashboard"
-                        ? "active"
-                        : ""
-                }"
-                onclick="goTo('dashboard')"
-            >
-
-                <span class="nav-icon">
-                    ⌂
-                </span>
-
-
-                <span>
-                    داشبورد
-                </span>
-
-            </button>
-
-
-            <button
-                type="button"
-                class="nav-button ${
-                    state.currentPage ===
-                    "wallet"
-                        ? "active"
-                        : ""
-                }"
-                onclick="goTo('wallet')"
-            >
-
-                <span class="nav-icon">
-                    ◇
-                </span>
-
-
-                <span>
-                    کیف پول
-                </span>
-
-            </button>
-
-
-            <button
-                type="button"
-                class="nav-button ${
-                    state.currentPage ===
-                    "trades"
-                        ? "active"
-                        : ""
-                }"
-                onclick="goTo('trades')"
-            >
-
-                <span class="nav-icon">
-                    ↕
-                </span>
-
-
-                <span>
-                    معاملات
-                </span>
-
-            </button>
-
-
-            <button
-                type="button"
-                class="nav-button ${
-                    state.currentPage ===
-                    "analytics"
-                        ? "active"
-                        : ""
-                }"
-                onclick="goTo('analytics')"
-            >
-
-                <span class="nav-icon">
-                    ◔
-                </span>
-
-
-                <span>
-                    آمار
-                </span>
-
-            </button>
-
-
-            <button
-                type="button"
-                class="nav-button ${
-                    state.currentPage ===
-                    "profile"
-                        ? "active"
-                        : ""
-                }"
-                onclick="goTo('profile')"
-            >
-
-                <span class="nav-icon">
-                    ◉
-                </span>
-
-
-                <span>
-                    پروفایل
-                </span>
-
-            </button>
-
-        </nav>
-
-    `;
-
-}
-
-
-// =====================================
-// Analytics :: M
-// =====================================
-
-function renderAnalytics() {
-
-    const wallet =
-        state.wallet || {};
-
-
-    const app =
-        document.getElementById(
-            "app"
-        );
-
-
-    if (!app) {
-
-        return;
-
-    }
-
-
-    app.innerHTML = `
-
-        <div class="page">
-
-            <div class="page-header">
-
-                <h1>
-                    آمار
-                </h1>
-
-            </div>
-
-
-            <div class="stats-grid">
-
-                <div class="glass-card stat-card">
-
-                    <div class="stat-label">
-                        کل معاملات
-                    </div>
-
-
-                    <div class="stat-value">
-
-                        ${formatNumber(
-                            wallet.totalTrades,
-                            0
-                        )}
-
-                    </div>
-
-                </div>
-
-
-                <div class="glass-card stat-card">
-
-                    <div class="stat-label">
-                        سود کل
-                    </div>
-
-
-                    <div class="stat-value green">
-
-                        $${formatNumber(
-                            wallet.totalProfit
-                        )}
-
-                    </div>
-
-                </div>
-
-
-                <div class="glass-card stat-card">
-
-                    <div class="stat-label">
-                        سود امروز
-                    </div>
-
-
-                    <div class="stat-value green">
-                        $0.00
-                    </div>
-
-                </div>
-
-
-                <div class="glass-card stat-card">
-
-                    <div class="stat-label">
-                        نرخ برد
-                    </div>
-
-
-                    <div class="stat-value">
-                        0.00%
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <div class="section-title">
-
-                <h2>
-                    وضعیت فعلی
-                </h2>
-
-            </div>
-
-
-            <div class="glass-card empty-card">
-
-                <div class="empty-icon">
-                    📊
-                </div>
-
-
-                <div class="empty-title">
-                    اطلاعات آماری واقعی
-                </div>
-
-
-                <div class="empty-text">
-                    آمار فقط بر اساس معاملات واقعی
-                    ثبت‌شده در Backend محاسبه خواهد شد.
-                </div>
-
-            </div>
-
-
-            ${renderBottomNavigation()}
-
-        </div>
-
-    `;
-
-}
-
-
-// =====================================
-// Render Current Page :: M
+// Current Page Renderer :: M
 // =====================================
 
 function renderCurrentPage() {
 
-    /*
-     * Backend همچنان مرجع اصلی امنیت است.
-     *
-     * Frontend فقط برای جلوگیری از نمایش
-     * صفحات غیرمجاز کنترل اضافه انجام می‌دهد.
-     */
+    // ---------------------------------
+    // Not authenticated
+    // ---------------------------------
 
     if (
-        !isAccessAllowed()
+        !state.backendUser
     ) {
-
-        renderAccessPage();
 
         return;
 
     }
 
 
-    if (
-        state.currentPage ===
-        "wallet"
-    ) {
-
-        renderWallet();
-
-        return;
-
-    }
-
-
-    if (
-        state.currentPage ===
-        "trades"
-    ) {
-
-        renderTrades();
-
-        return;
-
-    }
-
-
-    if (
-        state.currentPage ===
-        "withdraw"
-    ) {
-
-        renderWithdraw();
-
-        return;
-
-    }
-
-
-    if (
-        state.currentPage ===
-        "analytics"
-    ) {
-
-        renderAnalytics();
-
-        return;
-
-    }
-
+    // ---------------------------------
+    // Profile is available even before
+    // approval so user can see status.
+    // ---------------------------------
 
     if (
         state.currentPage ===
@@ -3171,34 +1902,98 @@ function renderCurrentPage() {
     }
 
 
-    renderDashboard();
+    // ---------------------------------
+    // All other pages require approval
+    // ---------------------------------
+
+    if (
+        !isAccessAllowed()
+    ) {
+
+        renderAccessPage();
+
+        return;
+
+    }
+
+
+    switch (
+        state.currentPage
+    ) {
+
+        case "dashboard":
+
+            renderDashboard();
+
+            break;
+
+
+        case "trades":
+
+            renderTrades();
+
+            break;
+
+
+        case "wallet":
+
+            renderWallet();
+
+            break;
+
+
+        default:
+
+            state.currentPage =
+                "dashboard";
+
+            renderDashboard();
+
+            break;
+
+    }
 
 }
 
 
 // =====================================
-// Navigation Handler :: M
+// Navigation :: M
 // =====================================
 
-function goTo(page) {
+function goTo(
+    page
+) {
 
-    /*
-     * پروفایل برای کاربر غیرتأییدشده
-     * همچنان قابل مشاهده است.
-     */
+    // ---------------------------------
+    // Profile always available
+    // ---------------------------------
 
     if (
-        !isAccessAllowed() &&
-        page !== "profile"
+        page === "profile"
     ) {
 
+        state.currentPage =
+            "profile";
+
+        renderCurrentPage();
+
+        return;
+
+    }
+
+
+    // ---------------------------------
+    // Other pages require approval
+    // ---------------------------------
+
+    if (
+        !isAccessAllowed()
+    ) {
+
+        state.currentPage =
+            "dashboard";
+
         renderAccessPage();
-
-
-        showToast(
-            getAccessMessage()
-        );
-
 
         return;
 
@@ -3208,45 +2003,38 @@ function goTo(page) {
     state.currentPage =
         page;
 
-
     renderCurrentPage();
 
 }
 
 
 // =====================================
-// Start AI Bot :: M
+// Toggle Bot :: M
 // =====================================
 
-async function startBot() {
+async function toggleBot() {
 
     if (
         !isAccessAllowed()
     ) {
 
-        showToast(
-            getAccessMessage()
-        );
-
-
         renderAccessPage();
-
 
         return;
 
     }
 
 
+    const user =
+        getUser();
+
+
     const userId =
-        getBackendUserId();
+        user._id ||
+        user.id;
 
 
     if (!userId) {
-
-        showToast(
-            "کاربر هنوز احراز نشده است"
-        );
-
 
         return;
 
@@ -3255,51 +2043,81 @@ async function startBot() {
 
     try {
 
-        showToast(
-            "در حال شروع ربات..."
-        );
+        const active =
+            state.bot?.status ===
+            "ACTIVE";
 
 
-        await apiRequest(
-            "/api/bot/start/" +
-            encodeURIComponent(
-                userId
-            ),
+        if (
+            active
+        ) {
+
+            // ---------------------------------
+            // Backend may later provide STOP.
+            // ---------------------------------
+
+            state.bot = {
+
+                ...(state.bot || {}),
+
+                status:
+                    "STOPPED"
+
+            };
+
+            renderDashboard();
+
+            return;
+
+        }
+
+
+        const response =
+            await apiRequest(
+
+                `/api/bot/start/${encodeURIComponent(
+                    userId
+                )}`,
+
+                {
+
+                    method:
+                        "POST",
+
+                    body:
+                        JSON.stringify({})
+
+                }
+
+            );
+
+
+        state.bot =
+            response?.bot ||
+            response?.data ||
             {
 
-                method:
-                    "POST",
+                status:
+                    "ACTIVE"
 
-                body:
-                    JSON.stringify({})
-
-            }
-        );
-
-
-        await loadBot();
+            };
 
 
         renderDashboard();
-
-
-        showToast(
-            "ربات با موفقیت فعال شد"
-        );
 
     }
 
     catch (error) {
 
         console.error(
-            "Start bot error:",
+            "Bot start error:",
             error
         );
 
 
-        showToast(
+        alert(
             error.message ||
-            "فعال‌سازی ربات انجام نشد"
+            "خطا در شروع معاملات AI"
         );
 
     }
@@ -3308,34 +2126,30 @@ async function startBot() {
 
 
 // =====================================
-// Open Support :: M
+// Support :: M
 // =====================================
 
 function openSupport() {
 
     const username =
-        SUPPORT_USERNAME
-            .replace(
-                "@",
-                ""
-            );
+        SUPPORT_USERNAME.replace(
+            "@",
+            ""
+        );
 
 
     const url =
-        "https://t.me/" +
-        username;
+        `https://t.me/${username}`;
 
 
     if (
         tg &&
-        typeof tg.openTelegramLink ===
-        "function"
+        tg.openTelegramLink
     ) {
 
         tg.openTelegramLink(
             url
         );
-
 
         return;
 
@@ -3351,193 +2165,37 @@ function openSupport() {
 
 
 // =====================================
-// Toast :: M
+// Open Telegram Bot :: M
 // =====================================
 
-function showToast(message) {
+function openTelegramBot() {
 
-    const oldToast =
-        document.querySelector(
-            ".toast"
-        );
+    const username =
+        "AutoTradeAI";
 
 
-    if (oldToast) {
-
-        oldToast.remove();
-
-    }
-
-
-    const toast =
-        document.createElement(
-            "div"
-        );
-
-
-    toast.className =
-        "toast";
-
-
-    toast.textContent =
-        message;
-
-
-    document.body.appendChild(
-        toast
-    );
-
-
-    setTimeout(
-        () => {
-
-            if (
-                toast &&
-                toast.parentNode
-            ) {
-
-                toast.remove();
-
-            }
-
-        },
-        3000
-    );
-
-}
-
-
-// =====================================
-// Date / Time :: M
-// =====================================
-
-function formatDateTime(date) {
-
-    if (!date) {
-
-        return "ثبت نشده";
-
-    }
-
-
-    const value =
-        new Date(date);
+    const url =
+        `https://t.me/${username}`;
 
 
     if (
-        Number.isNaN(
-            value.getTime()
-        )
+        tg &&
+        tg.openTelegramLink
     ) {
 
-        return "ثبت نشده";
-
-    }
-
-
-    return value.toLocaleString(
-        "fa-IR",
-        {
-
-            year:
-                "numeric",
-
-            month:
-                "2-digit",
-
-            day:
-                "2-digit",
-
-            hour:
-                "2-digit",
-
-            minute:
-                "2-digit"
-
-        }
-    );
-
-}
-
-
-// =====================================
-// Application Start :: M
-// =====================================
-
-async function initializeApp() {
-
-    initializeTelegram();
-
-
-    state.loginTime =
-        new Date();
-
-
-    try {
-
-        const authResult =
-            await authenticateTelegram();
-
-
-        if (
-            !authResult ||
-            !state.backendUser
-        ) {
-
-            state.loading =
-                false;
-
-
-            renderAccessPage();
-
-
-            return;
-
-        }
-
-
-        /*
-         * فقط کاربر تأییدشده اطلاعات مالی
-         * و معاملاتی را دریافت می‌کند.
-         */
-
-        if (
-            isAccessAllowed()
-        ) {
-
-            await loadData();
-
-        }
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "Application initialization error:",
-            error
+        tg.openTelegramLink(
+            url
         );
-
-    }
-
-
-    state.loading =
-        false;
-
-
-    if (
-        !isAccessAllowed()
-    ) {
-
-        renderAccessPage();
-
 
         return;
 
     }
 
 
-    renderDashboard();
+    window.open(
+        url,
+        "_blank"
+    );
 
 }
 
@@ -3549,28 +2207,155 @@ async function initializeApp() {
 window.goTo =
     goTo;
 
-
 window.openSupport =
     openSupport;
 
+window.openTelegramBot =
+    openTelegramBot;
 
-window.startBot =
-    startBot;
-
-
-window.showToast =
-    showToast;
-
+window.toggleBot =
+    toggleBot;
 
 window.refreshData =
     refreshData;
 
 
 // =====================================
+// Initialize Application :: M
+// =====================================
+
+async function initializeApp() {
+
+    initializeTelegram();
+
+
+    // ---------------------------------
+    // Loading
+    // ---------------------------------
+
+    app.innerHTML = `
+
+        <div class="access-page">
+
+            <div class="access-card">
+
+                <div class="access-icon">
+                    AI
+                </div>
+
+                <h2>
+                    AutoTrade AI
+                </h2>
+
+                <p>
+                    در حال اتصال به حساب شما...
+                </p>
+
+            </div>
+
+        </div>
+
+    `;
+
+
+    try {
+
+        // ---------------------------------
+        // Telegram Authentication
+        // ---------------------------------
+
+        await authenticateTelegram();
+
+
+        // ---------------------------------
+        // Load exchange rate
+        // ---------------------------------
+
+        await loadExchangeRate();
+
+
+        // ---------------------------------
+        // Important:
+        // only approved users load financial
+        // and trading data.
+        // ---------------------------------
+
+        if (
+            isAccessAllowed()
+        ) {
+
+            await Promise.all([
+
+                loadWallet(),
+
+                loadTrades(),
+
+                loadBot()
+
+            ]);
+
+        }
+
+
+        // ---------------------------------
+        // Render
+        // ---------------------------------
+
+        renderCurrentPage();
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "APPLICATION ERROR:",
+            error
+        );
+
+
+        app.innerHTML = `
+
+            <div class="access-page">
+
+                <div class="access-card">
+
+                    <div class="access-icon">
+                        ⚠️
+                    </div>
+
+                    <h2>
+                        خطا در اتصال
+                    </h2>
+
+                    <p>
+                        اتصال به سرور برقرار نشد.
+                    </p>
+
+                    <button
+                        class="primary-button"
+                        onclick="location.reload()"
+                    >
+                        تلاش مجدد
+                    </button>
+
+                </div>
+
+            </div>
+
+        `;
+
+    }
+
+}
+
+
+// =====================================
 // Start :: M
 // =====================================
 
-document.addEventListener(
-    "DOMContentLoaded",
-    initializeApp
-);
+initializeApp();
+
+
+// =====================================
+// ..M END
+// =====================================
