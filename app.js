@@ -1,41 +1,357 @@
 // =====================================
-// ..M Telegram Menu Button
+// ..M AutoTrade AI
+// Glass UI Controller
 // =====================================
 
-export async function setupTelegramMenuButton() {
-    const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
 
-    if (!BOT_TOKEN) {
-        console.error("❌ TELEGRAM_BOT_TOKEN پیدا نشد");
-        return;
+        initTelegram();
+
+        initNavigation();
+
+        initButtons();
+
+    }
+);
+
+
+// =====================================
+// ..M Telegram
+// =====================================
+
+function initTelegram() {
+
+    try {
+
+        if (
+            window.Telegram &&
+            window.Telegram.WebApp
+        ) {
+
+            const tg =
+                window.Telegram.WebApp;
+
+            tg.ready();
+
+            tg.expand();
+
+            tg.setHeaderColor("#06101d");
+
+            tg.setBackgroundColor("#020812");
+
+        }
+
+    } catch (error) {
+
+        console.log(
+            "Telegram WebApp initialization:",
+            error
+        );
+
     }
 
-    const MINI_APP_URL = "https://mahxchc.github.io/AutoTrade-AI/";
+}
 
-    const url = `https://api.telegram.org/bot${BOT_TOKEN}/setChatMenuButton`;
 
-    const response = await fetch(url, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            menu_button: {
-                type: "web_app",
-                text: "Open",
-                web_app: {
-                    url: MINI_APP_URL
+// =====================================
+// ..M Navigation
+// =====================================
+
+function initNavigation() {
+
+    const buttons =
+        document.querySelectorAll(
+            ".nav-item"
+        );
+
+
+    buttons.forEach(
+        button => {
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    const page =
+                        button.dataset.page;
+
+                    if (!page) {
+                        return;
+                    }
+
+                    showPage(page);
+
                 }
-            }
-        })
+            );
+
+        }
+    );
+
+}
+
+
+// =====================================
+// ..M Show Page
+// =====================================
+
+function showPage(pageName) {
+
+    const pages =
+        document.querySelectorAll(
+            ".page"
+        );
+
+
+    const navItems =
+        document.querySelectorAll(
+            ".nav-item"
+        );
+
+
+    pages.forEach(
+        page => {
+
+            page.classList.remove(
+                "active"
+            );
+
+        }
+    );
+
+
+    navItems.forEach(
+        item => {
+
+            item.classList.remove(
+                "active"
+            );
+
+        }
+    );
+
+
+    const targetPage =
+        document.getElementById(
+            `page-${pageName}`
+        );
+
+
+    const targetButton =
+        document.querySelector(
+            `.nav-item[data-page="${pageName}"]`
+        );
+
+
+    if (targetPage) {
+
+        targetPage.classList.add(
+            "active"
+        );
+
+    }
+
+
+    if (targetButton) {
+
+        targetButton.classList.add(
+            "active"
+        );
+
+    }
+
+
+    window.scrollTo({
+
+        top: 0,
+
+        behavior: "smooth"
+
     });
 
-    const result = await response.json();
+}
 
-    if (!result.ok) {
-        console.error("❌ خطا در تنظیم Menu Button:", result);
-        return;
+
+// =====================================
+// ..M Buttons
+// =====================================
+
+function initButtons() {
+
+    const startButton =
+        document.querySelector(
+            ".primary-button"
+        );
+
+
+    if (startButton) {
+
+        startButton.addEventListener(
+            "click",
+            () => {
+
+                showMessage(
+                    "سیستم AI Trading آماده است."
+                );
+
+            }
+        );
+
     }
 
-    console.log("✅ Telegram Menu Button: Open");
+
+    const notification =
+        document.getElementById(
+            "notificationBtn"
+        );
+
+
+    if (notification) {
+
+        notification.addEventListener(
+            "click",
+            () => {
+
+                showMessage(
+                    "اعلان جدیدی وجود ندارد."
+                );
+
+            }
+        );
+
+    }
+
+
+    const support =
+        document.querySelector(
+            ".support-card button"
+        );
+
+
+    if (support) {
+
+        support.addEventListener(
+            "click",
+            () => {
+
+                window.open(
+                    "https://t.me/mehdi2410l",
+                    "_blank"
+                );
+
+            }
+        );
+
+    }
+
+}
+
+
+// =====================================
+// ..M Message
+// =====================================
+
+function showMessage(text) {
+
+    const old =
+        document.querySelector(
+            ".glass-toast"
+        );
+
+
+    if (old) {
+
+        old.remove();
+
+    }
+
+
+    const toast =
+        document.createElement(
+            "div"
+        );
+
+
+    toast.className =
+        "glass-toast";
+
+
+    toast.textContent =
+        text;
+
+
+    Object.assign(
+        toast.style,
+        {
+
+            position: "fixed",
+
+            zIndex: "100",
+
+            left: "50%",
+
+            bottom:
+                "105px",
+
+            transform:
+                "translateX(-50%)",
+
+            width:
+                "calc(100% - 40px)",
+
+            maxWidth:
+                "500px",
+
+            padding:
+                "15px 18px",
+
+            textAlign:
+                "center",
+
+            borderRadius:
+                "18px",
+
+            color:
+                "#eaffff",
+
+            background:
+                "rgba(130,220,255,0.12)",
+
+            border:
+                "1px solid rgba(210,248,255,0.20)",
+
+            backdropFilter:
+                "blur(24px)",
+
+            webkitBackdropFilter:
+                "blur(24px)",
+
+            boxShadow:
+                "0 20px 50px rgba(0,0,0,.35)",
+
+            fontSize:
+                "12px",
+
+            fontWeight:
+                "700"
+
+        }
+    );
+
+
+    document.body.appendChild(
+        toast
+    );
+
+
+    setTimeout(
+        () => {
+
+            toast.remove();
+
+        },
+        2500
+    );
+
 }
