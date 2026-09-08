@@ -1,555 +1,1296 @@
-<!-- =====================================
-     ..M AutoTrade AI
-     Profile Page
-     ===================================== -->
+/* =====================================
+   ..M AutoTrade AI
+   Premium Ice Blue Glass UI
+   Profile Edition
+===================================== */
 
-<!DOCTYPE html>
-<html lang="fa" dir="rtl">
+:root {
 
-<head>
+    --bg-1: #020812;
+    --bg-2: #061525;
+    --bg-3: #0a2034;
 
-    <meta charset="UTF-8">
+    --ice: #bfefff;
+    --ice-light: #e7fbff;
+    --ice-soft: #8edfff;
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+    --glass: rgba(190, 239, 255, 0.085);
+    --glass-strong: rgba(190, 239, 255, 0.14);
 
-    <title>AutoTrade AI</title>
+    --white: #f7fdff;
+    --muted: rgba(225, 245, 252, 0.62);
 
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    --border: rgba(210, 247, 255, 0.18);
 
-    <link
-        rel="stylesheet"
-        href="style.css"
-    >
+    --shadow:
+        0 18px 60px rgba(0, 0, 0, 0.28);
 
-</head>
+    --radius: 24px;
+}
 
 
-<body>
+/* =====================================
+   ..M Reset
+===================================== */
 
-    <!-- =====================================
-         ..M App
-         ===================================== -->
+* {
 
-    <main class="app">
+    box-sizing: border-box;
 
+    margin: 0;
 
-        <!-- =====================================
-             ..M Header
-             ===================================== -->
+    padding: 0;
 
-        <header class="top-header">
+    -webkit-tap-highlight-color: transparent;
+}
 
-            <div class="brand">
 
-                <div class="brand-icon">
-                    AI
-                </div>
+html,
+body {
 
-                <div class="brand-text">
+    width: 100%;
 
-                    <strong>
-                        AutoTrade AI
-                    </strong>
+    min-height: 100%;
 
-                    <span>
-                        هوش مصنوعی معاملات
-                    </span>
+    background: var(--bg-1);
 
-                </div>
+    color: var(--white);
 
-            </div>
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        Arial,
+        sans-serif;
 
+    overflow-x: hidden;
+}
 
-            <button
-                id="notificationBtn"
-                class="notification-button"
-                type="button"
-            >
 
-                🔔
+body {
 
-            </button>
+    min-height: 100vh;
 
-        </header>
+    min-height: 100dvh;
 
+    position: relative;
+}
 
-        <!-- =====================================
-             ..M Profile
-             ===================================== -->
 
-        <section
-            id="page-profile"
-            class="page active"
-        >
+/* =====================================
+   ..M Background
+===================================== */
 
+.background {
 
-            <div class="page-heading">
+    position: fixed;
 
-                <h1>
-                    پروفایل
-                </h1>
+    inset: 0;
 
-                <p>
-                    حساب کاربری
-                </p>
+    overflow: hidden;
 
-            </div>
+    z-index: 0;
 
+    background:
+        radial-gradient(
+            circle at 50% 0%,
+            rgba(115, 220, 255, 0.16),
+            transparent 34%
+        ),
+        radial-gradient(
+            circle at 10% 65%,
+            rgba(72, 180, 255, 0.11),
+            transparent 35%
+        ),
+        radial-gradient(
+            circle at 90% 75%,
+            rgba(155, 240, 255, 0.08),
+            transparent 35%
+        ),
+        linear-gradient(
+            145deg,
+            var(--bg-1),
+            var(--bg-2),
+            var(--bg-3)
+        );
+}
 
-            <!-- =====================================
-                 ..M User Information
-                 ===================================== -->
 
-            <section class="profile-card">
+.light {
 
-                <div class="profile-card-header">
+    position: absolute;
 
-                    <div class="profile-avatar">
-                        <span id="profileInitial">
-                            A
-                        </span>
-                    </div>
+    width: 280px;
 
-                    <div class="profile-title">
+    height: 280px;
 
-                        <strong id="profileName">
-                            کاربر
-                        </strong>
+    border-radius: 50%;
 
-                        <span>
-                            اطلاعات کاربر
-                        </span>
+    filter: blur(90px);
 
-                    </div>
+    opacity: 0.35;
 
-                </div>
+    pointer-events: none;
+}
 
 
-                <div class="profile-info-list">
+.light-1 {
 
+    top: -100px;
 
-                    <!-- User ID -->
+    left: -80px;
 
-                    <div class="profile-info-row">
+    background: #86dcff;
+}
 
-                        <div class="info-icon">
-                            #
-                        </div>
 
-                        <div class="info-content">
+.light-2 {
 
-                            <span>
-                                آیدی کاربر
-                            </span>
+    right: -120px;
 
-                            <strong id="userTelegramId">
-                                0
-                            </strong>
+    top: 35%;
 
-                        </div>
+    background: #5dbfff;
+}
 
-                    </div>
 
+.light-3 {
 
-                    <!-- Name -->
+    left: 20%;
 
-                    <div class="profile-info-row">
+    bottom: -180px;
 
-                        <div class="info-icon">
-                            A
-                        </div>
+    background: #b5f3ff;
+}
 
-                        <div class="info-content">
 
-                            <span>
-                                نام و نام خانوادگی
-                            </span>
+.orb {
 
-                            <strong id="userFullName">
-                                کاربر
-                            </strong>
+    position: absolute;
 
-                        </div>
+    border-radius: 50%;
 
-                    </div>
+    border: 1px solid rgba(210, 248, 255, 0.08);
 
-
-                    <!-- Phone -->
-
-                    <div class="profile-info-row">
-
-                        <div class="info-icon">
-                            ☎
-                        </div>
-
-                        <div class="info-content">
-
-                            <span>
-                                شماره تلفن
-                            </span>
-
-                            <strong id="userPhone">
-                                ثبت نشده
-                            </strong>
-
-                        </div>
-
-                    </div>
-
-
-                </div>
-
-            </section>
-
-
-            <!-- =====================================
-                 ..M Support
-                 ===================================== -->
-
-            <section class="support-card">
-
-                <div class="support-icon">
-                    ?
-                </div>
-
-
-                <div class="support-content">
-
-                    <strong>
-                        پشتیبانی
-                    </strong>
-
-                    <span>
-                        نیاز به کمک دارید؟
-                    </span>
-
-                </div>
-
-
-                <button
-                    type="button"
-                    id="supportButton"
-                >
-                    پیام به پشتیبانی
-                </button>
-
-            </section>
-
-
-        </section>
-
-
-        <!-- =====================================
-             ..M Bottom Navigation
-             ===================================== -->
-
-        <nav class="bottom-navigation">
-
-
-            <button
-                class="nav-item"
-                data-page="home"
-                type="button"
-            >
-
-                <span class="nav-icon">
-                    ⌂
-                </span>
-
-                <span>
-                    خانه
-                </span>
-
-            </button>
-
-
-            <button
-                class="nav-item"
-                data-page="wallet"
-                type="button"
-            >
-
-                <span class="nav-icon">
-                    ◇
-                </span>
-
-                <span>
-                    کیف پول
-                </span>
-
-            </button>
-
-
-            <button
-                class="nav-item"
-                data-page="trades"
-                type="button"
-            >
-
-                <span class="nav-icon">
-                    ↗
-                </span>
-
-                <span>
-                    معاملات
-                </span>
-
-            </button>
-
-
-            <button
-                class="nav-item"
-                data-page="analytics"
-                type="button"
-            >
-
-                <span class="nav-icon">
-                    ◐
-                </span>
-
-                <span>
-                    تحلیل
-                </span>
-
-            </button>
-
-
-            <button
-                class="nav-item active"
-                data-page="profile"
-                type="button"
-            >
-
-                <span class="nav-icon">
-                    ○
-                </span>
-
-                <span>
-                    پروفایل
-                </span>
-
-            </button>
-
-
-        </nav>
-
-
-    </main>
-
-
-    <!-- =====================================
-         ..M Profile Data
-         ===================================== -->
-
-    <script>
-
-        document.addEventListener(
-            "DOMContentLoaded",
-            () => {
-
-                loadTelegramUser();
-
-                initSupport();
-
-            }
+    background:
+        radial-gradient(
+            circle at 30% 30%,
+            rgba(220, 250, 255, 0.08),
+            rgba(100, 210, 255, 0.015) 55%,
+            transparent 70%
         );
 
+    filter: blur(1px);
 
-        // =====================================
-        // ..M Telegram User
-        // =====================================
+    pointer-events: none;
+}
 
-        function loadTelegramUser() {
 
-            try {
+.orb-1 {
 
-                const tg =
-                    window.Telegram &&
-                    window.Telegram.WebApp;
+    width: 320px;
 
+    height: 320px;
 
-                if (!tg) {
+    top: 18%;
 
-                    return;
+    left: -180px;
+}
 
-                }
 
+.orb-2 {
 
-                tg.ready();
+    width: 260px;
 
+    height: 260px;
 
-                const user =
-                    tg.initDataUnsafe &&
-                    tg.initDataUnsafe.user;
+    right: -150px;
 
+    top: 8%;
+}
 
-                if (!user) {
 
-                    return;
+.orb-3 {
 
-                }
+    width: 380px;
 
+    height: 380px;
 
-                // ..M Telegram ID
+    left: 30%;
 
-                const telegramId =
-                    user.id || 0;
+    bottom: -280px;
+}
 
 
-                const idElement =
-                    document.getElementById(
-                        "userTelegramId"
-                    );
+/* =====================================
+   ..M App
+===================================== */
 
+#app {
 
-                if (idElement) {
+    position: relative;
 
-                    idElement.textContent =
-                        telegramId;
+    z-index: 1;
 
-                }
+    width: 100%;
 
+    max-width: 620px;
 
-                // ..M Full Name
+    min-height: 100vh;
 
-                const firstName =
-                    user.first_name || "";
+    min-height: 100dvh;
 
+    margin: auto;
 
-                const lastName =
-                    user.last_name || "";
+    padding:
+        max(18px, env(safe-area-inset-top))
+        16px
+        calc(110px + env(safe-area-inset-bottom))
+        16px;
+}
 
 
-                const fullName =
-                    `${firstName} ${lastName}`
-                        .trim();
+.app {
 
+    position: relative;
 
-                const nameElement =
-                    document.getElementById(
-                        "userFullName"
-                    );
+    z-index: 1;
 
+    width: 100%;
 
-                const profileName =
-                    document.getElementById(
-                        "profileName"
-                    );
+    max-width: 620px;
 
+    min-height: 100vh;
 
-                if (fullName) {
+    min-height: 100dvh;
 
-                    if (nameElement) {
+    margin: auto;
 
-                        nameElement.textContent =
-                            fullName;
+    padding:
+        max(18px, env(safe-area-inset-top))
+        16px
+        calc(110px + env(safe-area-inset-bottom))
+        16px;
+}
 
-                    }
 
+/* =====================================
+   ..M Header
+===================================== */
 
-                    if (profileName) {
+.top-header {
 
-                        profileName.textContent =
-                            fullName;
+    position: relative;
 
-                    }
+    z-index: 5;
 
-                }
+    display: flex;
 
+    align-items: center;
 
-                // ..M Avatar
+    justify-content: space-between;
 
-                const initialElement =
-                    document.getElementById(
-                        "profileInitial"
-                    );
+    margin-bottom: 22px;
+}
 
 
-                if (
-                    initialElement &&
-                    firstName
-                ) {
+.brand {
 
-                    initialElement.textContent =
-                        firstName
-                            .charAt(0)
-                            .toUpperCase();
+    display: flex;
 
-                }
+    align-items: center;
 
+    gap: 11px;
+}
 
-            } catch (error) {
 
-                console.log(
-                    "Telegram user error:",
-                    error
-                );
+.brand-icon {
 
-            }
+    width: 43px;
 
-        }
+    height: 43px;
 
+    display: grid;
 
-        // =====================================
-        // ..M Support
-        // =====================================
+    place-items: center;
 
-        function initSupport() {
+    border-radius: 15px;
 
-            const button =
-                document.getElementById(
-                    "supportButton"
-                );
+    color: #062033;
 
+    font-weight: 900;
 
-            if (!button) {
+    font-size: 13px;
 
-                return;
+    background:
+        linear-gradient(
+            145deg,
+            #eaffff,
+            #a9eaff
+        );
 
-            }
+    box-shadow:
+        0 0 25px rgba(145, 226, 255, 0.25),
+        inset 0 1px rgba(255,255,255,0.85);
+}
 
 
-            button.addEventListener(
-                "click",
-                () => {
+.brand-text {
 
-                    const url =
-                        "https://t.me/mehdi2410l";
+    display: flex;
 
+    flex-direction: column;
+}
 
-                    if (
-                        window.Telegram &&
-                        window.Telegram.WebApp &&
-                        window.Telegram.WebApp.openTelegramLink
-                    ) {
 
-                        window.Telegram.WebApp.openTelegramLink(
-                            url
-                        );
+.brand-text strong {
 
-                        return;
+    font-size: 17px;
 
-                    }
+    font-weight: 800;
 
+    letter-spacing: -0.3px;
+}
 
-                    window.open(
-                        url,
-                        "_blank"
-                    );
 
-                }
+.brand-text span {
+
+    color: var(--muted);
+
+    font-size: 11px;
+
+    margin-top: 2px;
+}
+
+
+.brand-title {
+
+    font-size: 17px;
+
+    font-weight: 800;
+}
+
+
+.brand-subtitle {
+
+    color: var(--muted);
+
+    font-size: 11px;
+
+    margin-top: 2px;
+}
+
+
+.notification-button {
+
+    position: relative;
+
+    width: 44px;
+
+    height: 44px;
+
+    display: grid;
+
+    place-items: center;
+
+    border: 1px solid var(--border);
+
+    border-radius: 50%;
+
+    color: var(--ice-light);
+
+    background:
+        rgba(210, 245, 255, 0.07);
+
+    backdrop-filter:
+        blur(20px)
+        saturate(160%);
+
+    -webkit-backdrop-filter:
+        blur(20px)
+        saturate(160%);
+
+    font-size: 20px;
+
+    box-shadow:
+        inset 0 1px rgba(255,255,255,0.10),
+        0 10px 35px rgba(0,0,0,0.22);
+}
+
+
+.icon-glass-button {
+
+    position: relative;
+
+    width: 44px;
+
+    height: 44px;
+
+    display: grid;
+
+    place-items: center;
+
+    color: var(--ice-light);
+
+    border-radius: 50%;
+
+    border: 1px solid var(--border);
+
+    background: rgba(210, 245, 255, 0.07);
+
+    backdrop-filter: blur(20px) saturate(160%);
+
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+
+    box-shadow:
+        inset 0 1px rgba(255,255,255,0.10),
+        0 10px 35px rgba(0,0,0,0.22);
+}
+
+
+/* =====================================
+   ..M Glass
+===================================== */
+
+.glass-card {
+
+    position: relative;
+
+    overflow: hidden;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(220, 250, 255, 0.105),
+            rgba(130, 220, 255, 0.045)
+        );
+
+    backdrop-filter:
+        blur(22px)
+        saturate(170%);
+
+    -webkit-backdrop-filter:
+        blur(22px)
+        saturate(170%);
+
+    border: 1px solid rgba(210, 248, 255, 0.16);
+
+    border-radius: var(--radius);
+
+    box-shadow: var(--shadow);
+
+    isolation: isolate;
+}
+
+
+.glass-card::before {
+
+    content: "";
+
+    position: absolute;
+
+    inset: 0;
+
+    pointer-events: none;
+
+    background:
+        linear-gradient(
+            125deg,
+            rgba(255,255,255,0.12),
+            transparent 32%,
+            transparent 65%,
+            rgba(170,235,255,0.04)
+        );
+
+    opacity: 0.8;
+}
+
+
+.glass-card::after {
+
+    content: "";
+
+    position: absolute;
+
+    left: 12%;
+
+    right: 12%;
+
+    top: 0;
+
+    height: 1px;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            rgba(235,252,255,0.38),
+            transparent
+        );
+
+    pointer-events: none;
+}
+
+
+/* =====================================
+   ..M Pages
+===================================== */
+
+.page {
+
+    display: none;
+
+    animation: pageIn 0.28s ease;
+}
+
+
+.page.active {
+
+    display: block;
+}
+
+
+@keyframes pageIn {
+
+    from {
+
+        opacity: 0;
+
+        transform: translateY(8px);
+    }
+
+    to {
+
+        opacity: 1;
+
+        transform: translateY(0);
+    }
+}
+
+
+/* =====================================
+   ..M Page Heading
+===================================== */
+
+.page-heading {
+
+    margin: 10px 2px 22px;
+
+    text-align: right;
+}
+
+
+.page-heading h1 {
+
+    font-size: 29px;
+
+    line-height: 1.3;
+
+    letter-spacing: -0.7px;
+}
+
+
+.page-heading p {
+
+    color: var(--muted);
+
+    margin-top: 6px;
+
+    font-size: 12px;
+}
+
+
+.page-heading span {
+
+    display: block;
+
+    color: var(--muted);
+
+    margin-top: 5px;
+
+    font-size: 11px;
+}
+
+
+/* =====================================
+   ..M Profile Card
+===================================== */
+
+.profile-card {
+
+    position: relative;
+
+    overflow: hidden;
+
+    padding: 20px;
+
+    margin-bottom: 14px;
+
+    border-radius: var(--radius);
+
+    border: 1px solid rgba(210,248,255,0.16);
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(190,239,255,0.105),
+            rgba(100,190,240,0.045)
+        );
+
+    backdrop-filter:
+        blur(24px)
+        saturate(175%);
+
+    -webkit-backdrop-filter:
+        blur(24px)
+        saturate(175%);
+
+    box-shadow:
+        0 18px 60px rgba(0,0,0,0.28),
+        inset 0 1px rgba(255,255,255,0.10);
+}
+
+
+.profile-card::before {
+
+    content: "";
+
+    position: absolute;
+
+    inset: 0;
+
+    pointer-events: none;
+
+    background:
+        linear-gradient(
+            125deg,
+            rgba(255,255,255,0.10),
+            transparent 35%,
+            transparent 70%,
+            rgba(170,235,255,0.05)
+        );
+}
+
+
+/* =====================================
+   ..M Profile Header
+===================================== */
+
+.profile-card-header {
+
+    position: relative;
+
+    z-index: 1;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 13px;
+
+    padding-bottom: 18px;
+
+    margin-bottom: 5px;
+
+    border-bottom:
+        1px solid
+        rgba(210,248,255,0.08);
+}
+
+
+.profile-avatar {
+
+    width: 58px;
+
+    height: 58px;
+
+    flex-shrink: 0;
+
+    display: grid;
+
+    place-items: center;
+
+    border-radius: 19px;
+
+    color: #062337;
+
+    font-size: 21px;
+
+    font-weight: 900;
+
+    background:
+        linear-gradient(
+            145deg,
+            #eaffff,
+            #9de6ff
+        );
+
+    box-shadow:
+        0 0 28px rgba(150,230,255,0.20),
+        inset 0 1px rgba(255,255,255,0.90);
+}
+
+
+.profile-title {
+
+    min-width: 0;
+}
+
+
+.profile-title strong {
+
+    display: block;
+
+    color: var(--white);
+
+    font-size: 15px;
+
+    font-weight: 800;
+}
+
+
+.profile-title span {
+
+    display: block;
+
+    color: var(--muted);
+
+    font-size: 10px;
+
+    margin-top: 5px;
+}
+
+
+/* =====================================
+   ..M Profile Information
+===================================== */
+
+.profile-info-list {
+
+    position: relative;
+
+    z-index: 1;
+}
+
+
+.profile-info-row {
+
+    min-height: 66px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    border-bottom:
+        1px solid
+        rgba(210,248,255,0.07);
+}
+
+
+.profile-info-row:last-child {
+
+    border-bottom: 0;
+}
+
+
+.info-icon {
+
+    width: 34px;
+
+    height: 34px;
+
+    flex-shrink: 0;
+
+    display: grid;
+
+    place-items: center;
+
+    border-radius: 12px;
+
+    color: var(--ice-light);
+
+    background:
+        rgba(190,239,255,0.07);
+
+    border:
+        1px solid
+        rgba(190,239,255,0.09);
+
+    font-size: 14px;
+
+    font-weight: 700;
+}
+
+
+.info-content {
+
+    min-width: 0;
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 4px;
+}
+
+
+.info-content span {
+
+    color: var(--muted);
+
+    font-size: 10px;
+}
+
+
+.info-content strong {
+
+    color: var(--white);
+
+    font-size: 13px;
+
+    font-weight: 700;
+
+    direction: rtl;
+
+    unicode-bidi: plaintext;
+
+    overflow-wrap: anywhere;
+}
+
+
+/* =====================================
+   ..M Support
+===================================== */
+
+.support-card {
+
+    position: relative;
+
+    overflow: hidden;
+
+    min-height: 78px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    padding: 16px;
+
+    border-radius: var(--radius);
+
+    border:
+        1px solid
+        rgba(210,248,255,0.16);
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(190,239,255,0.105),
+            rgba(100,190,240,0.045)
+        );
+
+    backdrop-filter:
+        blur(24px)
+        saturate(175%);
+
+    -webkit-backdrop-filter:
+        blur(24px)
+        saturate(175%);
+
+    box-shadow:
+        0 18px 55px rgba(0,0,0,0.25),
+        inset 0 1px rgba(255,255,255,0.09);
+}
+
+
+.support-card::before {
+
+    content: "";
+
+    position: absolute;
+
+    inset: 0;
+
+    pointer-events: none;
+
+    background:
+        linear-gradient(
+            120deg,
+            rgba(255,255,255,0.08),
+            transparent 38%,
+            rgba(150,230,255,0.04)
+        );
+}
+
+
+.support-icon {
+
+    position: relative;
+
+    z-index: 1;
+
+    width: 48px;
+
+    height: 48px;
+
+    flex-shrink: 0;
+
+    display: grid;
+
+    place-items: center;
+
+    border-radius: 16px;
+
+    color: #06273a;
+
+    background:
+        linear-gradient(
+            145deg,
+            #eaffff,
+            #a9eaff
+        );
+
+    font-size: 19px;
+
+    font-weight: 900;
+
+    box-shadow:
+        0 0 25px rgba(150,230,255,0.18),
+        inset 0 1px rgba(255,255,255,0.90);
+}
+
+
+.support-content {
+
+    position: relative;
+
+    z-index: 1;
+
+    min-width: 0;
+}
+
+
+.support-content strong {
+
+    display: block;
+
+    color: var(--white);
+
+    font-size: 13px;
+
+    font-weight: 800;
+}
+
+
+.support-content span {
+
+    display: block;
+
+    color: var(--muted);
+
+    font-size: 10px;
+
+    margin-top: 4px;
+}
+
+
+.support-card button {
+
+    position: relative;
+
+    z-index: 2;
+
+    flex-shrink: 0;
+
+    margin-right: auto;
+
+    min-height: 42px;
+
+    padding:
+        0 14px;
+
+    border:
+        1px solid
+        rgba(190,239,255,0.18);
+
+    border-radius: 14px;
+
+    color: var(--ice-light);
+
+    background:
+        rgba(190,239,255,0.07);
+
+    backdrop-filter:
+        blur(12px);
+
+    -webkit-backdrop-filter:
+        blur(12px);
+
+    font-size: 10px;
+
+    font-weight: 700;
+
+    white-space: nowrap;
+}
+
+
+.support-card button:active {
+
+    transform: scale(0.96);
+
+    background:
+        rgba(190,239,255,0.14);
+}
+
+
+/* =====================================
+   ..M Bottom Navigation
+===================================== */
+
+.bottom-navigation,
+.bottom-nav {
+
+    position: fixed;
+
+    z-index: 20;
+
+    left: 50%;
+
+    bottom:
+        calc(
+            12px + env(safe-area-inset-bottom)
+        );
+
+    transform: translateX(-50%);
+
+    width:
+        min(
+            calc(100% - 24px),
+            590px
+        );
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(5, 1fr);
+
+    padding: 7px;
+
+    border-radius: 25px;
+
+    border:
+        1px solid
+        rgba(220,250,255,0.15);
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(190,239,255,0.105),
+            rgba(100,190,240,0.045)
+        );
+
+    backdrop-filter:
+        blur(28px)
+        saturate(180%);
+
+    -webkit-backdrop-filter:
+        blur(28px)
+        saturate(180%);
+
+    box-shadow:
+        0 20px 60px rgba(0,0,0,0.42),
+        inset 0 1px rgba(255,255,255,0.12);
+}
+
+
+.nav-item {
+
+    min-height: 55px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 4px;
+
+    border: 0;
+
+    border-radius: 19px;
+
+    color:
+        rgba(220,245,252,0.46);
+
+    background: transparent;
+
+    font-size: 8px;
+}
+
+
+.nav-icon {
+
+    font-size: 18px;
+
+    line-height: 1;
+}
+
+
+.nav-item.active {
+
+    color: #dffaff;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(220,250,255,0.16),
+            rgba(150,225,255,0.06)
+        );
+
+    box-shadow:
+        inset 0 1px rgba(255,255,255,0.10),
+        0 5px 20px rgba(120,220,255,0.08);
+}
+
+
+.nav-item.active .nav-icon {
+
+    color: var(--ice-light);
+
+    text-shadow:
+        0 0 13px rgba(170,235,255,0.55);
+}
+
+
+/* =====================================
+   ..M Button Reset
+===================================== */
+
+button {
+
+    font-family: inherit;
+
+    cursor: pointer;
+
+    -webkit-appearance: none;
+
+    appearance: none;
+}
+
+
+button:active {
+
+    transform: scale(0.98);
+}
+
+
+/* =====================================
+   ..M Toast
+===================================== */
+
+.glass-toast {
+
+    font-family: inherit;
+
+    direction: rtl;
+
+    text-align: center;
+
+    line-height: 1.7;
+
+}
+
+
+/* =====================================
+   ..M Mobile
+===================================== */
+
+@media (max-width: 380px) {
+
+    #app,
+    .app {
+
+        padding-left: 12px;
+
+        padding-right: 12px;
+    }
+
+
+    .page-heading h1 {
+
+        font-size: 26px;
+    }
+
+
+    .profile-card {
+
+        padding: 17px;
+    }
+
+
+    .profile-info-row {
+
+        min-height: 62px;
+    }
+
+
+    .support-card {
+
+        gap: 9px;
+
+        padding: 13px;
+    }
+
+
+    .support-card button {
+
+        padding:
+            0 10px;
+
+        font-size: 9px;
+    }
+
+
+    .bottom-navigation,
+    .bottom-nav {
+
+        width:
+            calc(100% - 16px);
+
+        bottom:
+            calc(
+                8px + env(safe-area-inset-bottom)
             );
+    }
 
-        }
-
-    </script>
+}
 
 
-    <script src="app.js"></script>
+/* =====================================
+   ..M Fallback
+===================================== */
 
-</body>
+@supports not (
+    backdrop-filter: blur(10px)
+) {
 
-</html>
+    .glass-card,
+    .profile-card,
+    .support-card,
+    .bottom-navigation,
+    .bottom-nav,
+    .icon-glass-button,
+    .notification-button {
+
+        background:
+            rgba(12,35,52,0.94);
+    }
+
+}
