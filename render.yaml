@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: autotrade-ai-backend
+    runtime: node
+    rootDir: backend
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: BOT_TOKEN
+        sync: false
+      - key: OWNER_TELEGRAM_ID
+        value: "6999255720"
+      - key: ADMIN_TELEGRAM_ID
+        value: "6999255720"
+      - key: BOT_USERNAME
+        value: "autotradee_aii_bot"
+      - key: SUPPORT_USERNAME
+        value: "@mehdi2410l"
+      - key: BACKEND_URL
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: MINI_APP_URL
+        sync: false
+      - key: TELEGRAM_INIT_DATA_MAX_AGE
+        value: "86400"
+      - key: MONGO_URI
+        sync: false

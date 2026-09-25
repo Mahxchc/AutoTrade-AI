@@ -1,0 +1,20 @@
+# AutoTrade AI backend environment
+# NEVER commit a real token or password.
+
+BOT_TOKEN=PASTE_YOUR_BOT_TOKEN_HERE
+# TELEGRAM_BOT_TOKEN is accepted as a backwards-compatible fallback.
+
+OWNER_TELEGRAM_ID=6999255720
+# ADMIN_TELEGRAM_ID may also be used; OWNER_TELEGRAM_ID takes precedence.
+
+BOT_USERNAME=autotradee_aii_bot
+SUPPORT_USERNAME=@mehdi2410l
+
+BACKEND_URL=https://YOUR-BACKEND-DOMAIN
+MINI_APP_URL=https://YOUR-FRONTEND-DOMAIN
+FRONTEND_URL=https://YOUR-FRONTEND-DOMAIN
+
+TELEGRAM_INIT_DATA_MAX_AGE=86400
+
+# Keep your existing database/payment/exchange variables below.
+MONGO_URI=PASTE_YOUR_MONGODB_URI_HERE
