@@ -203,110 +203,68 @@ function renderUser(user) {
 async function getUserState() {
 
     if (!tg || !tg.initData) {
-        throw new Error("Telegram Mini App initData is missing");
+        throw new Error("Telegram Mini App initData is unavailable.");
     }
 
-    const authResponse =
-        await fetch(apiUrl("/api/auth/telegram"), {
-            method: "POST",
+    const apiBase =
+        (window.AUTO_TRADE_API_BASE || "").replace(/\/$/, "");
+
+    async function api(path, options = {}) {
+        const response = await fetch(`${apiBase}${path}`, {
+            ...options,
             headers: {
-                "Content-Type": "application/json",
+                ...(options.headers || {}),
                 "X-Telegram-Init-Data": tg.initData
-            },
-            body: JSON.stringify({
-                initData: tg.initData
-            })
+            }
         });
 
-    let authData = {};
+        const data = await response.json().catch(() => ({}));
 
-    try {
-        authData = await authResponse.json();
-    } catch (_) {}
+        if (!response.ok) {
+            const error = new Error(
+                data.message || `Backend request failed: ${response.status}`
+            );
+            error.status = response.status;
+            error.data = data;
+            throw error;
+        }
 
-    if (authResponse.status === 404 || authData.registered === false) {
-        return {
-            registered: false,
-            status: "not_registered"
-        };
+        return data;
     }
 
-    if (!authResponse.ok) {
-        throw new Error(
-            authData.message ||
-            "Telegram authentication failed"
-        );
+    const auth = await api("/api/auth/telegram", { method: "POST" });
+
+    if (!auth.registered) {
+        return { registered: false, status: "not_registered" };
     }
 
-    const user = authData.user || {};
-    const status =
-        authData.status ||
-        (authData.approved ? "approved" : "pending");
-
-    if (status === "rejected") {
-        return {
-            registered: true,
-            status: "rejected",
-            user: {
-                firstName: user.firstName || "",
-                lastName: user.lastName || "",
-                phone: user.phoneNumber || ""
-            }
-        };
-    }
+    const status = auth.status;
 
     if (status !== "approved") {
         return {
             registered: true,
-            status: "pending",
-            user: {
-                firstName: user.firstName || "",
-                lastName: user.lastName || "",
-                phone: user.phoneNumber || ""
-            }
+            status,
+            user: auth.user || null
         };
     }
 
-    const walletResponse =
-        await fetch(apiUrl("/api/wallet/me"), {
-            method: "GET",
-            headers: {
-                "X-Telegram-Init-Data": tg.initData
-            }
-        });
-
-    let walletData = {};
-
-    try {
-        walletData = await walletResponse.json();
-    } catch (_) {}
-
-    if (!walletResponse.ok) {
-        throw new Error(
-            walletData.message ||
-            "Failed to load wallet"
-        );
-    }
-
-    const wallet = walletData.wallet || {};
+    const walletResponse = await api("/api/wallet/me");
+    const wallet = walletResponse.wallet || {};
 
     return {
         registered: true,
         status: "approved",
-        user: {
-            firstName: user.firstName || "",
-            lastName: user.lastName || "",
-            phone: user.phoneNumber || ""
-        },
+        user: auth.user || null,
         balance: {
-            dollar: wallet.balanceUSD || 0,
-            toman: wallet.balanceToman || 0
+            dollar: wallet.balanceUSD ?? wallet.balance ?? 0,
+            toman: wallet.balanceToman ?? 0
         },
         trade: {
-            dollar: wallet.balanceUSD || 0,
-            toman: wallet.balanceToman || 0,
-            profit: wallet.totalProfit || 0
-        }
+            dollar: wallet.balanceUSD ?? wallet.balance ?? 0,
+            toman: wallet.balanceToman ?? 0,
+            profit: wallet.totalProfit ?? 0
+        },
+        wallet
     };
 }
 
