@@ -805,7 +805,14 @@ async function handleStart(
             });
 
 
-        // فقط یک پیام خوش‌آمدگویی
+        // Owner دسترسی مستقیم دارد و نباید وارد مراحل ثبت‌نام شود.
+        if (isOwner) {
+            return sendExistingUserMessage(
+                chatId,
+                user
+            );
+        }
+
         return sendWelcomeMessage(
             chatId
         );

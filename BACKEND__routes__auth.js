@@ -416,11 +416,10 @@ router.post(
                             : "pending",
 
                 approved:
-                    user.accessEnabled === true ||
-                    user.approvalStatus ===
-                        "APPROVED" ||
-                    user.status ===
-                        "ACTIVE",
+                    user.isAdmin === true ||
+                    (user.accessEnabled === true &&
+                     user.approvalStatus === "APPROVED" &&
+                     user.status === "ACTIVE"),
 
                 message:
                     "Telegram authentication successful",
@@ -647,11 +646,10 @@ router.get(
                     user.isAdmin === true,
 
                 approved:
-                    user.accessEnabled === true ||
-                    user.approvalStatus ===
-                        "APPROVED" ||
-                    user.status ===
-                        "ACTIVE",
+                    user.isAdmin === true ||
+                    (user.accessEnabled === true &&
+                     user.approvalStatus === "APPROVED" &&
+                     user.status === "ACTIVE"),
 
                 user:
                     buildUserResponse(
