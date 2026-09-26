@@ -8,9 +8,9 @@ import express from "express";
 
 import {
     requireTelegramUser
-} from "BACKEND__middleware__auth.js";
+} from "../middleware/auth.js";
 
-import User from "BACKEND__models__User.js";
+import User from "../models/User.js";
 
 
 const router =
@@ -24,7 +24,7 @@ const router =
 function getAdminTelegramId() {
 
     return String(
-        process.env.OWNER_TELEGRAM_ID || process.env.ADMIN_TELEGRAM_ID || ""
+        process.env.ADMIN_TELEGRAM_ID || ""
     ).trim();
 
 }

@@ -4,9 +4,7 @@
 // File: backend/bot.js
 // =====================================
 
-import "dotenv/config";
-
-import User from "BACKEND__models__User.js";
+import User from "./models/User.js";
 
 
 // =====================================
@@ -14,7 +12,6 @@ import User from "BACKEND__models__User.js";
 // =====================================
 
 const TELEGRAM_BOT_TOKEN =
-    process.env.BOT_TOKEN ||
     process.env.TELEGRAM_BOT_TOKEN;
 
 const BACKEND_URL =
@@ -28,8 +25,8 @@ const MINI_APP_URL =
     "";
 
 const SUPPORT_USERNAME =
-    process.env.SUPPORT_USERNAME ||
     "@mehdi2410l";
+
 
 // =====================================
 // ..M Telegram API
@@ -394,32 +391,6 @@ function parseFullName(
 
 
 // =====================================
-// ..M Registration Admin Keyboard
-// =====================================
-
-function registrationAdminKeyboard(userId) {
-
-    return {
-
-        inline_keyboard: [
-
-            [
-                {
-                    text: "✅ تأیید",
-                    callback_data: `approve:${userId}`
-                },
-                {
-                    text: "❌ رد",
-                    callback_data: `reject:${userId}`
-                }
-            ]
-
-        ]
-    };
-}
-
-
-// =====================================
 // ..M Notify Admins
 // =====================================
 
@@ -512,13 +483,7 @@ ${requestDate}
 
             await sendMessage(
                 admin.telegramId,
-                message,
-                {
-                    reply_markup:
-                        registrationAdminKeyboard(
-                            user._id
-                        )
-                }
+                message
             );
         }
 
@@ -740,11 +705,7 @@ async function handleStart(
         );
 
     const adminTelegramId =
-        String(
-            process.env.OWNER_TELEGRAM_ID ||
-            process.env.ADMIN_TELEGRAM_ID ||
-            ""
-        ).trim();
+        String(process.env.ADMIN_TELEGRAM_ID || "").trim();
 
     const isOwner =
         Boolean(adminTelegramId) &&
@@ -805,7 +766,7 @@ async function handleStart(
             });
 
 
-        // Owner دسترسی مستقیم دارد و نباید وارد مراحل ثبت‌نام شود.
+        // Owner bypass: do not enter the registration flow.
         if (isOwner) {
             return sendExistingUserMessage(
                 chatId,
@@ -813,6 +774,7 @@ async function handleStart(
             );
         }
 
+        // Ordinary users begin the registration flow.
         return sendWelcomeMessage(
             chatId
         );
@@ -1207,158 +1169,6 @@ async function handleTextMessage(
 
 
 // =====================================
-// ..M Admin Callback Handler
-// =====================================
-
-async function handleAdminCallback(
-    callbackQuery
-) {
-
-    const fromId =
-        String(callbackQuery?.from?.id || "");
-
-    const configuredAdminId =
-        String(
-            process.env.OWNER_TELEGRAM_ID ||
-            process.env.ADMIN_TELEGRAM_ID ||
-            ""
-        ).trim();
-
-    if (
-        !fromId ||
-        !configuredAdminId ||
-        fromId !== configuredAdminId
-    ) {
-
-        await telegramRequest(
-            "answerCallbackQuery",
-            {
-                callback_query_id:
-                    callbackQuery.id,
-                text: "دسترسی مدیر لازم است.",
-                show_alert: true
-            }
-        );
-
-        return;
-    }
-
-    const data =
-        String(callbackQuery?.data || "");
-
-    const [action, userId] =
-        data.split(":");
-
-    if (
-        !userId ||
-        !["approve", "reject"].includes(action)
-    ) {
-
-        await telegramRequest(
-            "answerCallbackQuery",
-            {
-                callback_query_id:
-                    callbackQuery.id,
-                text: "درخواست نامعتبر است.",
-                show_alert: true
-            }
-        );
-
-        return;
-    }
-
-    const user =
-        await User.findById(userId);
-
-    if (!user) {
-
-        await telegramRequest(
-            "answerCallbackQuery",
-            {
-                callback_query_id:
-                    callbackQuery.id,
-                text: "کاربر پیدا نشد.",
-                show_alert: true
-            }
-        );
-
-        return;
-    }
-
-    if (user.isAdmin === true) {
-
-        await telegramRequest(
-            "answerCallbackQuery",
-            {
-                callback_query_id:
-                    callbackQuery.id,
-                text: "حساب مدیر قابل تغییر نیست.",
-                show_alert: true
-            }
-        );
-
-        return;
-    }
-
-    if (action === "approve") {
-
-        user.accessEnabled = true;
-        user.approvalStatus = "APPROVED";
-        user.status = "ACTIVE";
-        user.botAccess = true;
-        user.botActive = false;
-        await user.save();
-
-        await sendApprovalNotification(
-            user.telegramId,
-            user.firstName || ""
-        );
-
-    } else {
-
-        user.accessEnabled = false;
-        user.approvalStatus = "REJECTED";
-        user.status = "REJECTED";
-        user.botAccess = false;
-        user.botActive = false;
-        await user.save();
-
-        await sendRejectionNotification(
-            user.telegramId
-        );
-    }
-
-    await telegramRequest(
-        "answerCallbackQuery",
-        {
-            callback_query_id:
-                callbackQuery.id,
-            text:
-                action === "approve"
-                    ? "کاربر تأیید شد."
-                    : "درخواست رد شد."
-        }
-    );
-
-    if (callbackQuery.message?.chat?.id && callbackQuery.message?.message_id) {
-
-        await telegramRequest(
-            "editMessageReplyMarkup",
-            {
-                chat_id:
-                    callbackQuery.message.chat.id,
-                message_id:
-                    callbackQuery.message.message_id,
-                reply_markup: {
-                    inline_keyboard: []
-                }
-            }
-        );
-    }
-}
-
-
-// =====================================
 // ..M Handle Telegram Update
 // =====================================
 
@@ -1370,16 +1180,6 @@ async function handleTelegramUpdate(
 
         if (!update) {
             return;
-        }
-
-
-        if (
-            update.callback_query
-        ) {
-
-            return handleAdminCallback(
-                update.callback_query
-            );
         }
 
 
@@ -1531,8 +1331,7 @@ async function setupTelegramWebhook() {
 
                 allowed_updates: [
 
-                    "message",
-                    "callback_query"
+                    "message"
 
                 ]
 
@@ -1661,8 +1460,6 @@ export {
 
     notifyAdminsAboutRegistration,
 
-    handleAdminCallback,
-
     removeKeyboard
 
 };
@@ -1703,8 +1500,6 @@ export default {
     sendRejectionNotification,
 
     notifyAdminsAboutRegistration,
-
-    handleAdminCallback,
 
     removeKeyboard
 
