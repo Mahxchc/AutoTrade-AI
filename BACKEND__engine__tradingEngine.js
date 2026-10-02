@@ -7,15 +7,15 @@
 
 import mongoose from "mongoose";
 
-import Trade from "BACKEND__models__Trade.js";
-import Wallet from "BACKEND__models__Wallet.js";
-import User from "BACKEND__models__User.js";
-import Bot from "BACKEND__models__Bot.js";
+import Trade from "./BACKEND__models__Trade.js";
+import Wallet from "./BACKEND__models__Wallet.js";
+import User from "./BACKEND__models__User.js";
+import Bot from "./BACKEND__models__Bot.js";
 
 import {
     checkTradePermission,
     calculatePositionSize
-} from "BACKEND__engine__riskManager.js";
+} from "./BACKEND__engine__riskManager.js";
 
 
 // =====================================

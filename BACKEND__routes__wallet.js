@@ -8,16 +8,16 @@
 import express from "express";
 import mongoose from "mongoose";
 
-import User from "BACKEND__models__User.js";
-import Wallet from "BACKEND__models__Wallet.js";
+import User from "./BACKEND__models__User.js";
+import Wallet from "./BACKEND__models__Wallet.js";
 
 import {
     requiredTelegramUser
-} from "BACKEND__middleware__auth.js";
+} from "./BACKEND__middleware__auth.js";
 
 import {
     getWalletDisplayValues
-} from "BACKEND__services__currencyService.js";
+} from "./BACKEND__services__currencyService.js";
 
 const router = express.Router();
 

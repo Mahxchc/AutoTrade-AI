@@ -4,7 +4,7 @@
 // File: backend/bot.js
 // =====================================
 
-import User from "./models/User.js";
+import User from "./BACKEND__models__User.js";
 
 
 // =====================================

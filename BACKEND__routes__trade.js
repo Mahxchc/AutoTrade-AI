@@ -8,14 +8,14 @@
 import express from "express";
 import mongoose from "mongoose";
 
-import Trade from "BACKEND__models__Trade.js";
-import User from "BACKEND__models__User.js";
+import Trade from "./BACKEND__models__Trade.js";
+import User from "./BACKEND__models__User.js";
 
 import {
     requireUser,
     requireApprovedUser,
     requireAdmin
-} from "BACKEND__middleware__auth.js";
+} from "./BACKEND__middleware__auth.js";
 
 
 const router =

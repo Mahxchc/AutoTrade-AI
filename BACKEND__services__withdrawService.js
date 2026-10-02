@@ -7,12 +7,12 @@
 
 import mongoose from "mongoose";
 
-import Withdraw from "BACKEND__models__Withdraw.js";
-import Wallet from "BACKEND__models__Wallet.js";
+import Withdraw from "./BACKEND__models__Withdraw.js";
+import Wallet from "./BACKEND__models__Wallet.js";
 
 import {
     getUsdToTomanRate
-} from "BACKEND__services__currencyService.js";
+} from "./BACKEND__services__currencyService.js";
 
 
 // =====================================

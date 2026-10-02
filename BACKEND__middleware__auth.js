@@ -6,9 +6,9 @@
 
 import {
     validateTelegramInitData
-} from "BACKEND__utils__telegramAuth.js";
+} from "./BACKEND__utils__telegramAuth.js";
 
-import User from "BACKEND__models__User.js";
+import User from "./BACKEND__models__User.js";
 
 
 // =====================================

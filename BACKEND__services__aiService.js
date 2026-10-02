@@ -7,7 +7,7 @@
 import {
     analyzeMarket as analyzeMarketEngine,
     validateSignal
-} from "BACKEND__engine__aiEngine.js";
+} from "./BACKEND__engine__aiEngine.js";
 
 
 // =====================================

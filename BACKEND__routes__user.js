@@ -6,11 +6,11 @@
 
 import express from "express";
 
-import User from "BACKEND__models__User.js";
+import User from "./BACKEND__models__User.js";
 
 import {
     requireTelegramUser
-} from "BACKEND__middleware__auth.js";
+} from "./BACKEND__middleware__auth.js";
 
 
 const router =

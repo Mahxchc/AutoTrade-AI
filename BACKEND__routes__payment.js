@@ -11,14 +11,14 @@ import mongoose from "mongoose";
 import {
     verifyPayment,
     getPaymentStatus
-} from "BACKEND__services__paymentVerificationService.js";
+} from "./BACKEND__services__paymentVerificationService.js";
 
-import User from "BACKEND__models__User.js";
+import User from "./BACKEND__models__User.js";
 
 import {
     requiredTelegramUser,
     requiredAdmin
-} from "BACKEND__middleware__auth.js";
+} from "./BACKEND__middleware__auth.js";
 
 
 const router =

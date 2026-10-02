@@ -5,9 +5,9 @@
 // File: backend/services/paymentService.js
 // =====================================
 
-import Withdraw from "BACKEND__models__Withdraw.js";
-import Wallet from "BACKEND__models__Wallet.js";
-import User from "BACKEND__models__User.js";
+import Withdraw from "./BACKEND__models__Withdraw.js";
+import Wallet from "./BACKEND__models__Wallet.js";
+import User from "./BACKEND__models__User.js";
 
 
 // =====================================

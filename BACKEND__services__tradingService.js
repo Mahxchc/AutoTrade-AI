@@ -5,12 +5,12 @@
 // File: backend/services/tradingService.js
 // =====================================
 
-import Bot from "BACKEND__models__Bot.js";
+import Bot from "./BACKEND__models__Bot.js";
 
 import {
     placeOrder,
     checkOrderStatus
-} from "BACKEND__services__exchangeService.js";
+} from "./BACKEND__services__exchangeService.js";
 
 
 // =====================================

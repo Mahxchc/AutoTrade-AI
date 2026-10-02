@@ -5,7 +5,7 @@
 // File: backend/services/userService.js
 // =====================================
 
-import User from "BACKEND__models__User.js";
+import User from "./BACKEND__models__User.js";
 
 
 // =====================================

@@ -7,11 +7,11 @@
 
 import mongoose from "mongoose";
 
-import Deposit from "BACKEND__models__Deposit.js";
+import Deposit from "./BACKEND__models__Deposit.js";
 
 import {
     confirmDeposit
-} from "BACKEND__services__depositService.js";
+} from "./BACKEND__services__depositService.js";
 
 
 // =====================================

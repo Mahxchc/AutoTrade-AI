@@ -8,12 +8,12 @@
 
 import mongoose from "mongoose";
 
-import Deposit from "BACKEND__models__Deposit.js";
-import Wallet from "BACKEND__models__Wallet.js";
+import Deposit from "./BACKEND__models__Deposit.js";
+import Wallet from "./BACKEND__models__Wallet.js";
 
 import {
     getUsdToIrrRate
-} from "BACKEND__services__currencyService.js";
+} from "./BACKEND__services__currencyService.js";
 
 
 // =====================================

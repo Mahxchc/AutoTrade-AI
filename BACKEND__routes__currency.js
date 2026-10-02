@@ -14,7 +14,7 @@ import {
     tomanToUsd,
     formatToman,
     formatUSD
-} from "BACKEND__services__currencyService.js";
+} from "./BACKEND__services__currencyService.js";
 
 const router = express.Router();
 

@@ -8,8 +8,8 @@
 import express from "express";
 import mongoose from "mongoose";
 
-import Withdraw from "BACKEND__models__Withdraw.js";
-import User from "BACKEND__models__User.js";
+import Withdraw from "./BACKEND__models__Withdraw.js";
+import User from "./BACKEND__models__User.js";
 
 import {
     createWithdrawRequest,
@@ -18,12 +18,12 @@ import {
     completeWithdraw,
     failWithdraw,
     cancelWithdraw
-} from "BACKEND__services__withdrawService.js";
+} from "./BACKEND__services__withdrawService.js";
 
 import {
     requiredTelegramUser,
     requiredAdmin
-} from "BACKEND__middleware__auth.js";
+} from "./BACKEND__middleware__auth.js";
 
 
 const router = express.Router();

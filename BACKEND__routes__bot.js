@@ -8,16 +8,16 @@
 import express from "express";
 import mongoose from "mongoose";
 
-import Bot from "BACKEND__models__Bot.js";
-import User from "BACKEND__models__User.js";
+import Bot from "./BACKEND__models__Bot.js";
+import User from "./BACKEND__models__User.js";
 
 import {
     requireTelegramUser
-} from "BACKEND__middleware__auth.js";
+} from "./BACKEND__middleware__auth.js";
 
 import {
     reactivateBot
-} from "BACKEND__engine__tradingEngine.js";
+} from "./BACKEND__engine__tradingEngine.js";
 
 
 const router =

@@ -8,9 +8,9 @@ import express from "express";
 
 import {
     requireTelegramUser
-} from "../middleware/auth.js";
+} from "./BACKEND__middleware__auth.js";
 
-import User from "../models/User.js";
+import User from "./BACKEND__models__User.js";
 
 
 const router =

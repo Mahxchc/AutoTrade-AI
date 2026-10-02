@@ -12,17 +12,17 @@ import {
     createDeposit,
     getUserDeposits,
     getDepositById
-} from "BACKEND__services__depositService.js";
+} from "./BACKEND__services__depositService.js";
 
-import User from "BACKEND__models__User.js";
+import User from "./BACKEND__models__User.js";
 
 import {
     requiredTelegramUser
-} from "BACKEND__middleware__auth.js";
+} from "./BACKEND__middleware__auth.js";
 
 import {
     getUsdToTomanRate
-} from "BACKEND__services__currencyService.js";
+} from "./BACKEND__services__currencyService.js";
 
 
 const router =

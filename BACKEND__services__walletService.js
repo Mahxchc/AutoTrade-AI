@@ -5,8 +5,8 @@
 // File: backend/services/walletService.js
 // =====================================
 
-import Wallet from "BACKEND__models__Wallet.js";
-import User from "BACKEND__models__User.js";
+import Wallet from "./BACKEND__models__Wallet.js";
+import User from "./BACKEND__models__User.js";
 
 
 // =====================================
