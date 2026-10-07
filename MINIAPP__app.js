@@ -46,8 +46,25 @@ function hideAllScreens() {
     registrationScreen.classList.add("hidden");
     waitingScreen.classList.add("hidden");
     rejectedScreen.classList.add("hidden");
+    document.getElementById("errorScreen").classList.add("hidden");
 
     mainScreen.classList.add("hidden");
+}
+
+
+function showError(error) {
+
+    hideAllScreens();
+
+    const detail = document.getElementById("errorDetail");
+
+    if (detail) {
+        detail.textContent =
+            (error && error.message ? error.message : "Unknown error") +
+            (error && error.status ? " (HTTP " + error.status + ")" : "");
+    }
+
+    document.getElementById("errorScreen").classList.remove("hidden");
 }
 
 
@@ -113,10 +130,12 @@ openBotBtn.addEventListener("click", () => {
 
     const url =
         "https://t.me/" +
-        botUsername.replace(/^@/, "");
+        botUsername.replace(/^@/, "") +
+        "?start=register";
 
     if (tg?.openTelegramLink) {
         tg.openTelegramLink(url);
+        setTimeout(() => { try { tg.close(); } catch (e) {} }, 300);
         return;
     }
 
@@ -437,10 +456,11 @@ async function startApp() {
 
         /*
            اگر بک‌اند در دسترس نباشد،
-           کاربر را وارد محیط مالی نمی‌کنیم.
+           کاربر را وارد محیط مالی نمی‌کنیم
+           و خطای واقعی را نشان می‌دهیم.
         */
 
-        showRegistrationRequired();
+        showError(error);
     }
 
 }
@@ -499,3 +519,9 @@ document
 /* Start */
 
 startApp();
+
+document.getElementById("retryBtn").addEventListener("click", () => {
+    hideAllScreens();
+    loadingScreen.classList.remove("hidden");
+    startApp();
+});
