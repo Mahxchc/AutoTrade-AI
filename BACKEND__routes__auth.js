@@ -24,7 +24,7 @@ const router =
 function getAdminTelegramId() {
 
     return String(
-        process.env.ADMIN_TELEGRAM_ID || ""
+        process.env.OWNER_TELEGRAM_ID || process.env.ADMIN_TELEGRAM_ID || ""
     ).trim();
 
 }

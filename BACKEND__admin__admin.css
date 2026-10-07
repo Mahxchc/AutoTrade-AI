@@ -1,0 +1,40 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg1:#03111f; --bg2:#061d31; --glass:rgba(255,255,255,.07);
+  --border:rgba(255,255,255,.12); --text:#fff; --muted:#8fa8bd;
+  --blue:#39a9ff; --blue2:#176cff; --green:#28d7a0; --red:#ff647c; --amber:#ffc857;
+}
+body {
+  font-family: Tahoma, Arial, sans-serif; color: var(--text); min-height: 100vh;
+  background: radial-gradient(circle at 20% 0%, rgba(40,140,255,.2), transparent 35%),
+              linear-gradient(180deg, var(--bg1), var(--bg2));
+  padding: 16px; direction: rtl;
+}
+h1 { font-size: 20px; margin-bottom: 4px; }
+.sub { color: var(--muted); font-size: 12px; margin-bottom: 16px; }
+.card { background: var(--glass); border: 1px solid var(--border); border-radius: 18px;
+  padding: 14px; margin-bottom: 12px; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+.stat { text-align: center; padding: 10px 4px; }
+.stat b { display: block; font-size: 20px; }
+.stat span { font-size: 11px; color: var(--muted); }
+.tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+.tab { flex: 1; padding: 10px; border-radius: 12px; border: 1px solid var(--border);
+  background: var(--glass); color: var(--text); font-family: inherit; cursor: pointer; }
+.tab.active { background: linear-gradient(135deg, var(--blue), var(--blue2)); border-color: transparent; }
+.row { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; padding: 3px 0; }
+.row span { color: var(--muted); }
+.name { font-size: 15px; font-weight: bold; margin-bottom: 6px; }
+.badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 999px; margin-right: 6px; }
+.PENDING { background: rgba(255,200,87,.15); color: var(--amber); }
+.APPROVED, .ACTIVE { background: rgba(40,215,160,.15); color: var(--green); }
+.REJECTED, .BLOCKED { background: rgba(255,100,124,.15); color: var(--red); }
+.actions { display: flex; gap: 8px; margin-top: 10px; }
+.btn { flex: 1; padding: 10px; border: 0; border-radius: 12px; color: #fff;
+  font-family: inherit; cursor: pointer; }
+.ok { background: linear-gradient(135deg, #1fbf8a, #28d7a0); }
+.no { background: linear-gradient(135deg, #e0475f, var(--red)); }
+.neutral { background: rgba(255,255,255,.12); }
+.btn:disabled { opacity: .5; }
+.empty, .err { text-align: center; color: var(--muted); padding: 24px 8px; font-size: 14px; }
+.err { color: var(--red); }

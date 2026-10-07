@@ -1,52 +1,262 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-  <title>AutoTrade AI — پنل مدیریت</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <link rel="stylesheet" href="/admin-assets/admin.css">
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    >
+
+    <title>AutoTrade AI</title>
+
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <link rel="stylesheet" href="./MINIAPP__style.css">
 </head>
+
 <body>
-  <div class="bg bg-a"></div><div class="bg bg-b"></div><div class="noise"></div>
-  <main class="shell">
-    <header class="topbar glass">
-      <div class="brand-wrap">
-        <div class="brand-icon">A</div>
-        <div><div class="eyebrow">AUTOTRADE AI</div><h1>پنل مدیریت</h1></div>
-      </div>
-      <button id="refreshBtn" class="icon-btn" type="button" aria-label="به‌روزرسانی">↻</button>
-    </header>
 
-    <section id="loading" class="glass state-card">
-      <div class="spinner"></div><h2>در حال بررسی دسترسی...</h2><p>پنل فقط برای مدیر مجاز است.</p>
-    </section>
+<!-- Loading -->
+<div id="loadingScreen" class="screen loading-screen">
+    <div class="loader"></div>
 
-    <section id="denied" class="glass state-card hidden">
-      <div class="state-icon">🔒</div><h2>دسترسی مجاز نیست</h2><p id="deniedText">این صفحه فقط داخل Telegram و برای مدیر اصلی قابل استفاده است.</p>
-    </section>
+    <h2>در حال ورود</h2>
+    <p>لطفاً صبر کنید...</p>
+</div>
 
-    <div id="panel" class="hidden">
-      <section class="stats-grid">
-        <article class="glass stat"><span>در انتظار</span><strong id="pendingCount">0</strong></article>
-        <article class="glass stat"><span>تأییدشده</span><strong id="approvedCount">0</strong></article>
-        <article class="glass stat"><span>ردشده</span><strong id="rejectedCount">0</strong></article>
-        <article class="glass stat"><span>کل کاربران</span><strong id="totalCount">0</strong></article>
-      </section>
 
-      <section class="glass section-card">
-        <div class="section-head"><div><span class="eyebrow">ACCESS CONTROL</span><h2>درخواست‌های جدید</h2></div><button id="pendingBtn" class="filter active" type="button">در انتظار</button></div>
-        <div id="pendingList" class="user-list"></div>
-      </section>
+<!-- Registration Required -->
+<div id="registrationScreen" class="screen hidden">
 
-      <section class="glass section-card">
-        <div class="section-head"><div><span class="eyebrow">USERS</span><h2>همه کاربران</h2></div><button id="allBtn" class="filter" type="button">همه</button></div>
-        <div id="allList" class="user-list"></div>
-      </section>
+    <div class="glass-card center-card">
+
+        <div class="icon">🔐</div>
+
+        <h1>ثبت‌نام لازم است</h1>
+
+        <p>
+            برای استفاده از Mini App ابتدا باید
+            در ربات ثبت‌نام کنید.
+        </p>
+
+        <button id="openBotBtn" class="primary-btn">
+            🤖 رفتن به ربات
+        </button>
+
+        <div id="registrationStatus" class="status-box hidden"></div>
+
     </div>
 
-    <div id="toast" class="toast hidden"></div>
-  </main>
-  <script src="/admin-assets/admin.js"></script>
+</div>
+
+
+<!-- Waiting For Approval -->
+<div id="waitingScreen" class="screen hidden">
+
+    <div class="glass-card center-card">
+
+        <div class="icon">⏳</div>
+
+        <h1>در انتظار تأیید</h1>
+
+        <p>
+            ثبت‌نام شما با موفقیت انجام شد.
+        </p>
+
+        <p>
+            درخواست شما برای تأیید به سوی مدیریت ارسال شده است.
+        </p>
+
+        <div class="status pending">
+            در انتظار تأیید مدیریت
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- Rejected -->
+<div id="rejectedScreen" class="screen hidden">
+
+    <div class="glass-card center-card">
+
+        <div class="icon">❌</div>
+
+        <h1>دسترسی تأیید نشد</h1>
+
+        <p>
+            درخواست شما توسط مدیریت تأیید نشده است.
+        </p>
+
+        <a
+            class="support-link"
+            href="https://t.me/mehdi2410l"
+            target="_blank"
+        >
+            پشتیبانی: @mehdi2410l
+        </a>
+
+    </div>
+
+</div>
+
+
+<!-- Main App -->
+<div id="mainScreen" class="hidden">
+
+    <header class="top-bar">
+
+        <div>
+            <span class="small-title">خوش آمدید</span>
+            <h2 id="userName">کاربر</h2>
+        </div>
+
+        <div class="avatar" id="userAvatar">
+            👤
+        </div>
+
+    </header>
+
+
+    <main class="container">
+
+        <!-- User -->
+        <section class="glass-card user-card">
+
+            <div class="section-title">
+                اطلاعات حساب
+            </div>
+
+            <div class="user-row">
+                <span>نام</span>
+                <strong id="firstName">---</strong>
+            </div>
+
+            <div class="user-row">
+                <span>نام خانوادگی</span>
+                <strong id="lastName">---</strong>
+            </div>
+
+            <div class="user-row">
+                <span>شماره تلفن</span>
+                <strong id="phoneNumber">---</strong>
+            </div>
+
+        </section>
+
+
+        <!-- Balance -->
+        <section class="glass-card balance-card">
+
+            <span class="balance-label">
+                موجودی دلاری
+            </span>
+
+            <div class="dollar-balance">
+                $<span id="dollarBalance">0.00</span>
+            </div>
+
+            <div class="toman-balance">
+                <span id="tomanBalance">0</span>
+                تومان
+            </div>
+
+        </section>
+
+
+        <!-- Trading / Profit -->
+        <section class="glass-card">
+
+            <div class="section-title">
+                وضعیت معامله
+            </div>
+
+            <div class="trade-value">
+                <span>مبلغ دلاری</span>
+
+                <strong>
+                    $<span id="tradeDollar">0.00</span>
+                </strong>
+            </div>
+
+            <div class="trade-value">
+                <span>معادل تومان</span>
+
+                <strong>
+                    <span id="tradeToman">0</span>
+                    تومان
+                </strong>
+            </div>
+
+            <div class="trade-value">
+                <span>سود</span>
+
+                <strong>
+                    $<span id="profitDollar">0.00</span>
+                </strong>
+            </div>
+
+        </section>
+
+
+        <!-- Actions -->
+        <section class="actions">
+
+            <button
+                id="depositBtn"
+                class="action-btn deposit"
+            >
+                <span>💰</span>
+                <b>واریز</b>
+            </button>
+
+            <button
+                id="withdrawBtn"
+                class="action-btn withdraw"
+            >
+                <span>💸</span>
+                <b>برداشت</b>
+            </button>
+
+        </section>
+
+
+        <!-- Support -->
+        <section class="glass-card support-card">
+
+            <div class="support-icon">
+                💬
+            </div>
+
+            <div>
+                <span>پشتیبانی</span>
+
+                <a
+                    href="https://t.me/mehdi2410l"
+                    target="_blank"
+                >
+                    @mehdi2410l
+                </a>
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<p class="risk-note">
+    ⚠️ معامله‌گری ریسک دارد. سود تضمین نمی‌شود و ممکن است سرمایه کاهش یابد.
+</p>
+
+<script>
+    // Set this to your real Telegram bot username without @.
+    window.APP_BOT_USERNAME = "autotradee_aii_bot";
+    window.APP_API_BASE_URL = "https://autotrade-backend-02cc.onrender.com";
+</script>
+<script src="./MINIAPP__app.js"></script>
+
 </body>
 </html>
