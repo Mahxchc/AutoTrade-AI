@@ -1154,11 +1154,23 @@ async function handleTextMessage(
 
         if (
             !ownerId ||
-            String(message.from.id) !== ownerId ||
-            !backendUrl
+            String(message.from.id) !== ownerId
         ) {
 
-            return;
+            return sendMessage(
+                message.chat.id,
+                "⛔ دسترسی مدیریت ندارید.\n\n" +
+                "شناسه‌ی شما: " + message.from.id + "\n" +
+                "اگر شما سازنده هستید، این عدد باید با OWNER_TELEGRAM_ID در Render یکی باشد."
+            );
+        }
+
+        if (!backendUrl) {
+
+            return sendMessage(
+                message.chat.id,
+                "⚠️ متغیر BACKEND_URL در Render تنظیم نشده است."
+            );
         }
 
         return sendMessage(
