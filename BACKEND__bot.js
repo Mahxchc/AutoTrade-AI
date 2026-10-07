@@ -1132,6 +1132,57 @@ async function handleTextMessage(
 
 
     // ---------------------------------
+    // ..M Admin Panel (owner only)
+    // ---------------------------------
+
+    if (
+        text === "/admin" ||
+        text.startsWith("/admin@")
+    ) {
+
+        const ownerId =
+            String(
+                process.env.OWNER_TELEGRAM_ID ||
+                process.env.ADMIN_TELEGRAM_ID ||
+                ""
+            ).trim();
+
+        const backendUrl =
+            String(
+                process.env.BACKEND_URL || ""
+            ).trim().replace(/\/$/, "");
+
+        if (
+            !ownerId ||
+            String(message.from.id) !== ownerId ||
+            !backendUrl
+        ) {
+
+            return;
+        }
+
+        return sendMessage(
+            message.chat.id,
+            "🛡 پنل مدیریت",
+            {
+                reply_markup: {
+                    inline_keyboard: [
+                        [
+                            {
+                                text: "باز کردن پنل مدیریت",
+                                web_app: {
+                                    url: `${backendUrl}/admin`
+                                }
+                            }
+                        ]
+                    ]
+                }
+            }
+        );
+    }
+
+
+    // ---------------------------------
     // ..M Find User
     // ---------------------------------
 
